@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beauty Operations OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Supabase JS SDK — авторизация -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --rose:#C2185B;--rose-l:#FCE4EC;--rose-d:#880E4F;--rose-m:#F48FB1;
+  --bg:#FAFAF9;--surface:#fff;--s2:#F5F4F2;--s3:#EEECE9;
+  --text:#1A1A1A;--t2:#6B6B6B;--t3:#9E9E9E;
+  --border:#E5E3DF;--border2:#D0CEC9;
+  --green:#2E7D32;--gbg:#E8F5E9;--gm:#66BB6A;
+  --amber:#E65100;--abg:#FFF3E0;--am:#FFA726;
+  --red:#C62828;--rbg:#FFEBEE;--rm:#EF9A9A;
+  --blue:#1565C0;--bbg:#E3F2FD;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sh:0 1px 3px rgba(0,0,0,.08);--shm:0 4px 12px rgba(0,0,0,.1)
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px}
+.nav-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;letter-spacing:-.3px;cursor:pointer}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:var(--rose)}
+.nav-links{display:flex;gap:2px}
+.nav-link{padding:6px 14px;border-radius:var(--r);font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;border:none;background:transparent;transition:all .15s}
+.nav-link:hover,.nav-link.active{background:var(--s2);color:var(--text)}
+.hidden{display:none!important}
+.nav-right{display:flex;align-items:center;gap:10px}
+.user-pill{display:flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--border);border-radius:20px;font-size:13px;cursor:pointer;background:var(--surface);transition:all .15s}
+.user-pill:hover{border-color:var(--border2);background:var(--s2)}
+.user-avatar{width:24px;height:24px;border-radius:50%;background:var(--rose-l);color:var(--rose-d);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sub-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px}
+.sub-free{background:var(--s3);color:var(--t2)}
+.sub-paid{background:var(--gbg);color:var(--green)}
+
+
+/* SCREENS */
+.screen{display:none}
+.screen.active{display:block;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── AUTH SCREENS ── */
+.auth-wrap{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:36px;width:100%;max-width:420px;box-shadow:var(--shm)}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo-dot{width:14px;height:14px;border-radius:50%;background:var(--rose);display:inline-block;margin-right:6px}
+.auth-title{font-size:22px;font-weight:600;letter-spacing:-.3px;margin-bottom:6px;text-align:center}
+.auth-sub{font-size:14px;color:var(--t2);text-align:center;margin-bottom:24px}
+.auth-field{margin-bottom:16px}
+.auth-field label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:5px}
+.auth-field input{width:100%;padding:10px 14px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;font-family:inherit;color:var(--text);background:var(--s2);outline:none;transition:border-color .15s,box-shadow .15s}
+.auth-field input:focus{border-color:var(--rose);background:var(--surface);box-shadow:0 0 0 3px rgba(194,24,91,.1)}
+.auth-err{font-size:13px;color:var(--red);background:var(--rbg);padding:10px 14px;border-radius:var(--r);margin-bottom:16px;display:none}
+.auth-switch{text-align:center;font-size:13px;color:var(--t2);margin-top:16px}
+.auth-switch a{color:var(--rose);cursor:pointer;font-weight:500;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
+
+/* ── PAYWALL ── */
+.paywall-wrap{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:24px}
+.paywall-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:40px;width:100%;max-width:620px;text-align:center;box-shadow:var(--shm)}
+.paywall-icon{font-size:44px;margin-bottom:20px}
+.paywall-box h2{font-size:24px;font-weight:600;letter-spacing:-.3px;margin-bottom:10px}
+.paywall-box p{font-size:15px;color:var(--t2);margin-bottom:28px;line-height:1.65}
+.plans-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.plan-card{border:2px solid var(--border);border-radius:var(--rl);padding:20px 16px;cursor:pointer;transition:all .15s;text-align:left;background:var(--surface)}
+.plan-card:hover{border-color:var(--rose-m)}
+.plan-card.selected{border-color:var(--rose);background:var(--rose-l)}
+.plan-label{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px}
+.plan-price{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-1px;margin-bottom:4px}
+.plan-price span{font-size:14px;font-weight:400;color:var(--t2)}
+.plan-save{font-size:12px;color:var(--green);font-weight:600;margin-top:4px}
+.plan-feature{font-size:12px;color:var(--t2);margin-top:8px}
+.paywall-features{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;text-align:left}
+.pay-feat{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--t2)}
+.pay-feat-check{width:20px;height:20px;border-radius:50%;background:var(--gbg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+
+/* LIQPAY FORM */
+#liqpay-form-container{display:none}
+#liqpay-form-container form{display:inline}
+
+/* ── MAIN APP ── */
+.page{max-width:840px;margin:0 auto;padding:36px 24px 80px}
+.page-lg{max-width:960px}
+.page-h{margin-bottom:28px}
+.page-h h2{font-size:24px;font-weight:600;letter-spacing:-.4px;margin-bottom:5px}
+.page-h p{font-size:14px;color:var(--t2)}
+
+/* ── LANDING ── */
+.hero{text-align:center;padding:64px 20px 48px;max-width:660px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--rose-l);color:var(--rose-d);font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:20px}
+.hero h1{font-size:44px;font-weight:700;line-height:1.18;letter-spacing:-.8px;margin-bottom:18px}
+.hero h1 em{font-style:normal;color:var(--rose)}
+.hero p{font-size:17px;color:var(--t2);line-height:1.65;margin-bottom:32px}
+.hero-btns{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:840px;margin:0 auto 56px}
+.feat{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:20px;transition:box-shadow .2s}
+.feat:hover{box-shadow:var(--shm)}
+.feat-icon{width:40px;height:40px;border-radius:10px;background:var(--rose-l);color:var(--rose);font-size:20px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.feat-title{font-size:14px;font-weight:600;margin-bottom:6px}
+.feat-desc{font-size:13px;color:var(--t2);line-height:1.6}
+.levels{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 auto 60px;max-width:840px}
+.lv{padding:12px 18px;border-radius:var(--r);border:1px solid transparent;text-align:center;flex:1;min-width:120px}
+.lv-n{font-size:20px;font-weight:700;margin-bottom:3px}
+.lv-l{font-size:13px;font-weight:600}
+
+/* ── ONBOARDING ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.fg-full{grid-column:1/-1}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:5px}
+.field input,.field select{width:100%;padding:10px 14px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;font-family:inherit;color:var(--text);background:var(--s2);outline:none;transition:border-color .15s,box-shadow .15s}
+.field input:focus,.field select:focus{border-color:var(--rose);background:var(--surface);box-shadow:0 0 0 3px rgba(194,24,91,.1)}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.svc{padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--t2);text-align:center;transition:all .15s;user-select:none}
+.svc:hover{border-color:var(--rose-m);color:var(--rose)}
+.svc.sel{background:var(--rose-l);border-color:var(--rose-m);color:var(--rose-d)}
+.fsec{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin:20px 0 12px}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
+
+/* ── AUDIT ── */
+.topbar{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px 18px;margin-bottom:20px}
+.ptrack{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,var(--rose),var(--rose-m));border-radius:3px;transition:width .4s}
+.pnums{font-size:13px;font-weight:500;color:var(--t2);white-space:nowrap}
+.block-nav{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.bnav-btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--t2);transition:all .15s}
+.bnav-btn:hover{border-color:var(--rose-m);color:var(--rose)}
+.bnav-btn.active{background:var(--rose-l);border-color:var(--rose-m);color:var(--rose-d)}
+.bnav-btn.done{background:var(--gbg);border-color:var(--gm);color:var(--green)}
+.btitle{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);font-size:19px;font-weight:600;letter-spacing:-.3px}
+.q-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px}
+.qnum{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:5px;letter-spacing:.3px}
+.qtext{font-size:14px;font-weight:500;margin-bottom:12px;line-height:1.5}
+.qans{display:flex;gap:8px;flex-wrap:wrap}
+.ansbtn{display:flex;align-items:center;gap:5px;padding:6px 14px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--t2);transition:all .15s}
+.ansbtn:hover{border-color:var(--text);color:var(--text)}
+.ansbtn.yes{background:var(--gbg);border-color:var(--gm);color:var(--green)}
+.ansbtn.partly{background:var(--abg);border-color:var(--am);color:var(--amber)}
+.ansbtn.no{background:var(--rbg);border-color:var(--rm);color:var(--red)}
+.qcomment{width:100%;margin-top:8px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-family:inherit;color:var(--t2);background:var(--s2);resize:none;outline:none;transition:border-color .15s}
+.qcomment:focus{border-color:var(--rose);background:var(--surface)}
+.audit-bottom{display:flex;align-items:center;justify-content:space-between}
+.audit-ctr{font-size:13px;color:var(--t3)}
+
+/* ── RESULTS ── */
+.score-hero{display:flex;align-items:center;gap:28px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:24px 28px;margin-bottom:20px}
+.score-ring{position:relative;width:90px;height:90px;flex-shrink:0}
+.score-ring svg{transform:rotate(-90deg)}
+.ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.ring-val{font-size:24px;font-weight:700;letter-spacing:-1px}
+.ring-pct{font-size:10px;color:var(--t3)}
+.score-info h3{font-size:20px;font-weight:600;margin-bottom:4px}
+.score-info p{font-size:13px;color:var(--t2)}
+.lv-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-top:8px}
+.blocks-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px}
+.bcard-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.bcard-name{font-size:13px;font-weight:500}
+.bcard-score{font-size:20px;font-weight:700;letter-spacing:-1px}
+.bcard-lv{font-size:11px;font-weight:600;text-align:right;margin-top:1px}
+.bbar{height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.bfill{height:100%;border-radius:2px;transition:width .6s}
+/* AI PANEL */
+.ai-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:22px 26px;margin-bottom:20px}
+.ai-hdr{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--rose)}
+.ai-dot.pulse{animation:aipulse 1.5s infinite}
+@keyframes aipulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.ai-panel h3{font-size:17px;font-weight:600;letter-spacing:-.2px;margin-bottom:16px}
+.ai-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.ai-sec{margin-bottom:16px}
+.ai-sec:last-child{margin-bottom:0}
+.ai-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:8px}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--r);font-size:12px;font-weight:500}
+.tag.crit{background:var(--rbg);color:var(--red);border:1px solid var(--rm)}
+.tag.risk{background:var(--abg);color:var(--amber);border:1px solid var(--am)}
+.tag.prio{background:var(--gbg);color:var(--green);border:1px solid var(--gm)}
+.ai-summary{font-size:14px;color:var(--t2);line-height:1.7;padding:14px;background:var(--s2);border-radius:var(--rl);font-style:italic}
+.loading{display:flex;flex-direction:column;align-items:center;padding:28px;gap:10px;color:var(--t3)}
+.dots{display:flex;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--rose);animation:db 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes db{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
+
+/* ── ROADMAP ── */
+.phase{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:22px 26px;margin-bottom:16px}
+.phase-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.phase-left{display:flex;align-items:center;gap:12px}
+.phase-num{width:34px;height:34px;border-radius:10px;background:var(--rose-l);color:var(--rose-d);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.phase-info h3{font-size:16px;font-weight:600;margin-bottom:2px}
+.phase-info p{font-size:12px;color:var(--t3)}
+.phase-score{font-size:22px;font-weight:700;letter-spacing:-1px;text-align:right}
+.phase-lv{font-size:11px;font-weight:600}
+.task-list{display:flex;flex-direction:column}
+.task{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
+.task:last-child{border-bottom:none}
+.task-l{display:flex;align-items:center;gap:10px}
+.chk{width:20px;height:20px;border:1.5px solid var(--border2);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.chk:hover{border-color:var(--rose)}
+.chk.done{background:var(--green);border-color:var(--green)}
+.chk.done::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+.task-name{font-size:14px;font-weight:500}
+.task-name.done{text-decoration:line-through;color:var(--t3)}
+.task-r{display:flex;align-items:center;gap:8px}
+.prio{font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px}
+.prio-critical{background:var(--rbg);color:var(--red)}
+.prio-high{background:var(--abg);color:var(--amber)}
+.prio-medium{background:var(--gbg);color:var(--green)}
+.btn-impl{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--t2);transition:all .15s;white-space:nowrap}
+.btn-impl:hover{background:var(--rose-l);border-color:var(--rose-m);color:var(--rose-d)}
+
+/* ── DASHBOARD ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px}
+.metric-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.metric-val{font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:2px}
+.metric-sub{font-size:12px;color:var(--t3)}
+.d2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:20px 22px}
+.dcard-title{font-size:14px;font-weight:600;margin-bottom:14px}
+.bbar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bbar-row:last-child{margin-bottom:0}
+.bbar-name{font-size:13px;color:var(--t2);min-width:100px;font-weight:500}
+.bbar-track{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.bbar-fill{height:100%;border-radius:3px;transition:width .6s}
+.bbar-val{font-size:13px;font-weight:600;min-width:32px;text-align:right}
+.timeline{list-style:none}
+.tl-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:6px;height:6px;border-radius:50%;background:var(--rose);margin-top:5px;flex-shrink:0}
+.tl-text{flex:1;color:var(--t2)}
+.tl-time{font-size:11px;color:var(--t3)}
+.empty-tl{padding:20px 0;font-size:13px;color:var(--t3);text-align:center}
+
+/* ── TEMPLATES ── */
+.tmpl-filter{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.flt-btn{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--t2);transition:all .15s}
+.flt-btn:hover{border-color:var(--text);color:var(--text)}
+.flt-btn.active{background:var(--rose-l);border-color:var(--rose-m);color:var(--rose-d)}
+.tmpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tmpl{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:18px 20px;cursor:pointer;transition:all .2s}
+.tmpl:hover{border-color:var(--rose-m);box-shadow:var(--sh)}
+.tmpl-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.tmpl-icon{width:38px;height:38px;border-radius:10px;background:var(--rose-l);color:var(--rose);font-size:18px;display:flex;align-items:center;justify-content:center}
+.tmpl-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:var(--s3);color:var(--t3)}
+.tmpl-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.tmpl-desc{font-size:13px;color:var(--t2);line-height:1.5}
+
+/* ── PROFILE ── */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.prof-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:22px 24px}
+.prof-card-title{font-size:14px;font-weight:600;margin-bottom:16px}
+.prof-field{margin-bottom:14px;font-size:14px}
+.prof-label{color:var(--t2);margin-bottom:3px;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.prof-val{font-weight:500}
+.prof-sub-status{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-weight:600;margin-bottom:12px}
+.sub-info{font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex;animation:fadeIn .2s}
+.modal{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.2)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 14px;border-bottom:1px solid var(--border)}
+.modal-hdr h3{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;cursor:pointer;padding:5px;border-radius:var(--r);color:var(--t3);transition:all .15s;font-size:18px;line-height:1}
+.modal-close:hover{background:var(--s2);color:var(--text)}
+.modal-body{padding:18px 22px 22px}
+.modal-intro{font-size:14px;color:var(--t2);margin-bottom:16px;line-height:1.6}
+.mfield{margin-bottom:12px}
+.mfield label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:4px}
+.mfield input{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;font-family:inherit;color:var(--text);background:var(--s2);outline:none;transition:border-color .15s}
+.mfield input:focus{border-color:var(--rose);background:var(--surface);box-shadow:0 0 0 3px rgba(194,24,91,.1)}
+.ai-result{background:var(--s2);border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-top:14px;font-size:14px;line-height:1.75;color:var(--text);white-space:pre-wrap;max-height:340px;overflow-y:auto}
+.copy-row{display:flex;justify-content:flex-end;margin-top:8px}
+
+/* ── BUTTONS ── */
+.btn-primary{display:inline-flex;align-items:center;gap:7px;background:var(--rose);color:#fff;border:none;padding:11px 22px;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;letter-spacing:-.1px}
+.btn-primary:hover{background:var(--rose-d);transform:translateY(-1px);box-shadow:var(--shm)}
+.btn-primary:active{transform:none}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.btn-outline{display:inline-flex;align-items:center;gap:6px;background:transparent;color:var(--t2);border:1px solid var(--border2);padding:10px 20px;border-radius:var(--r);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
+.btn-outline:hover{border-color:var(--text);color:var(--text);background:var(--s2)}
+.btn-sm{padding:7px 16px;font-size:13px}
+.btn-copy{display:flex;align-items:center;gap:5px;padding:6px 14px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--t2);transition:all .15s;font-family:inherit}
+.btn-copy:hover{background:var(--s2);color:var(--text)}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:60px 20px;color:var(--t3)}
+.empty-icon{font-size:40px;margin-bottom:14px;opacity:.5}
+.empty h3{font-size:15px;font-weight:500;margin-bottom:6px;color:var(--t2)}
+.empty p{font-size:13px;margin-bottom:18px}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;background:#1A1A1A;color:#fff;padding:12px 18px;border-radius:var(--r);font-size:13px;font-weight:500;z-index:9999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* ── ALERT BANNER ── */
+
+
+
+
+@media(max-width:680px){
+  .feat-grid,.blocks-grid,.metrics,.d2col,.tmpl-grid,.ai-2col,.profile-grid,.plans-row,.form-grid{grid-template-columns:1fr}
+  .hero h1{font-size:30px}
+  .nav{padding:0 14px}
+  .page{padding:24px 14px 60px}
+  .svc-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo" onclick="gotoHome()">
+    <div class="logo-dot"></div>Beauty OS
+  </div>
+  <div class="nav-links" id="nav-links">
+    <button class="nav-link" id="nl-landing" onclick="show('landing')">Главная</button>
+    <button class="nav-link hidden" id="nl-dashboard" onclick="show('dashboard')">Дашборд</button>
+    <button class="nav-link hidden" id="nl-roadmap" onclick="show('roadmap')">Роадмап</button>
+    <button class="nav-link" id="nl-templates" onclick="show('templates')">Шаблоны</button>
+    <button class="nav-link hidden" id="nl-profile" onclick="show('profile')">Профиль</button>
+  </div>
+  <div class="nav-right" id="nav-right">
+    <button class="btn-outline btn-sm" onclick="show('login')">Войти</button>
+    <button class="btn-primary btn-sm" onclick="show('register')">Начать бесплатно</button>
+  </div>
+</nav>
+
+<!-- ═══ LANDING ═══ -->
+<div class="screen" id="screen-landing">
+  <div style="max-width:840px;margin:0 auto;padding:0 24px 60px">
+    <div class="hero">
+      <div class="hero-badge">✦ AI-система для beauty-бизнеса</div>
+      <h1>Порядок в салоне<br>за <em>90 дней</em></h1>
+      <p>Пройдите операционный аудит — система найдёт слабые места и даст персональный план внедрения с AI-инструментами.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="startFlow()">✓ Пройти аудит бесплатно</button>
+        <button class="btn-outline" onclick="show('templates')">↗ Шаблоны документов</button>
+      </div>
+    </div>
+    <div class="feat-grid">
+      <div class="feat"><div class="feat-icon">📋</div><div class="feat-title">Глубокий аудит</div><div class="feat-desc">63 вопроса по 7 блокам. Финансы, персонал, продажи, клиенты, операционка, собственник, маркетинг.</div></div>
+      <div class="feat"><div class="feat-icon">🗺</div><div class="feat-title">Роадмап внедрения</div><div class="feat-desc">Автоматический план по приоритетам — от слабого к сильному. Задачи расставлены по важности.</div></div>
+      <div class="feat"><div class="feat-icon">🤖</div><div class="feat-title">AI Business Builder</div><div class="feat-desc">Кнопка «Внедрить» открывает AI-инструмент. Получите KPI, инструкции, скрипты за секунды.</div></div>
+    </div>
+    <div class="levels">
+      <div class="lv" style="background:#FFF5F5;border-color:#FFCDD2"><div class="lv-n" style="color:var(--red)">0–20</div><div class="lv-l" style="color:var(--red)">Хаос</div></div>
+      <div class="lv" style="background:var(--abg);border-color:var(--am)"><div class="lv-n" style="color:var(--amber)">21–40</div><div class="lv-l" style="color:var(--amber)">Выживание</div></div>
+      <div class="lv" style="background:#FFF8E1;border-color:#FFE082"><div class="lv-n" style="color:var(--amber)">41–60</div><div class="lv-l" style="color:var(--amber)">Контроль</div></div>
+      <div class="lv" style="background:var(--gbg);border-color:var(--gm)"><div class="lv-n" style="color:var(--green)">61–80</div><div class="lv-l" style="color:var(--green)">Система</div></div>
+      <div class="lv" style="background:var(--bbg);border-color:#90CAF9"><div class="lv-n" style="color:var(--blue)">81–100</div><div class="lv-l" style="color:var(--blue)">Масштаб</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REGISTER ═══ -->
+<div class="screen" id="screen-register">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo"><div class="logo-dot auth-logo-dot"></div></div>
+      <div class="auth-title">Создать аккаунт</div>
+      <div class="auth-sub">7 дней бесплатно — без карты</div>
+      <div class="auth-err" id="reg-err"></div>
+      <div class="auth-field"><label>Ваше имя</label><input id="reg-name" type="text" placeholder="Юлия Петренко" autocomplete="name"></div>
+      <div class="auth-field"><label>Email</label><input id="reg-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="auth-field"><label>Пароль (минимум 8 символов)</label><input id="reg-pass" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center" id="reg-btn" onclick="doRegister()">Создать аккаунт →</button>
+      <div class="auth-switch">Уже есть аккаунт? <a onclick="show('login')">Войти</a></div>
+      <div style="margin-top:14px;font-size:12px;color:var(--t3);text-align:center">
+        Авторизация через Supabase Auth — пароли зашифрованы, мы их не храним
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="screen" id="screen-login">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo"><div class="logo-dot auth-logo-dot"></div></div>
+      <div class="auth-title">Войти в Beauty OS</div>
+      <div class="auth-sub">Рады видеть вас снова</div>
+      <div class="auth-err" id="login-err"></div>
+      <div class="auth-field"><label>Email</label><input id="login-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="auth-field"><label>Пароль</label><input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center" id="login-btn" onclick="doLogin()">Войти →</button>
+      <div class="auth-switch">Нет аккаунта? <a onclick="show('register')">Зарегистрироваться</a></div>
+      <div class="auth-switch" style="margin-top:8px"><a onclick="doForgotPassword()">Забыли пароль?</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAYWALL ═══ -->
+<div class="screen" id="screen-paywall">
+  <div class="paywall-wrap">
+    <div class="paywall-box">
+
+      <!-- Показываем результаты аудита как триггер покупки -->
+      <div id="paywall-scores" style="margin-bottom:28px;display:none">
+        <div style="font-size:13px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Ваш операционный рейтинг</div>
+        <div id="paywall-score-row" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px"></div>
+        <div style="height:1px;background:var(--border);margin:20px 0"></div>
+      </div>
+
+      <div class="paywall-icon">🗺</div>
+      <h2>Получите план внедрения</h2>
+      <p>Аудит пройден. Теперь самое важное — знать <strong>что именно делать и в каком порядке</strong>. Одноразовый платёж — доступ навсегда.</p>
+
+      <!-- Цена -->
+      <div style="background:var(--rose-l);border:2px solid var(--rose-m);border-radius:var(--rl);padding:24px;margin-bottom:24px">
+        <div style="font-size:13px;font-weight:600;color:var(--rose-d);margin-bottom:6px">ПЛАН ВНЕДРЕНИЯ</div>
+        <div style="font-size:48px;font-weight:700;color:var(--rose-d);letter-spacing:-2px;line-height:1">$99</div>
+        <div style="font-size:14px;color:var(--rose-d);margin-top:6px;font-weight:500">Разовый платёж · Доступ навсегда</div>
+        <div style="font-size:13px;color:var(--t2);margin-top:8px">Повторный аудит через 6 месяцев — бесплатно</div>
+      </div>
+
+      <!-- Что включено -->
+      <div style="text-align:left;margin-bottom:24px">
+        <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Что вы получаете</div>
+        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>Роадмап внедрения</strong> — персональный план задач по приоритетам</div></div>
+        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>AI Business Builder</strong> — генерация KPI, инструкций, скриптов, чек-листов</div></div>
+        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>16 шаблонов</strong> — P&L, мотивация, должностные инструкции, регламенты</div></div>
+        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>Прогресс сохраняется</strong> — возвращайтесь с любого устройства</div></div>
+        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>Повторный аудит</strong> через 6 месяцев — отследить прогресс</div></div>
+      </div>
+
+      <!-- Разделитель: что бесплатно -->
+      <div style="background:var(--s2);border-radius:var(--r);padding:14px 16px;margin-bottom:24px;text-align:left">
+        <div style="font-size:12px;font-weight:600;color:var(--t3);margin-bottom:8px">УЖЕ БЕСПЛАТНО:</div>
+        <div style="font-size:13px;color:var(--t2);display:flex;flex-direction:column;gap:4px">
+          <span>✓ Полный аудит (63 вопроса)</span>
+          <span>✓ AI-анализ — проблемы, риски, потери прибыли</span>
+          <span>✓ Операционный рейтинг по 7 блокам</span>
+        </div>
+      </div>
+
+      <div id="liqpay-form-container" style="display:none"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;font-size:16px;padding:14px" id="pay-btn" onclick="doCheckout()">
+        Получить план внедрения — $99 →
+      </button>
+      <div style="margin-top:12px;font-size:12px;color:var(--t3)">Безопасная оплата через LiqPay · Visa, Mastercard, Apple Pay</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ONBOARDING ═══ -->
+<div class="screen" id="screen-onboarding">
+  <div class="page">
+    <div class="page-h"><h2>О вашем бизнесе</h2><p>2 минуты — персонализируем аудит под вас</p></div>
+    <div class="fsec">Основная информация</div>
+    <div class="form-grid">
+      <div class="field fg-full"><label>Название салона</label><input id="ob-name" type="text" placeholder="Studio Bloom"></div>
+      <div class="field"><label>Страна</label><select id="ob-country"><option>Украина</option><option>Польша</option><option>Испания</option><option>Германия</option><option>Чехия</option><option>ОАЭ</option><option>Другая</option></select></div>
+      <div class="field"><label>Город</label><input id="ob-city" type="text" placeholder="Киев"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="fsec">Команда</div>
+    <div class="form-grid">
+      <div class="field"><label>Мастеров</label><input id="ob-masters" type="number" min="1" value="3"></div>
+      <div class="field"><label>Администраторов</label><input id="ob-admins" type="number" min="0" value="1"></div>
+      <div class="field"><label>Кабинетов / мест</label><input id="ob-rooms" type="number" min="1" value="2"></div>
+      <div class="field"><label>Система записи</label><select id="ob-crm"><option>DIKIDI</option><option>Yclients</option><option>Fresha</option><option>Google-таблицы</option><option>Без системы</option></select></div>
+    </div>
+    <div class="divider"></div>
+    <div class="fsec">Финансы</div>
+    <div class="form-grid">
+      <div class="field"><label>Средний чек (₴)</label><input id="ob-avg" type="number" placeholder="800"></div>
+      <div class="field"><label>Выручка в месяц (₴)</label><input id="ob-rev" type="number" placeholder="120000"></div>
+      <div class="field fg-full"><label>Прибыль в месяц (₴)</label><input id="ob-profit" type="number" placeholder="25000"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="fsec">Услуги</div>
+    <div class="svc-grid" id="svc-grid">
+      <div class="svc" onclick="toggleSvc(this)">Маникюр / педикюр</div>
+      <div class="svc" onclick="toggleSvc(this)">Парикмахерские</div>
+      <div class="svc" onclick="toggleSvc(this)">Брови / ресницы</div>
+      <div class="svc" onclick="toggleSvc(this)">Массаж</div>
+      <div class="svc" onclick="toggleSvc(this)">Косметология</div>
+      <div class="svc" onclick="toggleSvc(this)">Эпиляция</div>
+      <div class="svc" onclick="toggleSvc(this)">Барбершоп</div>
+      <div class="svc" onclick="toggleSvc(this)">Макияж / визаж</div>
+      <div class="svc" onclick="toggleSvc(this)">Спа-процедуры</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-outline" onclick="gotoHome()">Назад</button>
+      <button class="btn-primary" onclick="startAudit()">Начать аудит →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AUDIT ═══ -->
+<div class="screen" id="screen-audit">
+  <div class="page">
+    <div class="topbar">
+      <div class="ptrack"><div class="pfill" id="pfill" style="width:0%"></div></div>
+      <div class="pnums" id="pnums">0 / 63</div>
+    </div>
+    <div class="block-nav" id="block-nav"></div>
+    <div class="btitle" id="btitle"></div>
+    <div class="q-list" id="q-list"></div>
+    <div class="audit-bottom">
+      <div class="audit-ctr" id="audit-ctr"></div>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn-outline" onclick="prevBlock()">← Назад</button>
+        <button class="btn-primary" id="audit-next" onclick="nextBlock()">Далее →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div class="screen" id="screen-results">
+  <div class="page">
+    <div class="page-h"><h2>Результаты аудита</h2><p>Операционный профиль вашего бизнеса</p></div>
+    <div class="score-hero" id="score-hero"></div>
+    <div class="blocks-grid" id="blocks-grid"></div>
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-hdr"><div class="ai-dot pulse" id="ai-dot"></div><span style="font-size:12px;color:var(--t3)" id="ai-status">Анализируем...</span></div>
+      <h3>AI-анализ вашего бизнеса</h3>
+      <div id="ai-content"><div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:13px">Формируем выводы...</div></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="buildRoadmap()">🗺 Построить роадмап внедрения</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ROADMAP ═══ -->
+<div class="screen" id="screen-roadmap">
+  <div class="page">
+    <div class="page-h"><h2>Роадмап внедрения</h2><p>Персональный план — от слабого к сильному</p></div>
+    <div id="roadmap-content"></div>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="screen" id="screen-dashboard">
+  <div class="page page-lg">
+    <div class="page-h"><h2 id="dash-title">Дашборд</h2><p id="dash-sub">Операционный статус бизнеса</p></div>
+    <div class="metrics" id="dash-metrics"></div>
+    <div class="d2col">
+      <div class="dcard"><div class="dcard-title">Прогресс по блокам</div><div id="dash-blocks"></div></div>
+      <div class="dcard"><div class="dcard-title">Последние действия</div><div id="dash-timeline"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TEMPLATES ═══ -->
+<div class="screen" id="screen-templates">
+  <div class="page">
+    <div class="page-h"><h2>Библиотека шаблонов</h2><p>Готовые документы для операционного управления</p></div>
+    <div class="tmpl-filter">
+      <button class="flt-btn active" onclick="filterTmpl('all',this)">Все</button>
+      <button class="flt-btn" onclick="filterTmpl('finance',this)">Финансы</button>
+      <button class="flt-btn" onclick="filterTmpl('hr',this)">Персонал</button>
+      <button class="flt-btn" onclick="filterTmpl('ops',this)">Операционка</button>
+      <button class="flt-btn" onclick="filterTmpl('sales',this)">Продажи</button>
+    </div>
+    <div class="tmpl-grid" id="tmpl-grid"></div>
+  </div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
+<div class="screen" id="screen-profile">
+  <div class="page">
+    <div class="page-h"><h2>Профиль</h2><p>Настройки аккаунта и подписки</p></div>
+    <div class="profile-grid">
+      <div class="prof-card">
+        <div class="prof-card-title">Аккаунт</div>
+        <div class="prof-field"><div class="prof-label">Имя</div><div class="prof-val" id="prof-name">—</div></div>
+        <div class="prof-field"><div class="prof-label">Email</div><div class="prof-val" id="prof-email">—</div></div>
+        <div class="prof-field"><div class="prof-label">Дата регистрации</div><div class="prof-val" id="prof-created">—</div></div>
+        <button class="btn-outline btn-sm" style="margin-top:8px" onclick="doLogout()">Выйти</button>
+      </div>
+      <div class="prof-card">
+        <div class="prof-card-title">Доступ</div>
+        <div id="prof-sub-info"></div>
+        <button class="btn-primary btn-sm" onclick="showPaywall()" id="prof-upgrade-btn" style="display:none">Получить план внедрения</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <h3 id="modal-title">AI-инструмент</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ═══ PAYMENT SUCCESS ═══ -->
+<div class="screen" id="screen-payment-success">
+  <div class="auth-wrap">
+    <div class="auth-box" style="text-align:center">
+      <div style="font-size:52px;margin-bottom:16px">🎉</div>
+      <div class="auth-title">Подписка активирована!</div>
+      <div class="auth-sub" style="margin-bottom:24px">Добро пожаловать в Beauty OS. Теперь у вас есть полный доступ ко всем инструментам.</div>
+      <button class="btn-primary" style="width:100%;justify-content:center" onclick="afterPayment()">Начать аудит →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+const S = {
+  user: null,
+  ob: {},
+  answers: {},
+  scores: {},
+  auditBlock: 0,
+  roadmapOrder: [],
+  completedTasks: new Set(),
+  recentActions: [],
+};
+
+// ══════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════
+const BLOCKS = [
+  {id:'finance',name:'Финансы',color:'#2E7D32'},
+  {id:'hr',name:'Персонал',color:'#C2185B'},
+  {id:'sales',name:'Продажи',color:'#E65100'},
+  {id:'clients',name:'Клиенты',color:'#1565C0'},
+  {id:'ops',name:'Операционка',color:'#6A1B9A'},
+  {id:'owner',name:'Собственник',color:'#880E4F'},
+  {id:'marketing',name:'Маркетинг',color:'#00695C'}
+];
+
+const QUESTIONS = {
+  finance:['Ведёте ежемесячный P&L?','Знаете себестоимость каждой услуги?','Есть план-факт (план vs факт)?','Рассчитана точка безубыточности?','Учитываете материальные расходы?','ФОТ мастеров не превышает 45% выручки?','Аренда не превышает 15% выручки?','Ведёте учёт дебиторской задолженности?','Есть финансовая подушка на 1–2 месяца?'],
+  hr:['У каждого есть должностная инструкция?','Есть чёткая система мотивации + KPI?','Проводите регулярные собрания?','Есть система адаптации новых сотрудников?','Мастера проходят обучение?','Есть оргструктура с разделением ответственности?','Процесс найма стандартизирован?','Есть система оценки персонала?','Текучесть менее 30% в год?'],
+  sales:['Администраторы работают по скриптам?','Есть процедура допродажи при каждом визите?','Есть программа лояльности / абонементы?','Ведёте учёт конверсии звонков в запись?','Администраторы знают план по выручке?','Есть системная работа с отзывами?','Продаёте подарочные сертификаты?','Есть акции для снижения простоя?','Знаете, какие услуги прибыльнее всего?'],
+  clients:['Ведёте базу клиентов с историей?','Знаете retention rate (% вернувшихся за 90 дней)?','Настроены автоматические напоминания?','Поздравляете клиентов с днём рождения?','Работаете с отменами (перезаписываете)?','Собираете обратную связь после визита?','Есть реферальная программа?','Знаете LTV клиента за год?','Retention rate выше 50%?'],
+  ops:['Есть чек-лист открытия смены?','Есть чек-лист закрытия смены?','Есть регламент закупки расходников?','Стандарты чистоты задокументированы?','Есть процедура работы с жалобами?','Загрузка кабинетов мониторится?','Работа с опозданиями стандартизирована?','Есть инструкция по кассовой дисциплине?','Контроль качества фиксируется?'],
+  owner:['Работаете в бизнесе менее 50% времени?','Бизнес работает без вас неделю без проблем?','Есть управляющий администратор / замдиректора?','Есть стратегический план на 6–12 месяцев?','Отслеживаете метрики еженедельно?','Решения принимаете на основе данных?','Есть чёткие финансовые цели на год?','Инвестируете в собственное развитие?','Есть система делегирования?'],
+  marketing:['Ведёте Instagram / TikTok (3+ поста в неделю)?','Настроена таргетированная реклама?','Есть актуальный Google My Business?','Ведёте email / SMS рассылку по базе?','Знаете стоимость привлечения клиента (CAC)?','Анализируете, какой канал даёт больше клиентов?','Практикуете коллаборации?','Есть контент-план на месяц вперёд?','Проводите активности для клиентов?']
+};
+
+const ROADMAP_TASKS = {
+  finance:[{id:'f1',name:'Рассчитать себестоимость услуг',tool:'cost_calc',p:'critical'},{id:'f2',name:'Внедрить P&L таблицу',tool:'pl_template',p:'critical'},{id:'f3',name:'Создать план-факт на месяц',tool:'plan_fact',p:'high'},{id:'f4',name:'Рассчитать точку безубыточности',tool:'bep_calc',p:'high'},{id:'f5',name:'Настроить учёт материалов',tool:'expenses',p:'medium'}],
+  hr:[{id:'h1',name:'Создать оргструктуру',tool:'orgchart',p:'high'},{id:'h2',name:'Написать должностные инструкции',tool:'job_desc',p:'critical'},{id:'h3',name:'Разработать KPI',tool:'kpi',p:'critical'},{id:'h4',name:'Создать систему мотивации',tool:'motivation',p:'high'},{id:'h5',name:'Внедрить регулярные собрания',tool:'meetings',p:'medium'}],
+  sales:[{id:'s1',name:'Написать скрипты администраторов',tool:'scripts',p:'critical'},{id:'s2',name:'Внедрить систему допродаж',tool:'upsell',p:'high'},{id:'s3',name:'Запустить программу лояльности',tool:'loyalty',p:'high'},{id:'s4',name:'Настроить контроль конверсии',tool:'conversion',p:'medium'},{id:'s5',name:'Запустить продажу абонементов',tool:'subscriptions',p:'medium'}],
+  clients:[{id:'c1',name:'Настроить автонапоминания',tool:'reminders',p:'high'},{id:'c2',name:'Внедрить сбор обратной связи',tool:'feedback',p:'medium'},{id:'c3',name:'Запустить реферальную программу',tool:'referral',p:'medium'}],
+  ops:[{id:'o1',name:'Создать чек-лист открытия смены',tool:'open_checklist',p:'critical'},{id:'o2',name:'Создать чек-лист закрытия смены',tool:'close_checklist',p:'critical'},{id:'o3',name:'Написать регламент закупок',tool:'procurement',p:'high'},{id:'o4',name:'Внедрить контроль качества',tool:'quality',p:'high'},{id:'o5',name:'Регламент работы с жалобами',tool:'complaints',p:'medium'}],
+  owner:[{id:'ow1',name:'Составить стратегический план',tool:'strategy',p:'high'},{id:'ow2',name:'Создать систему делегирования',tool:'delegation',p:'high'},{id:'ow3',name:'Еженедельный контроль метрик',tool:'weekly_review',p:'medium'}],
+  marketing:[{id:'m1',name:'Создать контент-план',tool:'content_plan',p:'high'},{id:'m2',name:'Настроить рекламу в Instagram',tool:'targeting',p:'high'},{id:'m3',name:'Запустить email / SMS рассылку',tool:'email_campaign',p:'medium'}]
+};
+
+const TOOL_CONFIGS = {
+  kpi:{title:'Создать KPI',qs:[{id:'q1',label:'Должность'},{id:'q2',label:'Основные обязанности'},{id:'q3',label:'Средний чек (₴)'},{id:'q4',label:'Целевая выручка в месяц (₴)'}]},
+  job_desc:{title:'Должностная инструкция',qs:[{id:'q1',label:'Должность'},{id:'q2',label:'Основные задачи'},{id:'q3',label:'Требования к кандидату'},{id:'q4',label:'График работы'}]},
+  motivation:{title:'Система мотивации',qs:[{id:'q1',label:'Текущий тип оплаты'},{id:'q2',label:'Выручка на мастера в месяц (₴)'},{id:'q3',label:'Текущий % или оклад'},{id:'q4',label:'Цель по росту выручки (%)'}]},
+  scripts:{title:'Скрипты для администраторов',qs:[{id:'q1',label:'Тип скрипта (входящий / допродажа / возврат)'},{id:'q2',label:'Основные услуги'},{id:'q3',label:'Средний чек (₴)'},{id:'q4',label:'Главные возражения клиентов'}]},
+  open_checklist:{title:'Чек-лист открытия смены',qs:[{id:'q1',label:'Время начала работы'},{id:'q2',label:'Мастеров в смене'},{id:'q3',label:'Есть кассовый аппарат?'},{id:'q4',label:'Специфические задачи'}]},
+  close_checklist:{title:'Чек-лист закрытия смены',qs:[{id:'q1',label:'Время окончания работы'},{id:'q2',label:'Нужен Z-отчёт?'},{id:'q3',label:'Кто делает уборку?'},{id:'q4',label:'Есть склад расходников?'}]},
+  bep_calc:{title:'Расчёт точки безубыточности',qs:[{id:'q1',label:'Постоянные расходы в месяц (₴)'},{id:'q2',label:'Среднемесячная выручка (₴)'},{id:'q3',label:'ФОТ мастеров (%) от выручки'},{id:'q4',label:'Материалы (%) от выручки'}]},
+  pl_template:{title:'Внедрение P&L',qs:[{id:'q1',label:'Статьи постоянных расходов'},{id:'q2',label:'Статьи переменных расходов'},{id:'q3',label:'Источники выручки'},{id:'q4',label:'Периодичность отчётности'}]},
+  loyalty:{title:'Программа лояльности',qs:[{id:'q1',label:'Средний чек (₴)'},{id:'q2',label:'Визитов клиента в год'},{id:'q3',label:'Используете систему записи?'},{id:'q4',label:'Бюджет на бонусы (% выручки)'}]},
+  upsell:{title:'Система допродаж',qs:[{id:'q1',label:'Топ-3 услуги'},{id:'q2',label:'Средний чек сейчас (₴)'},{id:'q3',label:'Есть продукты для домашнего ухода?'},{id:'q4',label:'Цель по росту чека (%)'}]},
+  content_plan:{title:'Контент-план Instagram',qs:[{id:'q1',label:'Основные услуги'},{id:'q2',label:'Целевая аудитория'},{id:'q3',label:'Текущее число подписчиков'},{id:'q4',label:'Цель аккаунта'}]},
+  default:{title:'AI-инструмент',qs:[{id:'q1',label:'Опишите ситуацию'},{id:'q2',label:'Что сейчас не работает?'},{id:'q3',label:'Ожидаемый результат'}]}
+};
+
+const TEMPLATES = [
+  {id:'pl',cat:'finance',name:'P&L шаблон',desc:'Доходы, расходы, прибыль по месяцам',tag:'Финансы',tool:'pl_template'},
+  {id:'bep',cat:'finance',name:'Точка безубыточности',desc:'Расчёт BEP и запас прочности',tag:'Финансы',tool:'bep_calc'},
+  {id:'cashflow',cat:'finance',name:'Cash Flow',desc:'Движение денег по неделям',tag:'Финансы',tool:'default'},
+  {id:'planfact',cat:'finance',name:'План-факт',desc:'Сравнение плана и факта по месяцам',tag:'Финансы',tool:'default'},
+  {id:'kpi_adm',cat:'hr',name:'KPI администратора',desc:'Метрики и бонусная система',tag:'Персонал',tool:'kpi'},
+  {id:'kpi_master',cat:'hr',name:'KPI мастера',desc:'Загрузка, средний чек, retention',tag:'Персонал',tool:'kpi'},
+  {id:'job_desc',cat:'hr',name:'Должностная инструкция',desc:'Для мастера / администратора',tag:'Персонал',tool:'job_desc'},
+  {id:'motivation',cat:'hr',name:'Система мотивации',desc:'Схема оплаты, KPI, бонусы',tag:'Персонал',tool:'motivation'},
+  {id:'open',cat:'ops',name:'Чек-лист открытия',desc:'Стандарт открытия смены',tag:'Операционка',tool:'open_checklist'},
+  {id:'close',cat:'ops',name:'Чек-лист закрытия',desc:'Стандарт закрытия смены',tag:'Операционка',tool:'close_checklist'},
+  {id:'quality',cat:'ops',name:'Контроль качества',desc:'Форма оценки услуг и сервиса',tag:'Операционка',tool:'default'},
+  {id:'procurement',cat:'ops',name:'Регламент закупок',desc:'Заказ и учёт расходников',tag:'Операционка',tool:'default'},
+  {id:'scripts',cat:'sales',name:'Скрипты администратора',desc:'Входящий, допродажа, возврат',tag:'Продажи',tool:'scripts'},
+  {id:'loyalty',cat:'sales',name:'Программа лояльности',desc:'Бонусы, накопление, спецпредложения',tag:'Продажи',tool:'loyalty'},
+  {id:'upsell',cat:'sales',name:'Система допродаж',desc:'Матрица upsell по услугам',tag:'Продажи',tool:'upsell'},
+  {id:'content',cat:'sales',name:'Контент-план Instagram',desc:'Темы, форматы, рубрики',tag:'Маркетинг',tool:'content_plan'}
+];
+
+// ══════════════════════════════════════════════════
+// NAVIGATION & INIT
+// ══════════════════════════════════════════════════
+function show(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const nl = document.getElementById('nl-' + name);
+  if (nl) nl.classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'templates') renderTemplates('all');
+  if (name === 'roadmap') renderRoadmap();
+  if (name === 'profile') renderProfile();
+  window.scrollTo(0, 0);
+}
+
+function gotoHome() {
+  show(S.user ? 'dashboard' : 'landing');
+}
+
+// Проверка пути /payment/success
+function checkPaymentSuccess() {
+  if (window.location.pathname === '/payment/success') {
+    history.replaceState({}, '', '/');
+    if (S.user) {
+      refreshUser().then(() => show('payment-success'));
+    } else {
+      show('payment-success');
+    }
+  }
+}
+
+async function init() {
+  renderTemplates('all');
+  await tryAutoLogin();
+  checkPaymentSuccess();
+}
+
+async function tryAutoLogin() {
+  try {
+    const res = await api('/api/auth/me');
+    if (res.user) {
+      setUser(res.user);
+      // Пробуем загрузить сохранённый аудит
+      await loadAudit();
+      show('dashboard');
+    } else {
+      show('landing');
+    }
+  } catch {
+    show('landing');
+  }
+}
+
+async function refreshUser() {
+  try {
+    const res = await api('/api/auth/me');
+    if (res.user) setUser(res.user);
+  } catch {}
+}
+
+function setUser(user) {
+  S.user = user;
+  const isPaid = user.has_access; // true если оплатил $99
+  // Nav pill
+  document.getElementById('nav-right').innerHTML = `
+    <div class="user-pill" onclick="show('profile')">
+      <div class="user-avatar">${user.name.charAt(0).toUpperCase()}</div>
+      <span>${user.name.split(' ')[0]}</span>
+      <span class="sub-badge ${isPaid ? 'sub-paid' : 'sub-free'}">
+        ${isPaid ? '✓ Доступ' : 'Бесплатно'}
+      </span>
+    </div>`;
+  // Показываем nav items
+  ['nl-dashboard','nl-roadmap','nl-profile'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('hidden');
+  });
+  document.getElementById('nl-landing').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════════
+// API HELPER — добавляет Bearer token к каждому запросу
+// ══════════════════════════════════════════════════
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...opts.headers };
+  // Если есть токен — добавляем в заголовок
+  if (_accessToken) headers['Authorization'] = `Bearer ${_accessToken}`;
+  const res = await fetch(path, { ...opts, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Ошибка сервера');
+  return data;
+}
+
+function startFlow() {
+  if (S.user) { show('onboarding'); } else { show('register'); }
+}
+
+// ══════════════════════════════════════════════════
+// SUPABASE AUTH INIT
+// SUPABASE_URL и SUPABASE_ANON_KEY — публичные ключи,
+// их безопасно хранить в HTML фронтенда
+// ══════════════════════════════════════════════════
+const SUPABASE_URL      = window.__ENV__?.SUPABASE_URL      || '';
+const SUPABASE_ANON_KEY = window.__ENV__?.SUPABASE_ANON_KEY || '';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Текущий access_token — кладём в каждый запрос к нашему API
+let _accessToken = null;
+
+// ══════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════
+
+// Регистрация через Supabase Auth
+async function doRegister() {
+  const btn = document.getElementById('reg-btn');
+  const errEl = document.getElementById('reg-err');
+  errEl.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Создаём аккаунт...';
+
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+
+  if (!name || !email || !pass) {
+    errEl.textContent = 'Заполните все поля'; errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Создать аккаунт →'; return;
+  }
+  if (pass.length < 8) {
+    errEl.textContent = 'Пароль минимум 8 символов'; errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Создать аккаунт →'; return;
+  }
+
+  try {
+    // Supabase регистрирует пользователя и шифрует пароль сам
+    const { data, error } = await sb.auth.signUp({
+      email, password: pass,
+      options: { data: { name } }  // имя сохраняется в метаданных
+    });
+
+    if (error) throw error;
+
+    _accessToken = data.session?.access_token;
+
+    // Наш триггер в БД автоматически создаёт profiles запись
+    // Но на случай если триггер не сработал — дублируем через API
+    if (_accessToken) {
+      await api('/api/auth/profile/init', {
+        method: 'POST',
+        body: JSON.stringify({ name })
+      }).catch(() => {});
+    }
+
+    toast('Добро пожаловать! 7 дней бесплатно 🎉');
+
+    // Загружаем профиль и идём в онбординг
+    await loadUserProfile();
+    show('onboarding');
+  } catch (e) {
+    let msg = e.message;
+    if (msg.includes('already registered')) msg = 'Этот email уже зарегистрирован';
+    if (msg.includes('invalid email'))      msg = 'Некорректный email';
+    errEl.textContent = msg; errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Создать аккаунт →';
+  }
+}
+
+// Вход через Supabase Auth
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Входим...';
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: document.getElementById('login-email').value.trim(),
+      password: document.getElementById('login-pass').value
+    });
+
+    if (error) throw error;
+
+    _accessToken = data.session.access_token;
+    await loadUserProfile();
+    await loadAudit();
+    toast('С возвращением!');
+    show(S.scores.overall ? 'dashboard' : 'onboarding');
+  } catch (e) {
+    let msg = e.message;
+    if (msg.includes('Invalid login')) msg = 'Неверный email или пароль';
+    errEl.textContent = msg; errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Войти →';
+  }
+}
+
+// Выход
+async function doLogout() {
+  await sb.auth.signOut();
+  _accessToken = null;
+  S.user = null; S.scores = {}; S.answers = {};
+  location.reload();
+}
+
+// Сброс пароля
+async function doForgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) {
+    const errEl = document.getElementById('login-err');
+    errEl.textContent = 'Введите email в поле выше'; errEl.style.display = 'block'; return;
+  }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`
+  });
+  if (!error) toast('Письмо со ссылкой сброса отправлено на ' + email);
+  else toast('Ошибка: ' + error.message, true);
+}
+
+// Загрузка профиля с нашего бэкенда
+async function loadUserProfile() {
+  const res = await api('/api/auth/me');
+  if (res.user) setUser(res.user);
+}
+
+// Автоматический вход при открытии страницы (Supabase хранит сессию)
+async function tryAutoLogin() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      _accessToken = session.access_token;
+      await loadUserProfile();
+      await loadAudit();
+      show(S.scores.overall ? 'dashboard' : 'onboarding');
+    } else {
+      show('landing');
+    }
+  } catch {
+    show('landing');
+  }
+}
+
+// Supabase слушает изменения сессии (например, refresh токена)
+sb.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    _accessToken = session.access_token;
+  } else {
+    _accessToken = null;
+  }
+});
+
+// ══════════════════════════════════════════════════
+// PAYMENT — разовый платёж $99
+// ══════════════════════════════════════════════════
+
+// Показать paywall с результатами аудита как контекст
+function showPaywall() {
+  if (!S.user) { show('register'); return; }
+  // Если уже есть доступ — сразу в роадмап
+  if (S.user.has_access) { buildRoadmap(); return; }
+
+  // Показываем мини-рейтинги на paywall как триггер
+  const scoresWrap = document.getElementById('paywall-scores');
+  const scoresRow  = document.getElementById('paywall-score-row');
+  if (S.scores.overall && scoresRow) {
+    scoresWrap.style.display = 'block';
+    const weak = BLOCKS.filter(b => (S.scores[b.id]||0) < 50);
+    scoresRow.innerHTML = weak.slice(0,4).map(b => {
+      const s = S.scores[b.id]||0;
+      const c = sc(s);
+      return `<div style="background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;text-align:center;min-width:90px">
+        <div style="font-size:20px;font-weight:700;color:${c}">${s}%</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">${b.name}</div>
+      </div>`;
+    }).join('');
+  }
+  showPaywall();
+}
+
+async function doCheckout() {
+  if (!S.user) { show('register'); return; }
+  const btn = document.getElementById('pay-btn');
+  btn.disabled = true; btn.textContent = 'Создаём платёж...';
+  try {
+    const res = await api('/api/payment/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ plan: 'lifetime' })
+    });
+    const container = document.getElementById('liqpay-form-container');
+    container.innerHTML = `
+      <form method="POST" action="${res.action}" id="liqpay-form">
+        <input type="hidden" name="data" value="${res.data}">
+        <input type="hidden" name="signature" value="${res.signature}">
+      </form>`;
+    container.style.display = 'block';
+    document.getElementById('liqpay-form').submit();
+  } catch (e) {
+    toast('Ошибка: ' + e.message, true);
+    btn.disabled = false; btn.textContent = 'Получить план внедрения — $99 →';
+  }
+}
+
+function afterPayment() {
+  refreshUser().then(() => {
+    toast('Доступ открыт! Строим ваш роадмап 🎉');
+    buildRoadmap();
+  });
+}
+
+// ══════════════════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════════════════
+function toggleSvc(el) { el.classList.toggle('sel'); }
+
+function startAudit() {
+  S.ob = {
+    name: document.getElementById('ob-name').value || 'Ваш салон',
+    country: document.getElementById('ob-country').value,
+    city: document.getElementById('ob-city').value || '',
+    masters: document.getElementById('ob-masters').value || '3',
+    admins: document.getElementById('ob-admins').value || '1',
+    rooms: document.getElementById('ob-rooms').value || '2',
+    crm: document.getElementById('ob-crm').value,
+    avgCheck: document.getElementById('ob-avg').value || '',
+    revenue: document.getElementById('ob-rev').value || '',
+    profit: document.getElementById('ob-profit').value || '',
+    services: [...document.querySelectorAll('.svc.sel')].map(e => e.textContent)
+  };
+  S.auditBlock = 0;
+  S.answers = {};
+  show('audit');
+  renderAuditBlock();
+}
+
+// ══════════════════════════════════════════════════
+// AUDIT
+// ══════════════════════════════════════════════════
+function countAns(bid) { return QUESTIONS[bid].filter((_,i) => S.answers[bid+'_'+i]?.val).length; }
+function totalAns() { return BLOCKS.reduce((s,b) => s + countAns(b.id), 0); }
+function totalQ() { return BLOCKS.reduce((s,b) => s + QUESTIONS[b.id].length, 0); }
+
+function renderBlockNav() {
+  document.getElementById('block-nav').innerHTML = BLOCKS.map((b,i) => {
+    const done = countAns(b.id) === QUESTIONS[b.id].length;
+    const active = i === S.auditBlock;
+    return `<button class="bnav-btn ${active?'active':''} ${done&&!active?'done':''}" onclick="jumpBlock(${i})">
+      ${done&&!active?'✓ ':''} ${b.name}
+    </button>`;
+  }).join('');
+}
+
+function renderAuditBlock() {
+  const b = BLOCKS[S.auditBlock];
+  const qs = QUESTIONS[b.id];
+  renderBlockNav();
+  const ta = totalAns(), tq = totalQ();
+  document.getElementById('pfill').style.width = (ta/tq*100).toFixed(0) + '%';
+  document.getElementById('pnums').textContent = `${ta} / ${tq}`;
+  document.getElementById('audit-next').textContent = S.auditBlock === BLOCKS.length-1 ? 'Завершить аудит →' : 'Далее →';
+  document.getElementById('audit-ctr').textContent = `Блок ${S.auditBlock+1} из ${BLOCKS.length}`;
+  document.getElementById('btitle').innerHTML = `<span style="color:${b.color}">${b.name}</span>`;
+  document.getElementById('q-list').innerHTML = qs.map((q,i) => {
+    const key = b.id+'_'+i;
+    const ans = S.answers[key] || {};
+    return `<div class="qcard">
+      <div class="qnum">ВОПРОС ${i+1} / ${qs.length}</div>
+      <div class="qtext">${q}</div>
+      <div class="qans">
+        <button class="ansbtn ${ans.val==='yes'?'yes':''}" onclick="ansQ('${key}','yes',this)">✓ Да</button>
+        <button class="ansbtn ${ans.val==='partly'?'partly':''}" onclick="ansQ('${key}','partly',this)">≈ Частично</button>
+        <button class="ansbtn ${ans.val==='no'?'no':''}" onclick="ansQ('${key}','no',this)">✕ Нет</button>
+      </div>
+      <textarea class="qcomment" rows="1" placeholder="Комментарий..." oninput="saveComment('${key}',this.value)">${ans.comment||''}</textarea>
+    </div>`;
+  }).join('');
+}
+
+function ansQ(key, val, btn) {
+  S.answers[key] = {...(S.answers[key]||{}), val};
+  btn.closest('.qcard').querySelectorAll('.ansbtn').forEach(b => b.classList.remove('yes','partly','no'));
+  btn.classList.add(val);
+  const ta = totalAns(), tq = totalQ();
+  document.getElementById('pfill').style.width = (ta/tq*100).toFixed(0)+'%';
+  document.getElementById('pnums').textContent = `${ta} / ${tq}`;
+  renderBlockNav();
+}
+
+function saveComment(key, val) { S.answers[key] = {...(S.answers[key]||{}), comment: val}; }
+function jumpBlock(i) { S.auditBlock = i; renderAuditBlock(); window.scrollTo(0,0); }
+function prevBlock() { if (S.auditBlock > 0) { S.auditBlock--; renderAuditBlock(); window.scrollTo(0,0); } else show('onboarding'); }
+function nextBlock() {
+  if (S.auditBlock < BLOCKS.length-1) { S.auditBlock++; renderAuditBlock(); window.scrollTo(0,0); }
+  else { calcScores(); show('results'); renderResults(); runAI(); autoSave(); }
+}
+
+// ══════════════════════════════════════════════════
+// SCORES
+// ══════════════════════════════════════════════════
+function calcScores() {
+  S.scores = {};
+  BLOCKS.forEach(b => {
+    let pts = 0;
+    QUESTIONS[b.id].forEach((_,i) => {
+      const a = S.answers[b.id+'_'+i];
+      if (a) pts += (a.val==='yes'?1:a.val==='partly'?0.5:0);
+    });
+    S.scores[b.id] = Math.round(pts / QUESTIONS[b.id].length * 100);
+  });
+  const vals = Object.values(S.scores);
+  S.scores.overall = Math.round(vals.reduce((s,v) => s+v, 0) / vals.length);
+}
+
+function lvInfo(s) {
+  if (s<=20) return {label:'Хаос',color:'#C62828',bg:'#FFEBEE'};
+  if (s<=40) return {label:'Выживание',color:'#E65100',bg:'#FFF3E0'};
+  if (s<=60) return {label:'Контроль',color:'#E65100',bg:'#FFF8E1'};
+  if (s<=80) return {label:'Система',color:'#2E7D32',bg:'#E8F5E9'};
+  return {label:'Масштабирование',color:'#1565C0',bg:'#E3F2FD'};
+}
+function sc(s) {
+  if(s<=20)return'#C62828';if(s<=40)return'#E65100';if(s<=60)return'#EF6C00';if(s<=80)return'#2E7D32';return'#1565C0';
+}
+
+// ══════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════
+function renderResults() {
+  const ov = S.scores.overall || 0;
+  const lv = lvInfo(ov); const c = sc(ov);
+  const R=38, circ=2*Math.PI*R, dash=circ*(1-ov/100);
+  document.getElementById('score-hero').innerHTML = `
+    <div class="score-ring">
+      <svg width="90" height="90" viewBox="0 0 90 90">
+        <circle cx="45" cy="45" r="${R}" fill="none" stroke="#F5F4F2" stroke-width="7"/>
+        <circle cx="45" cy="45" r="${R}" fill="none" stroke="${c}" stroke-width="7"
+          stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}" stroke-linecap="round"/>
+      </svg>
+      <div class="ring-num"><div class="ring-val" style="color:${c}">${ov}</div><div class="ring-pct">%</div></div>
+    </div>
+    <div class="score-info">
+      <h3>Общий рейтинг</h3>
+      <p>${S.ob.name||'Ваш бизнес'} · ${S.ob.city||S.ob.country||''}</p>
+      <div class="lv-badge" style="background:${lv.bg};color:${lv.color}">${lv.label}</div>
+      <p style="margin-top:10px;font-size:13px;color:var(--t3)">${S.ob.masters} мастеров · ${S.ob.admins} администраторов</p>
+    </div>`;
+  document.getElementById('blocks-grid').innerHTML = BLOCKS.map(b => {
+    const s = S.scores[b.id]||0; const bl=lvInfo(s); const c2=sc(s);
+    return `<div class="bcard">
+      <div class="bcard-top">
+        <div class="bcard-name" style="color:${b.color}">${b.name}</div>
+        <div><div class="bcard-score" style="color:${c2}">${s}%</div><div class="bcard-lv" style="color:${bl.color}">${bl.label}</div></div>
+      </div>
+      <div class="bbar"><div class="bfill" style="width:${s}%;background:${c2}"></div></div>
+    </div>`;
+  }).join('');
+  // Unlock nav
+  ['nl-dashboard','nl-roadmap'].forEach(id => { document.getElementById(id)?.classList.remove('hidden'); });
+}
+
+// ══════════════════════════════════════════════════
+// AI
+// ══════════════════════════════════════════════════
+async function runAI() {
+  const el = document.getElementById('ai-content');
+  const dotEl = document.getElementById('ai-dot');
+  const stEl = document.getElementById('ai-status');
+  el.innerHTML = `<div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:13px">Анализируем данные...</div></div>`;
+
+  try {
+    const res = await api('/api/ai/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ scores: S.scores, onboarding: S.ob })
+    });
+    const p = res.analysis;
+    dotEl.classList.remove('pulse');
+    stEl.textContent = 'Анализ завершён';
+    el.innerHTML = `
+      <div class="ai-2col">
+        <div>
+          <div class="ai-sec"><div class="ai-lbl">Главные проблемы</div><div class="tags">${(p.main_problems||[]).map(x=>`<span class="tag crit">${x}</span>`).join('')}</div></div>
+          <div class="ai-sec"><div class="ai-lbl">Слабые места</div><div class="tags">${(p.top_weaknesses||[]).map(x=>`<span class="tag risk">${x}</span>`).join('')}</div></div>
+          <div class="ai-sec"><div class="ai-lbl">Риски</div><div class="tags">${(p.risks||[]).map(x=>`<span class="tag crit">${x}</span>`).join('')}</div></div>
+        </div>
+        <div>
+          <div class="ai-sec"><div class="ai-lbl">Потери прибыли</div><div class="ai-summary">${p.profit_losses||''}</div></div>
+          <div class="ai-sec"><div class="ai-lbl">Приоритеты</div><div class="tags">${(p.priorities||[]).map(x=>`<span class="tag prio">${x}</span>`).join('')}</div></div>
+        </div>
+      </div>
+      <div style="height:1px;background:var(--border);margin:16px 0"></div>
+      <div class="ai-summary">${p.summary||''}</div>`;
+  } catch(e) {
+    dotEl.classList.remove('pulse');
+    stEl.textContent = 'Готово';
+    el.innerHTML = `<div class="ai-summary">AI-анализ временно недоступен. Нажмите «Построить роадмап» для перехода к плану внедрения.</div>`;
+    if (e.message.includes('подписк') || e.message.includes('SUBSCRIPTION')) {
+      el.innerHTML = `<div class="ai-summary" style="text-align:center">🔒 AI-анализ доступен при активной подписке. <button class="btn-primary btn-sm" onclick="showPaywall()" style="margin-top:10px">Оформить подписку</button></div>`;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ROADMAP
+// ══════════════════════════════════════════════════
+function buildRoadmap() {
+  // Если не оплатил — на paywall
+  if (S.user && !S.user.has_access) {
+    showPaywall();
+    return;
+  }
+  if (!S.user) { show('register'); return; }
+  const sorted = BLOCKS.filter(b => ROADMAP_TASKS[b.id]).sort((a,b) => (S.scores[a.id]||0)-(S.scores[b.id]||0));
+  S.roadmapOrder = sorted.map(b => b.id);
+  show('roadmap');
+}
+
+function renderRoadmap() {
+  const el = document.getElementById('roadmap-content');
+  if (!S.roadmapOrder?.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🗺</div><h3>Сначала пройдите аудит</h3><p>Роадмап строится на основе результатов</p><button class="btn-primary" onclick="show('onboarding')">Пройти аудит</button></div>`;
+    return;
+  }
+  const PL = {critical:'Критично',high:'Важно',medium:'Плановое'};
+  el.innerHTML = S.roadmapOrder.map((bid,pi) => {
+    const tasks = ROADMAP_TASKS[bid]||[];
+    const s = S.scores[bid]||0; const lv=lvInfo(s); const c=sc(s);
+    const block = BLOCKS.find(b=>b.id===bid);
+    const done = tasks.filter(t=>S.completedTasks.has(t.id)).length;
+    return `<div class="phase">
+      <div class="phase-top">
+        <div class="phase-left">
+          <div class="phase-num">0${pi+1}</div>
+          <div class="phase-info"><h3>${block?.name||bid}</h3><p>${done} из ${tasks.length} выполнено</p></div>
+        </div>
+        <div><div class="phase-score" style="color:${c}">${s}%</div><div class="phase-lv" style="color:${lv.color}">${lv.label}</div></div>
+      </div>
+      <div class="task-list">
+        ${tasks.map(t => {
+          const isDone = S.completedTasks.has(t.id);
+          return `<div class="task">
+            <div class="task-l">
+              <div class="chk ${isDone?'done':''}" onclick="toggleTask('${t.id}','${t.name.replace(/'/g,"\\'")}',this)"></div>
+              <div class="task-name ${isDone?'done':''}">${t.name}</div>
+            </div>
+            <div class="task-r">
+              <div class="prio prio-${t.p}">${PL[t.p]}</div>
+              <button class="btn-impl" onclick="openTool('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.tool}')">🤖 Внедрить</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleTask(id, name, el) {
+  if (S.completedTasks.has(id)) {
+    S.completedTasks.delete(id);
+  } else {
+    S.completedTasks.add(id);
+    S.recentActions.unshift({text: name, time: new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+    if (S.recentActions.length > 8) S.recentActions.pop();
+  }
+  renderRoadmap();
+  // Сохраняем в БД если авторизованы
+  if (S.user) {
+    api('/api/audit/task', { method:'POST', body:JSON.stringify({taskId:id, done:S.completedTasks.has(id)}) }).catch(()=>{});
+  }
+}
+
+// ══════════════════════════════════════════════════
+// IMPLEMENT TOOL
+// ══════════════════════════════════════════════════
+function openTool(taskId, taskName, tool) {
+  if (!S.user) { show('register'); return; }
+  if (!S.user.has_access) { showPaywall(); return; }
+  const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
+  document.getElementById('modal-title').textContent = cfg.title;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-intro">AI задаст вопросы и создаст готовый документ для <strong>${S.ob.name||'вашего салона'}</strong>.</div>
+    ${cfg.qs.map(q=>`<div class="mfield"><label>${q.label}</label><input id="mq-${q.id}" type="text" placeholder="Введите ответ..."></div>`).join('')}
+    <div class="btn-row">
+      <button class="btn-outline" onclick="closeModal()">Отмена</button>
+      <button class="btn-primary" id="gen-btn" onclick="generateDoc('${taskName.replace(/'/g,"\\'")}','${tool}')">✦ Сгенерировать</button>
+    </div>
+    <div id="modal-result"></div>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+async function generateDoc(taskName, tool) {
+  const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
+  const answers = cfg.qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
+  const btn = document.getElementById('gen-btn');
+  const resultEl = document.getElementById('modal-result');
+  btn.disabled = true; btn.textContent = 'Генерируем...';
+  resultEl.innerHTML = `<div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:13px">Создаём документ...</div></div>`;
+
+  try {
+    const res = await api('/api/ai/generate', {
+      method: 'POST',
+      body: JSON.stringify({ taskName, answers, salonData: S.ob })
+    });
+    const text = res.content
+      .replace(/^### (.*)/gm,'<h4 style="font-size:14px;font-weight:600;margin:12px 0 5px">$1</h4>')
+      .replace(/^## (.*)/gm,'<h4 style="font-size:14px;font-weight:600;margin:12px 0 5px">$1</h4>')
+      .replace(/^# (.*)/gm,'<strong>$1</strong>')
+      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^- (.*)/gm,'• $1')
+      .replace(/\n/g,'<br>');
+    resultEl.innerHTML = `
+      <div style="height:1px;background:var(--border);margin:14px 0"></div>
+      <div class="ai-result">${text}</div>
+      <div class="copy-row"><button class="btn-copy" onclick="copyResult()">⎘ Копировать</button></div>`;
+    S.recentActions.unshift({text:'Создан: '+taskName, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+  } catch(e) {
+    resultEl.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--red)">${e.message.includes('подписк')?'🔒 Требуется активная подписка':'Ошибка генерации. Попробуйте снова.'}</div>`;
+    if (e.message.includes('подписк')) {
+      setTimeout(() => { closeModal(); showPaywall(); }, 1500);
+    }
+  } finally {
+    btn.disabled = false; btn.textContent = '✦ Сгенерировать';
+  }
+}
+
+function copyResult() {
+  const el = document.getElementById('modal-result');
+  if (el) navigator.clipboard.writeText(el.innerText||'').then(() => toast('Скопировано!')).catch(()=>{});
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-bg'))
+    document.getElementById('modal-bg').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════
+function renderDashboard() {
+  if (S.ob.name) {
+    document.getElementById('dash-title').textContent = `Дашборд — ${S.ob.name}`;
+  }
+  const ov = S.scores.overall||0; const lv=lvInfo(ov); const c=sc(ov);
+  const done = S.completedTasks.size;
+  const total = Object.values(ROADMAP_TASKS).flat().length;
+  const progress = total > 0 ? Math.round(done/total*100) : 0;
+  const weak = BLOCKS.filter(b=>(S.scores[b.id]||0)<50).length;
+
+  document.getElementById('dash-metrics').innerHTML = `
+    <div class="metric"><div class="metric-lbl">Рейтинг</div><div class="metric-val" style="color:${c}">${ov}%</div><div class="metric-sub">${lv.label}</div></div>
+    <div class="metric"><div class="metric-lbl">Внедрено</div><div class="metric-val">${progress}%</div><div class="metric-sub">${done} из ${total} задач</div></div>
+    <div class="metric"><div class="metric-lbl">Выполнено</div><div class="metric-val">${done}</div><div class="metric-sub">задач роадмапа</div></div>
+    <div class="metric"><div class="metric-lbl">Слабых блоков</div><div class="metric-val" style="color:${weak>3?'#C62828':weak>1?'#E65100':'#2E7D32'}">${weak}</div><div class="metric-sub">ниже 50%</div></div>`;
+
+  document.getElementById('dash-blocks').innerHTML = BLOCKS.map(b => {
+    const s=S.scores[b.id]||0; const c2=sc(s);
+    return `<div class="bbar-row">
+      <div class="bbar-name">${b.name}</div>
+      <div class="bbar-track"><div class="bbar-fill" style="width:${s}%;background:${c2}"></div></div>
+      <div class="bbar-val" style="color:${c2}">${s}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('dash-timeline').innerHTML = S.recentActions.length
+    ? `<ul class="timeline">${S.recentActions.map(a=>`<li class="tl-item"><div class="tl-dot"></div><div class="tl-text">${a.text}</div><div class="tl-time">${a.time}</div></li>`).join('')}</ul>`
+    : `<div class="empty-tl">Действий пока нет.<br>Пройдите аудит и начните внедрение.</div>`;
+}
+
+// ══════════════════════════════════════════════════
+// TEMPLATES
+// ══════════════════════════════════════════════════
+function renderTemplates(cat) {
+  const filtered = cat==='all' ? TEMPLATES : TEMPLATES.filter(t=>t.cat===cat);
+  document.getElementById('tmpl-grid').innerHTML = filtered.map(t => `
+    <div class="tmpl" onclick="openTool('${t.id}','${t.name}','${t.tool}')">
+      <div class="tmpl-hdr"><div class="tmpl-icon">📄</div><div class="tmpl-badge">${t.tag}</div></div>
+      <div class="tmpl-name">${t.name}</div>
+      <div class="tmpl-desc">${t.desc}</div>
+    </div>`).join('');
+}
+
+function filterTmpl(cat, btn) {
+  document.querySelectorAll('.flt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTemplates(cat);
+}
+
+// ══════════════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════════════
+function renderProfile() {
+  if (!S.user) return;
+  const u = S.user;
+  document.getElementById('prof-name').textContent = u.name;
+  document.getElementById('prof-email').textContent = u.email;
+
+  const subEl = document.getElementById('prof-sub-info');
+  const upgradeBtn = document.getElementById('prof-upgrade-btn');
+
+  if (u.has_access) {
+    subEl.innerHTML = `
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);background:var(--gbg);color:var(--green);font-weight:600;margin-bottom:12px">
+        ✓ Доступ открыт
+      </div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">
+        Роадмап внедрения, AI-инструменты и шаблоны — доступны.<br>
+        <strong>Повторный аудит:</strong> бесплатно в любое время.
+      </div>`;
+    upgradeBtn.style.display = 'none';
+  } else {
+    subEl.innerHTML = `
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);background:var(--s3);color:var(--t2);font-weight:600;margin-bottom:12px">
+        Бесплатный доступ
+      </div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">
+        Аудит и AI-анализ доступны бесплатно.<br>
+        Роадмап внедрения и AI-инструменты — после оплаты $99.
+      </div>`;
+    upgradeBtn.style.display = 'block';
+    upgradeBtn.textContent = 'Получить план внедрения — $99';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// SAVE / LOAD
+// ══════════════════════════════════════════════════
+async function autoSave() {
+  if (!S.user) return;
+  try {
+    await api('/api/audit/save', {
+      method: 'POST',
+      body: JSON.stringify({
+        onboarding: S.ob,
+        answers: S.answers,
+        scores: S.scores,
+        completedTasks: [...S.completedTasks]
+      })
+    });
+  } catch(e) { console.warn('AutoSave failed:', e.message); }
+}
+
+async function loadAudit() {
+  if (!S.user) return;
+  try {
+    const res = await api('/api/audit/load');
+    if (res.audit) {
+      const a = res.audit;
+      if (a.onboarding) S.ob = a.onboarding;
+      if (a.answers) S.answers = a.answers;
+      if (a.scores) S.scores = a.scores;
+      if (a.completed_tasks) S.completedTasks = new Set(a.completed_tasks);
+      if (S.scores.overall) {
+        S.roadmapOrder = BLOCKS.filter(b=>ROADMAP_TASKS[b.id]).sort((a,b)=>(S.scores[a.id]||0)-(S.scores[b.id]||0)).map(b=>b.id);
+        ['nl-dashboard','nl-roadmap'].forEach(id=>document.getElementById(id)?.classList.remove('hidden'));
+      }
+    }
+  } catch(e) { console.warn('LoadAudit failed:', e.message); }
+}
+
+// ══════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════
+function toast(msg, isError=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? '#C62828' : '#1A1A1A';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Enter to submit auth forms
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const active = document.querySelector('.screen.active');
+    if (active?.id === 'screen-register') doRegister();
+    if (active?.id === 'screen-login') doLogin();
+  }
+});
+
+// ══════════════════════════════════════════════════
+// INIT — загружаем конфиг с сервера, потом авторизацию
+// ══════════════════════════════════════════════════
+async function init() {
+  renderTemplates('all');
+
+  // Шаг 1: получаем публичные ключи Supabase с нашего сервера
+  try {
+    const config = await fetch('/api/config').then(r => r.json());
+    if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
+      // Пересоздаём клиент с реальными ключами
+      const newClient = supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+      // Копируем методы в существующий объект
+      Object.keys(newClient).forEach(k => { try { sb[k] = newClient[k]; } catch(e){} });
+      Object.setPrototypeOf(sb, Object.getPrototypeOf(newClient));
+    }
+  } catch (e) {
+    console.warn('[INIT] Config load failed:', e.message);
+  }
+
+  // Шаг 2: проверяем есть ли активная сессия Supabase
+  await tryAutoLogin();
+  checkPaymentSuccess();
+}
+
+init();
+</script>
+</body>
+</html>
