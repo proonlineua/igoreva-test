@@ -1,0 +1,74 @@
+name: Deploy to VPS
+
+# Деплой на VPS при push у main (а також вручну через "Run workflow").
+# Спирається на секрети репозиторію:
+#   VPS_HOST     — IP/домен сервера
+#   VPS_USER     — користувач для SSH (deploy)
+#   VPS_SSH_KEY  — приватний SSH-ключ цього користувача
+#
+# На сервері має бути налаштований deploy-ключ (~/.ssh/github_deploy),
+# яким git тягне приватне репо. Node/PM2/nginx ставляться окремо при
+# первинному налаштуванні сервера — поки їх немає, крок з package.json
+# просто пропускається (деплоїться лише статика).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy over SSH
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          APP_DIR=/var/www/beauty-os
+          REPO=git@github.com:proonlineua/igoreva-test.git
+
+          # Перший запуск — створити теку й склонувати репо
+          if [ ! -d "$APP_DIR/.git" ]; then
+            echo ">> first run: cloning into $APP_DIR"
+            sudo mkdir -p "$APP_DIR"
+            sudo chown -R "$USER":"$USER" "$APP_DIR"
+            git clone "$REPO" "$APP_DIR"
+          fi
+
+          cd "$APP_DIR"
+          echo ">> updating to origin/main"
+          git fetch --prune origin main
+          git reset --hard origin/main
+
+          # Якщо в репо є Node-застосунок — поставити залежності й перезапустити PM2
+          if [ -f package.json ]; then
+            echo ">> node app detected"
+            if command -v npm >/dev/null 2>&1; then
+              npm ci --omit=dev || npm install --production
+            else
+              echo "!! npm не встановлено на сервері — пропускаю npm install"
+            fi
+            if command -v pm2 >/dev/null 2>&1; then
+              pm2 reload beauty-os 2>/dev/null || pm2 start server/index.js --name beauty-os
+              pm2 save
+            else
+              echo "!! pm2 не встановлено — застосунок не перезапущено"
+            fi
+          else
+            echo ">> static-only deploy (package.json відсутній)"
+          fi
+
+          echo ">> done"
+          REMOTE
