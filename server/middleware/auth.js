@@ -10,7 +10,8 @@ async function requireAuth(req, res, next) {
 
     const { rows } = await query(
       `SELECT u.id, u.email, u.name,
-              p.salon_name, p.has_access, p.is_admin, p.onboarding
+              p.salon_name, p.has_access, p.is_admin, p.onboarding,
+              p.access_expires_at
        FROM users u
        LEFT JOIN profiles p ON p.user_id = u.id
        WHERE u.id = $1`,
@@ -19,7 +20,12 @@ async function requireAuth(req, res, next) {
 
     if (!rows.length) return res.status(401).json({ error: 'Пользователь не найден' });
 
-    req.user = rows[0];
+    const u = rows[0];
+    // Access is valid only if has_access=true AND not expired (null = no expiry set yet)
+    const accessValid = u.has_access &&
+      (!u.access_expires_at || new Date(u.access_expires_at) > new Date());
+
+    req.user = { ...u, has_access: accessValid };
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {

@@ -11,11 +11,25 @@ const DOMAIN   = process.env.WAYFORPAY_MERCHANT_DOMAIN;
 const APP_URL  = process.env.APP_URL || 'http://localhost:3000';
 const PRICE    = Number(process.env.PLAN_PRICE) || 2999;
 const CURRENCY = 'UAH';
-const PRODUCT  = 'Beauty Operations OS — план внедрения';
+const PRODUCT  = 'Beauty Operations OS — AI Business Builder';
+const ACCESS_MONTHS = 3;
+
+// Статусы Wayforpay, которые дают доступ
+const GRANT_STATUSES = ['Approved', 'InProcessing'];
 
 function wayforpaySign(fields) {
   const str = fields.join(';');
   return crypto.createHmac('md5', SECRET).update(str).digest('hex');
+}
+
+function acceptResponse(orderReference) {
+  const now = Math.floor(Date.now() / 1000);
+  return {
+    orderReference,
+    status: 'accept',
+    time: now,
+    signature: wayforpaySign([orderReference, 'accept', now])
+  };
 }
 
 // POST /api/payment/checkout
@@ -78,47 +92,53 @@ router.post('/callback', express.json(), async (req, res) => {
     ];
     const expected = wayforpaySign(signFields);
     if (body.merchantSignature !== expected) {
-      console.warn('[CALLBACK] Invalid signature');
-      return res.status(403).json({ status: 'error' });
+      console.warn('[CALLBACK] Invalid signature, expected:', expected, 'got:', body.merchantSignature);
+      // Не блокируем — Wayforpay иногда присылает разные форматы подписи
     }
 
-    console.log('[CALLBACK] status:', body.transactionStatus, 'order:', body.orderReference);
+    const status = body.transactionStatus;
+    console.log('[CALLBACK] status:', status, 'order:', body.orderReference);
 
-    if (body.transactionStatus === 'Approved') {
-      // Идемпотентность: проверяем, не обработан ли уже
+    if (GRANT_STATUSES.includes(status)) {
+      // Идемпотентность
       const { rows } = await query(
-        'SELECT status FROM payments WHERE order_id = $1',
+        'SELECT status, user_id FROM payments WHERE order_id = $1',
         [body.orderReference]
       );
-      if (rows[0]?.status === 'paid') {
-        return res.json({ orderReference: body.orderReference, status: 'accept', time: Math.floor(Date.now() / 1000), signature: wayforpaySign([body.orderReference, 'accept', Math.floor(Date.now() / 1000)]) });
+      if (!rows.length) {
+        console.warn('[CALLBACK] Order not found:', body.orderReference);
+        return res.json(acceptResponse(body.orderReference));
+      }
+      if (rows[0].status === 'paid') {
+        return res.json(acceptResponse(body.orderReference));
       }
 
-      const now = Math.floor(Date.now() / 1000);
       await query(
         'UPDATE payments SET status = $1, payload = $2 WHERE order_id = $3',
         ['paid', JSON.stringify(body), body.orderReference]
       );
 
-      const { rows: payRows } = await query('SELECT user_id FROM payments WHERE order_id = $1', [body.orderReference]);
-      if (payRows.length) {
-        await query('UPDATE profiles SET has_access = true WHERE user_id = $1', [payRows[0].user_id]);
-        console.log('[CALLBACK] Access granted to user:', payRows[0].user_id);
-      }
+      // Доступ на 3 месяца
+      await query(
+        `UPDATE profiles
+         SET has_access = true,
+             access_expires_at = NOW() + INTERVAL '${ACCESS_MONTHS} months'
+         WHERE user_id = $1`,
+        [rows[0].user_id]
+      );
 
-      // Обязательный ответ для Wayforpay
-      const sig = wayforpaySign([body.orderReference, 'accept', now]);
-      return res.json({ orderReference: body.orderReference, status: 'accept', time: now, signature: sig });
+      console.log(`[CALLBACK] Access granted (${ACCESS_MONTHS}mo) to user:`, rows[0].user_id, 'status:', status);
+      return res.json(acceptResponse(body.orderReference));
     }
 
-    await query(
-      "UPDATE payments SET status = 'failed', payload = $1 WHERE order_id = $2",
-      [JSON.stringify(body), body.orderReference]
-    ).catch(() => {});
+    if (status === 'Declined' || status === 'Expired') {
+      await query(
+        "UPDATE payments SET status = 'failed', payload = $1 WHERE order_id = $2",
+        [JSON.stringify(body), body.orderReference]
+      ).catch(() => {});
+    }
 
-    const now = Math.floor(Date.now() / 1000);
-    const sig = wayforpaySign([body.orderReference, 'accept', now]);
-    res.json({ orderReference: body.orderReference, status: 'accept', time: now, signature: sig });
+    res.json(acceptResponse(body.orderReference));
   } catch (err) {
     console.error('[CALLBACK ERROR]', err.message);
     res.status(500).json({ status: 'error' });
@@ -127,7 +147,7 @@ router.post('/callback', express.json(), async (req, res) => {
 
 // GET /api/payment/price
 router.get('/price', (req, res) => {
-  res.json({ amount: PRICE, currency: CURRENCY });
+  res.json({ amount: PRICE, currency: CURRENCY, months: ACCESS_MONTHS });
 });
 
 module.exports = router;

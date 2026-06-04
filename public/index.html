@@ -726,7 +726,17 @@ function checkPaymentSuccess() {
   if (window.location.pathname === '/payment/success') {
     history.replaceState({}, '', '/');
     if (S.user) {
-      refreshUser().then(() => show('payment-success'));
+      // Поллинг: ждём пока Wayforpay webhook обновит has_access в БД (до 15 сек)
+      let attempts = 0;
+      const poll = async () => {
+        await refreshUser();
+        if (S.user?.has_access || attempts++ >= 14) {
+          show('payment-success');
+        } else {
+          setTimeout(poll, 1000);
+        }
+      };
+      poll();
     } else {
       show('payment-success');
     }
