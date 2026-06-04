@@ -417,26 +417,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
         <div style="height:1px;background:var(--border);margin:20px 0"></div>
       </div>
 
-      <div class="paywall-icon">🗺</div>
-      <h2>Получите план внедрения</h2>
-      <p>Аудит пройден. Теперь самое важное — знать <strong>что именно делать и в каком порядке</strong>. Одноразовый платёж — доступ навсегда.</p>
+      <div class="paywall-icon">🤖</div>
+      <h2>AI-генерация документов</h2>
+      <p>Нажмите «Внедрить» на любой задаче роадмапа — AI создаст готовый документ: KPI, скрипт, инструкцию или чек-лист за секунды. Разовый платёж — доступ навсегда.</p>
 
       <!-- Цена -->
       <div style="background:var(--rose-l);border:2px solid var(--rose-m);border-radius:var(--rl);padding:24px;margin-bottom:24px">
-        <div style="font-size:13px;font-weight:600;color:var(--rose-d);margin-bottom:6px">ПЛАН ВНЕДРЕНИЯ</div>
-        <div style="font-size:48px;font-weight:700;color:var(--rose-d);letter-spacing:-2px;line-height:1">$99</div>
+        <div style="font-size:13px;font-weight:600;color:var(--rose-d);margin-bottom:6px">AI BUSINESS BUILDER</div>
+        <div style="font-size:48px;font-weight:700;color:var(--rose-d);letter-spacing:-2px;line-height:1">2999 <span style="font-size:24px">грн</span></div>
         <div style="font-size:14px;color:var(--rose-d);margin-top:6px;font-weight:500">Разовый платёж · Доступ навсегда</div>
-        <div style="font-size:13px;color:var(--t2);margin-top:8px">Повторный аудит через 6 месяцев — бесплатно</div>
       </div>
 
       <!-- Что включено -->
       <div style="text-align:left;margin-bottom:24px">
         <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Что вы получаете</div>
-        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>Роадмап внедрения</strong> — персональный план задач по приоритетам</div></div>
-        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>AI Business Builder</strong> — генерация KPI, инструкций, скриптов, чек-листов</div></div>
+        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>AI Business Builder</strong> — кнопка «Внедрить» создаёт документ под ваш салон</div></div>
+        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>KPI, скрипты, инструкции</strong> — готовые материалы по каждой задаче</div></div>
         <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>16 шаблонов</strong> — P&L, мотивация, должностные инструкции, регламенты</div></div>
         <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>Прогресс сохраняется</strong> — возвращайтесь с любого устройства</div></div>
-        <div class="pay-feat"><div class="pay-feat-check">✓</div><div><strong>Повторный аудит</strong> через 6 месяцев — отследить прогресс</div></div>
       </div>
 
       <!-- Разделитель: что бесплатно -->
@@ -446,12 +444,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
           <span>✓ Полный аудит (63 вопроса)</span>
           <span>✓ AI-анализ — проблемы, риски, потери прибыли</span>
           <span>✓ Операционный рейтинг по 7 блокам</span>
+          <span>✓ Роадмап внедрения с приоритетами</span>
         </div>
       </div>
 
       <div id="liqpay-form-container" style="display:none"></div>
       <button class="btn-primary" style="width:100%;justify-content:center;font-size:16px;padding:14px" id="pay-btn" onclick="doCheckout()">
-        Получить план внедрения — $99 →
+        Активировать AI Business Builder — 2999 грн →
       </button>
       <div style="margin-top:12px;font-size:12px;color:var(--t3)">Безопасная оплата через Wayforpay · Visa, Mastercard, Apple Pay</div>
     </div>
@@ -535,7 +534,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <div id="ai-content"><div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:13px">Формируем выводы...</div></div></div>
     </div>
     <div class="btn-row">
-      <button class="btn-primary" onclick="buildRoadmap()">🗺 Построить роадмап внедрения</button>
+      <button class="btn-primary" onclick="buildRoadmap()">🗺 Построить роадмап — бесплатно →</button>
     </div>
   </div>
 </div>
@@ -1131,11 +1130,6 @@ async function runAI() {
 // ROADMAP
 // ══════════════════════════════════════════════════
 function buildRoadmap() {
-  // Если не оплатил — на paywall
-  if (S.user && !S.user.has_access) {
-    showPaywall();
-    return;
-  }
   if (!S.user) { show('register'); return; }
   const sorted = BLOCKS.filter(b => ROADMAP_TASKS[b.id]).sort((a,b) => (S.scores[a.id]||0)-(S.scores[b.id]||0));
   S.roadmapOrder = sorted.map(b => b.id);
