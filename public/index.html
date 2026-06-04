@@ -267,13 +267,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 /* ── MODAL ── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);z-index:999;align-items:center;justify-content:center;padding:20px}
 .modal-bg.open{display:flex;animation:fadeIn .2s}
-.modal{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.2)}
+.modal{background:var(--surface);border-radius:var(--rxl);width:100%;max-width:540px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.2);transition:max-width .2s}
+.modal.doc-mode{max-width:800px}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 22px 14px;border-bottom:1px solid var(--border)}
 .modal-hdr h3{font-size:16px;font-weight:600}
 .modal-close{background:none;border:none;cursor:pointer;padding:5px;border-radius:var(--r);color:var(--t3);transition:all .15s;font-size:18px;line-height:1}
 .modal-close:hover{background:var(--s2);color:var(--text)}
 .modal-body{padding:18px 22px 22px}
 .modal-intro{font-size:14px;color:var(--t2);margin-bottom:16px;line-height:1.6}
+/* Document viewer */
+.doc-paper{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:28px 32px;margin:12px 0;font-size:13.5px;line-height:1.75;color:#1a1a1a;min-height:200px}
+.doc-paper h1{font-size:18px;font-weight:700;margin:0 0 16px;color:#1a1a1a;border-bottom:2px solid var(--rose);padding-bottom:8px}
+.doc-paper h2{font-size:15px;font-weight:600;margin:18px 0 8px;color:var(--rose-d)}
+.doc-paper h3{font-size:13.5px;font-weight:600;margin:14px 0 6px;color:#333}
+.doc-paper p{margin:0 0 8px}
+.doc-paper ul{margin:4px 0 10px 18px;padding:0}
+.doc-paper li{margin-bottom:4px}
+.doc-paper table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.doc-paper th{background:var(--rose-l);color:var(--rose-d);font-weight:600;padding:7px 10px;text-align:left;border:1px solid var(--rose-m)}
+.doc-paper td{padding:6px 10px;border:1px solid var(--border2);vertical-align:top}
+.doc-paper tr:nth-child(even) td{background:var(--s2)}
+.doc-actions{display:flex;gap:8px;align-items:center;margin:10px 0 16px;flex-wrap:wrap}
+.chat-refine{background:var(--s2);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;margin-top:12px}
+.chat-refine-label{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.chat-refine textarea{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;resize:vertical;min-height:60px;outline:none;background:var(--surface);transition:border-color .15s}
+.chat-refine textarea:focus{border-color:var(--rose)}
+.chat-history{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;max-height:120px;overflow-y:auto}
+.chat-msg{font-size:12px;padding:6px 10px;border-radius:var(--r);max-width:90%}
+.chat-msg.user{background:var(--rose-l);color:var(--rose-d);align-self:flex-end}
+.chat-msg.ai{background:var(--s3);color:var(--t2);align-self:flex-start}
 .mfield{margin-bottom:12px}
 .mfield label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:4px}
 .mfield input{width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;font-family:inherit;color:var(--text);background:var(--s2);outline:none;transition:border-color .15s}
@@ -718,7 +740,7 @@ function show(name) {
   if (nl) nl.classList.add('active');
   if (name === 'dashboard') renderDashboard();
   if (name === 'templates') renderTemplates('all');
-  if (name === 'roadmap') renderRoadmap();
+  if (name === 'roadmap') { prefetchSavedDocNames().then(() => renderRoadmap()); }
   if (name === 'profile') renderProfile();
   window.scrollTo(0, 0);
 }
@@ -1183,6 +1205,8 @@ function renderRoadmap() {
             <div class="task-r">
               <div class="prio prio-${t.p}">${PL[t.p]}</div>
               <button class="btn-impl" onclick="openTool('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.tool}')">🤖 Внедрить</button>
+              ${(S.savedDocNames||new Set()).has(t.name)?`<button class="btn-impl" style="color:var(--rose)" onclick="openSavedDoc('${t.name.replace(/'/g,"\\'")}')">📄 Документ</button>`:''}
+
             </div>
           </div>`;
         }).join('')}
@@ -1225,28 +1249,86 @@ function openTool(taskId, taskName, tool) {
   document.getElementById('modal-bg').classList.add('open');
 }
 
+function mdToHtml(md) {
+  // Convert markdown to clean doc HTML
+  let html = md
+    .replace(/^# (.+)$/gm,   '<h1>$1</h1>')
+    .replace(/^## (.+)$/gm,  '<h2>$2</h2>'.replace('$2','$1'))
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^[-•] (.+)$/gm, '<li>$1</li>');
+  // Wrap consecutive <li> in <ul>
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>');
+  // Paragraphs: wrap lines that aren't already HTML
+  html = html.split('\n').map(line => {
+    if (!line.trim()) return '';
+    if (/^<(h[1-3]|ul|li|table|tr|td|th)/.test(line)) return line;
+    return '<p>' + line + '</p>';
+  }).join('\n');
+  return html;
+}
+
 function renderDoc(content, taskName, targetEl) {
-  const text = content
-    .replace(/^### (.*)/gm,'<h4 style="font-size:14px;font-weight:600;margin:12px 0 5px">$1</h4>')
-    .replace(/^## (.*)/gm,'<h4 style="font-size:14px;font-weight:600;margin:12px 0 5px">$1</h4>')
-    .replace(/^# (.*)/gm,'<strong>$1</strong>')
-    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-    .replace(/^- (.*)/gm,'• $1')
-    .replace(/\n/g,'<br>');
+  const html = mdToHtml(content);
+  document.querySelector('.modal')?.classList.add('doc-mode');
   targetEl.innerHTML = `
-    <div style="height:1px;background:var(--border);margin:14px 0"></div>
-    <div class="ai-result" id="doc-content">${text}</div>
-    <div class="copy-row" style="justify-content:space-between;align-items:center">
-      <button class="btn-copy" onclick="copyResult()">⎘ Копировать</button>
-      <span style="font-size:11px;color:var(--green)">✓ Сохранено в аккаунте</span>
+    <div class="doc-paper" id="doc-content">${html}</div>
+    <div class="doc-actions">
+      <button class="btn-copy" onclick="copyResult()">⎘ Копировать текст</button>
+      <button class="btn-primary btn-sm" onclick="downloadDoc('${taskName.replace(/'/g,"\\'")}')">⬇ Скачать .doc</button>
+      <span style="font-size:11px;color:var(--green);margin-left:auto">✓ Сохранено в аккаунте</span>
     </div>
-    <div style="margin-top:16px;padding:14px;background:var(--s2);border-radius:var(--r);border:1px solid var(--border)">
-      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px">✏️ Что исправить или добавить?</div>
-      <textarea id="refine-input" rows="2" placeholder="Например: добавь KPI для администратора, сделай короче, добавь примеры..." style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;resize:vertical;outline:none;background:var(--surface)"></textarea>
-      <button class="btn-primary btn-sm" style="margin-top:8px;width:100%;justify-content:center" id="refine-btn" onclick="refineDoc('${taskName.replace(/'/g,"\\'")}')">↻ Улучшить документ</button>
+    <div class="chat-refine">
+      <div class="chat-refine-label">💬 Попросить AI доработать</div>
+      <div class="chat-history" id="chat-history"></div>
+      <textarea id="refine-input" placeholder="Например: добавь KPI для администратора, сделай короче, добавь конкретные цифры..."></textarea>
+      <button class="btn-primary btn-sm" style="margin-top:8px;width:100%;justify-content:center" id="refine-btn" onclick="refineDoc('${taskName.replace(/'/g,"\\'")}')">↻ Улучшить →</button>
     </div>`;
   S._lastDocContent = content;
   S._lastDocName = taskName;
+  if (!S._chatHistory) S._chatHistory = [];
+  renderChatHistory();
+}
+
+function renderChatHistory() {
+  const el = document.getElementById('chat-history');
+  if (!el || !S._chatHistory?.length) return;
+  el.innerHTML = S._chatHistory.map(m =>
+    `<div class="chat-msg ${m.role}">${m.text}</div>`
+  ).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function downloadDoc(taskName) {
+  const docEl = document.getElementById('doc-content');
+  if (!docEl) return;
+  const salonName = S.ob?.name || 'Салон';
+  const date = new Date().toLocaleDateString('ru');
+  const wordHtml = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${taskName}</title><style>
+    body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.5;margin:2cm;color:#1a1a1a}
+    h1{font-size:16pt;color:#880e4f;border-bottom:2pt solid #c2185b;padding-bottom:6pt;margin-bottom:12pt}
+    h2{font-size:13pt;color:#880e4f;margin-top:14pt;margin-bottom:6pt}
+    h3{font-size:11pt;font-weight:bold;margin-top:10pt;margin-bottom:4pt}
+    ul{margin:4pt 0 8pt 16pt}li{margin-bottom:3pt}
+    table{border-collapse:collapse;width:100%;margin:8pt 0}
+    th{background:#fce4ec;color:#880e4f;padding:5pt 8pt;border:1pt solid #f48fb1;text-align:left;font-weight:bold}
+    td{padding:5pt 8pt;border:1pt solid #e0e0e0;vertical-align:top}
+    tr:nth-child(even) td{background:#fafaf9}
+    .meta{font-size:9pt;color:#666;margin-bottom:16pt}
+  </style></head><body>
+    <h1>${taskName}</h1>
+    <div class="meta">${salonName} · Сгенерировано: ${date} · Beauty Operations OS</div>
+    ${docEl.innerHTML}
+  </body></html>`;
+  const blob = new Blob(['﻿' + wordHtml], {type: 'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = taskName.replace(/[^а-яёa-z0-9\s]/gi,'').trim().slice(0,40) + '.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Документ скачивается...');
 }
 
 async function generateDoc(taskName, tool) {
@@ -1275,23 +1357,32 @@ async function generateDoc(taskName, tool) {
 }
 
 async function refineDoc(taskName) {
-  const feedback = document.getElementById('refine-input')?.value?.trim();
+  const input = document.getElementById('refine-input');
+  const feedback = input?.value?.trim();
   if (!feedback) { toast('Напишите что нужно исправить', true); return; }
   const btn = document.getElementById('refine-btn');
-  const resultEl = document.getElementById('modal-result');
-  btn.disabled = true; btn.textContent = 'Улучшаем...';
-  const loadHtml = `<div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:13px">Дорабатываем документ...</div></div>`;
-  document.getElementById('doc-content').innerHTML = loadHtml;
+  const docEl = document.getElementById('doc-content');
+  btn.disabled = true; btn.textContent = 'Дорабатываем...';
+  if (!S._chatHistory) S._chatHistory = [];
+  S._chatHistory.push({role:'user', text: feedback});
+  renderChatHistory();
+  input.value = '';
+  docEl.style.opacity = '0.4';
   try {
     const res = await api('/api/ai/refine', {
       method: 'POST',
       body: JSON.stringify({ taskName, originalContent: S._lastDocContent, feedback, salonData: S.ob })
     });
+    S._chatHistory.push({role:'ai', text:'✓ Документ обновлён'});
+    const resultEl = document.getElementById('modal-result');
     renderDoc(res.content, taskName, resultEl);
     toast('Документ улучшен!');
   } catch(e) {
+    S._chatHistory.push({role:'ai', text:'Ошибка: ' + e.message});
+    docEl.style.opacity = '1';
+    btn.disabled = false; btn.textContent = '↻ Улучшить →';
+    renderChatHistory();
     toast('Ошибка: ' + e.message, true);
-    btn.disabled = false; btn.textContent = '↻ Улучшить документ';
   }
 }
 
@@ -1301,8 +1392,12 @@ function copyResult() {
 }
 
 function closeModal(e) {
-  if (!e || e.target === document.getElementById('modal-bg'))
+  if (!e || e.target === document.getElementById('modal-bg')) {
     document.getElementById('modal-bg').classList.remove('open');
+    document.querySelector('.modal')?.classList.remove('doc-mode');
+    S._chatHistory = [];
+    S._lastDocContent = null;
+  }
 }
 
 // ══════════════════════════════════════════════════
@@ -1425,8 +1520,33 @@ async function loadMyDocuments() {
 function viewDoc(taskName, content) {
   document.getElementById('modal-title').textContent = taskName;
   document.getElementById('modal-body').innerHTML = `<div id="modal-result"></div>`;
+  S._chatHistory = [];
   renderDoc(content, taskName, document.getElementById('modal-result'));
   document.getElementById('modal-bg').classList.add('open');
+}
+
+async function openSavedDoc(taskName) {
+  document.getElementById('modal-title').textContent = taskName;
+  document.getElementById('modal-body').innerHTML = `<div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:13px">Загружаем документ...</div></div>`;
+  document.getElementById('modal-bg').classList.add('open');
+  try {
+    const res = await api('/api/ai/documents');
+    const doc = (res.documents || []).find(d => d.task_name === taskName);
+    if (!doc) { document.getElementById('modal-body').innerHTML = `<div style="padding:20px;color:var(--t2)">Документ не найден</div>`; return; }
+    document.getElementById('modal-body').innerHTML = `<div id="modal-result"></div>`;
+    S._chatHistory = [];
+    renderDoc(doc.content, taskName, document.getElementById('modal-result'));
+  } catch(e) {
+    document.getElementById('modal-body').innerHTML = `<div style="padding:20px;color:var(--red)">Ошибка загрузки</div>`;
+  }
+}
+
+async function prefetchSavedDocNames() {
+  if (!S.user?.has_access) return;
+  try {
+    const res = await api('/api/ai/documents');
+    S.savedDocNames = new Set((res.documents || []).map(d => d.task_name));
+  } catch {}
 }
 
 // ══════════════════════════════════════════════════
