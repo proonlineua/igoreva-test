@@ -592,6 +592,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
         <button class="btn-primary btn-sm" onclick="showPaywall()" id="prof-upgrade-btn" style="display:none">Получить план внедрения</button>
       </div>
     </div>
+
+    <!-- Мои документы -->
+    <div id="my-docs-section" style="margin-top:28px">
+      <div style="font-size:13px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Мои документы</div>
+      <div id="my-docs-list"></div>
+    </div>
   </div>
 </div>
 
@@ -1219,6 +1225,30 @@ function openTool(taskId, taskName, tool) {
   document.getElementById('modal-bg').classList.add('open');
 }
 
+function renderDoc(content, taskName, targetEl) {
+  const text = content
+    .replace(/^### (.*)/gm,'<h4 style="font-size:14px;font-weight:600;margin:12px 0 5px">$1</h4>')
+    .replace(/^## (.*)/gm,'<h4 style="font-size:14px;font-weight:600;margin:12px 0 5px">$1</h4>')
+    .replace(/^# (.*)/gm,'<strong>$1</strong>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^- (.*)/gm,'• $1')
+    .replace(/\n/g,'<br>');
+  targetEl.innerHTML = `
+    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+    <div class="ai-result" id="doc-content">${text}</div>
+    <div class="copy-row" style="justify-content:space-between;align-items:center">
+      <button class="btn-copy" onclick="copyResult()">⎘ Копировать</button>
+      <span style="font-size:11px;color:var(--green)">✓ Сохранено в аккаунте</span>
+    </div>
+    <div style="margin-top:16px;padding:14px;background:var(--s2);border-radius:var(--r);border:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px">✏️ Что исправить или добавить?</div>
+      <textarea id="refine-input" rows="2" placeholder="Например: добавь KPI для администратора, сделай короче, добавь примеры..." style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;resize:vertical;outline:none;background:var(--surface)"></textarea>
+      <button class="btn-primary btn-sm" style="margin-top:8px;width:100%;justify-content:center" id="refine-btn" onclick="refineDoc('${taskName.replace(/'/g,"\\'")}')">↻ Улучшить документ</button>
+    </div>`;
+  S._lastDocContent = content;
+  S._lastDocName = taskName;
+}
+
 async function generateDoc(taskName, tool) {
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
   const answers = cfg.qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
@@ -1232,17 +1262,7 @@ async function generateDoc(taskName, tool) {
       method: 'POST',
       body: JSON.stringify({ taskName, answers, salonData: S.ob })
     });
-    const text = res.content
-      .replace(/^### (.*)/gm,'<h4 style="font-size:14px;font-weight:600;margin:12px 0 5px">$1</h4>')
-      .replace(/^## (.*)/gm,'<h4 style="font-size:14px;font-weight:600;margin:12px 0 5px">$1</h4>')
-      .replace(/^# (.*)/gm,'<strong>$1</strong>')
-      .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
-      .replace(/^- (.*)/gm,'• $1')
-      .replace(/\n/g,'<br>');
-    resultEl.innerHTML = `
-      <div style="height:1px;background:var(--border);margin:14px 0"></div>
-      <div class="ai-result">${text}</div>
-      <div class="copy-row"><button class="btn-copy" onclick="copyResult()">⎘ Копировать</button></div>`;
+    renderDoc(res.content, taskName, resultEl);
     S.recentActions.unshift({text:'Создан: '+taskName, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
   } catch(e) {
     resultEl.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--red)">${e.message.includes('подписк')?'🔒 Требуется активная подписка':'Ошибка генерации. Попробуйте снова.'}</div>`;
@@ -1254,8 +1274,29 @@ async function generateDoc(taskName, tool) {
   }
 }
 
+async function refineDoc(taskName) {
+  const feedback = document.getElementById('refine-input')?.value?.trim();
+  if (!feedback) { toast('Напишите что нужно исправить', true); return; }
+  const btn = document.getElementById('refine-btn');
+  const resultEl = document.getElementById('modal-result');
+  btn.disabled = true; btn.textContent = 'Улучшаем...';
+  const loadHtml = `<div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:13px">Дорабатываем документ...</div></div>`;
+  document.getElementById('doc-content').innerHTML = loadHtml;
+  try {
+    const res = await api('/api/ai/refine', {
+      method: 'POST',
+      body: JSON.stringify({ taskName, originalContent: S._lastDocContent, feedback, salonData: S.ob })
+    });
+    renderDoc(res.content, taskName, resultEl);
+    toast('Документ улучшен!');
+  } catch(e) {
+    toast('Ошибка: ' + e.message, true);
+    btn.disabled = false; btn.textContent = '↻ Улучшить документ';
+  }
+}
+
 function copyResult() {
-  const el = document.getElementById('modal-result');
+  const el = document.getElementById('doc-content') || document.getElementById('modal-result');
   if (el) navigator.clipboard.writeText(el.innerText||'').then(() => toast('Скопировано!')).catch(()=>{});
 }
 
@@ -1331,7 +1372,7 @@ function renderProfile() {
   if (u.has_access) {
     subEl.innerHTML = `
       <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);background:var(--gbg);color:var(--green);font-weight:600;margin-bottom:12px">
-        ✓ Доступ открыт
+        ✓ AI Business Builder активен
       </div>
       <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">
         Роадмап внедрения, AI-инструменты и шаблоны — доступны.<br>
@@ -1344,12 +1385,48 @@ function renderProfile() {
         Бесплатный доступ
       </div>
       <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">
-        Аудит и AI-анализ доступны бесплатно.<br>
-        Роадмап внедрения и AI-инструменты — после оплаты $99.
+        Аудит, AI-анализ и роадмап доступны бесплатно.<br>
+        AI-генерация документов — после оплаты.
       </div>`;
     upgradeBtn.style.display = 'block';
-    upgradeBtn.textContent = 'Получить план внедрения — $99';
+    upgradeBtn.textContent = 'Активировать AI Business Builder — 2999 грн';
   }
+
+  // Загружаем сохранённые документы
+  loadMyDocuments();
+}
+
+async function loadMyDocuments() {
+  const el = document.getElementById('my-docs-list');
+  if (!el || !S.user?.has_access) return;
+  el.innerHTML = `<div style="font-size:13px;color:var(--t2)">Загружаем...</div>`;
+  try {
+    const res = await api('/api/ai/documents');
+    if (!res.documents?.length) {
+      el.innerHTML = `<div style="font-size:13px;color:var(--t2)">Документов пока нет. Нажмите «Внедрить» на любой задаче роадмапа.</div>`;
+      return;
+    }
+    el.innerHTML = res.documents.map(doc => {
+      const date = new Date(doc.created_at).toLocaleDateString('ru', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      const preview = doc.content.slice(0, 120).replace(/[#*\n]/g,' ');
+      return `<div style="border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--rose-m)'" onmouseout="this.style.borderColor='var(--border)'" onclick="viewDoc(${JSON.stringify(doc.task_name)},${JSON.stringify(doc.content)})">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <strong style="font-size:13px">${doc.task_name}</strong>
+          <span style="font-size:11px;color:var(--t3)">${date}</span>
+        </div>
+        <div style="font-size:12px;color:var(--t2)">${preview}...</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--t3)">Не удалось загрузить документы</div>`;
+  }
+}
+
+function viewDoc(taskName, content) {
+  document.getElementById('modal-title').textContent = taskName;
+  document.getElementById('modal-body').innerHTML = `<div id="modal-result"></div>`;
+  renderDoc(content, taskName, document.getElementById('modal-result'));
+  document.getElementById('modal-bg').classList.add('open');
 }
 
 // ══════════════════════════════════════════════════

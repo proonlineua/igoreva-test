@@ -99,4 +99,59 @@ ${safeAnswers || 'не указаны'}
   }
 });
 
+// POST /api/ai/refine — доработка уже сгенерированного документа
+router.post('/refine', async (req, res) => {
+  if (!req.user.has_access) {
+    return res.status(403).json({ error: 'Требуется план внедрения', code: 'ACCESS_REQUIRED' });
+  }
+
+  const { taskName, originalContent, feedback, salonData } = req.body;
+  if (!feedback || feedback.length > 1000) return res.status(400).json({ error: 'Укажите что нужно исправить' });
+  if (!originalContent) return res.status(400).json({ error: 'Нет исходного документа' });
+
+  const prompt = `Ты операционный консультант для салонов красоты.
+
+Вот уже созданный документ "${taskName}" для салона "${salonData?.name || 'Салон'}":
+
+${originalContent.slice(0, 3000)}
+
+---
+Пользователь просит доработать: ${feedback.slice(0, 1000)}
+
+Улучши документ с учётом этого запроса. Верни полный улучшенный документ (не только изменения). Конкретно, без воды.`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: prompt }]
+    });
+    const result = message.content.map(c => c.text || '').join('');
+
+    await query(
+      'INSERT INTO generated_documents (user_id, task_name, content) VALUES ($1, $2, $3)',
+      [req.user.id, taskName, result]
+    ).catch(() => {});
+
+    res.json({ success: true, content: result });
+  } catch (err) {
+    console.error('[AI REFINE]', err.message);
+    res.status(500).json({ error: 'Ошибка доработки. Попробуйте снова.' });
+  }
+});
+
+// GET /api/ai/documents — список сохранённых документов
+router.get('/documents', async (req, res) => {
+  try {
+    const { rows } = await query(
+      'SELECT id, task_name, content, created_at FROM generated_documents WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50',
+      [req.user.id]
+    );
+    res.json({ documents: rows });
+  } catch (err) {
+    console.error('[AI DOCUMENTS]', err.message);
+    res.status(500).json({ error: 'Ошибка загрузки документов' });
+  }
+});
+
 module.exports = router;
