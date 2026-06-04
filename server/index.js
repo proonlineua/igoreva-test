@@ -18,13 +18,14 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc:  ["'self'", "'unsafe-inline'"],
-      styleSrc:   ["'self'", "'unsafe-inline'", 'fonts.googleapis.com', 'fonts.gstatic.com'],
-      fontSrc:    ["'self'", 'fonts.gstatic.com'],
-      connectSrc: ["'self'", 'secure.wayforpay.com'],
-      imgSrc:     ["'self'", 'data:'],
-      formAction: ["'self'", 'https://secure.wayforpay.com']
+      defaultSrc:    ["'self'"],
+      scriptSrc:     ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc:      ["'self'", "'unsafe-inline'", 'fonts.googleapis.com', 'fonts.gstatic.com'],
+      fontSrc:       ["'self'", 'fonts.gstatic.com'],
+      connectSrc:    ["'self'", 'secure.wayforpay.com'],
+      imgSrc:        ["'self'", 'data:'],
+      formAction:    ["'self'", 'https://secure.wayforpay.com']
     }
   }
 }));
