@@ -63,6 +63,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0', ts: new Date().toISOString() });
 });
 
+// Wayforpay redirects browser to returnUrl via POST after payment
+app.post('/payment/success', (req, res) => {
+  res.redirect(303, '/payment/success');
+});
+
 // SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
