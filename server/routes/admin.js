@@ -118,7 +118,7 @@ router.get('/users/:id', async (req, res) => {
              FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE u.id = $1`, [id]),
       query(`SELECT onboarding, answers, scores, completed_tasks, created_at, updated_at FROM audits WHERE user_id = $1`, [id]),
       query(`SELECT id, order_id, amount, currency, status, created_at FROM payments WHERE user_id = $1 ORDER BY created_at DESC`, [id]),
-      query(`SELECT id, task_name, created_at FROM generated_documents WHERE user_id = $1 ORDER BY created_at DESC`, [id]),
+      query(`SELECT id, task_name, content, created_at FROM generated_documents WHERE user_id = $1 ORDER BY created_at DESC`, [id]),
       query(`SELECT scores, analysis, created_at FROM audit_analyses WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, [id])
     ]);
 

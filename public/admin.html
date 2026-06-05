@@ -196,7 +196,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="sidebar-label">Аналитика</div>
     <button class="nav-item" onclick="showScreen('sales')" id="nav-sales"><span class="ni">📈</span>Sales Analytics</button>
     <button class="nav-item" onclick="showScreen('product')" id="nav-product"><span class="ni">🔧</span>Product Analytics</button>
-    <button class="nav-item" onclick="showScreen('documents')" id="nav-documents"><span class="ni">📄</span>Documents</button>
     <div class="sidebar-label">Индустрия</div>
     <button class="nav-item" onclick="showScreen('industry')" id="nav-industry"><span class="ni">🌍</span>Industry Analytics</button>
     <button class="nav-item" onclick="showScreen('heatmap')" id="nav-heatmap"><span class="ni">🔥</span>Problem Heatmap</button>
@@ -456,25 +455,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <!-- ═══════════════════════════════════ -->
-<!-- DOCUMENT CENTER                    -->
-<!-- ═══════════════════════════════════ -->
-<div class="screen" id="screen-documents">
-  <div class="page-header"><h1>Document Center</h1><p id="docs-count-label">Все сгенерированные документы</p></div>
-
-  <div class="filter-bar">
-    <input class="filter-input" id="docs-search" placeholder="🔍 Задача, email..." oninput="debounceLoadDocs()">
-  </div>
-
-  <div class="table-card">
-    <table class="admin-table">
-      <thead><tr><th>Задача</th><th>Пользователь</th><th>Салон</th><th>Дата</th><th>Предпросмотр</th></tr></thead>
-      <tbody id="docs-tbody"></tbody>
-    </table>
-    <div class="pagination" id="docs-pagination"></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════ -->
 <!-- PAYMENTS                           -->
 <!-- ═══════════════════════════════════ -->
 <div class="screen" id="screen-payments">
@@ -508,6 +488,39 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </main>
 
 <script>
+// ═══════════════════════════════════════════
+// AUDIT DATA (copied from main app)
+// ═══════════════════════════════════════════
+const BLOCKS = [
+  {id:'finance',name:'Финансы',color:'#2E7D32'},
+  {id:'hr',name:'Персонал',color:'#C2185B'},
+  {id:'sales',name:'Продажи',color:'#E65100'},
+  {id:'clients',name:'Клиенты',color:'#1565C0'},
+  {id:'ops',name:'Операционка',color:'#6A1B9A'},
+  {id:'owner',name:'Собственник',color:'#880E4F'},
+  {id:'marketing',name:'Маркетинг',color:'#00695C'}
+];
+const QUESTIONS = {
+  finance:['Ведёте ежемесячный P&L?','Знаете себестоимость каждой услуги?','Есть план-факт (план vs факт)?','Рассчитана точка безубыточности?','Учитываете материальные расходы?','ФОТ мастеров не превышает 45% выручки?','Аренда не превышает 15% выручки?','Ведёте учёт дебиторской задолженности?','Есть финансовая подушка на 1–2 месяца?'],
+  hr:['У каждого есть должностная инструкция?','Есть чёткая система мотивации + KPI?','Проводите регулярные собрания?','Есть система адаптации новых сотрудников?','Мастера проходят обучение?','Есть оргструктура с разделением ответственности?','Процесс найма стандартизирован?','Есть система оценки персонала?','Текучесть менее 30% в год?'],
+  sales:['Администраторы работают по скриптам?','Есть процедура допродажи при каждом визите?','Есть программа лояльности / абонементы?','Ведёте учёт конверсии звонков в запись?','Администраторы знают план по выручке?','Есть системная работа с отзывами?','Продаёте подарочные сертификаты?','Есть акции для снижения простоя?','Знаете, какие услуги прибыльнее всего?'],
+  clients:['Ведёте базу клиентов с историей?','Знаете retention rate (% вернувшихся за 90 дней)?','Настроены автоматические напоминания?','Поздравляете клиентов с днём рождения?','Работаете с отменами (перезаписываете)?','Собираете обратную связь после визита?','Есть реферальная программа?','Знаете LTV клиента за год?','Retention rate выше 50%?'],
+  ops:['Есть чек-лист открытия смены?','Есть чек-лист закрытия смены?','Есть регламент закупки расходников?','Стандарты чистоты задокументированы?','Есть процедура работы с жалобами?','Загрузка кабинетов мониторится?','Работа с опозданиями стандартизирована?','Есть инструкция по кассовой дисциплине?','Контроль качества фиксируется?'],
+  owner:['Работаете в бизнесе менее 50% времени?','Бизнес работает без вас неделю без проблем?','Есть управляющий администратор / замдиректора?','Есть стратегический план на 6–12 месяцев?','Отслеживаете метрики еженедельно?','Решения принимаете на основе данных?','Есть чёткие финансовые цели на год?','Инвестируете в собственное развитие?','Есть система делегирования?'],
+  marketing:['Ведёте Instagram / TikTok (3+ поста в неделю)?','Настроена таргетированная реклама?','Есть актуальный Google My Business?','Ведёте email / SMS рассылку по базе?','Знаете стоимость привлечения клиента (CAC)?','Анализируете, какой канал даёт больше клиентов?','Практикуете коллаборации?','Есть контент-план на месяц вперёд?','Проводите активности для клиентов?']
+};
+const ROADMAP_TASKS = {
+  finance:[{id:'f1',name:'Рассчитать себестоимость услуг',p:'critical'},{id:'f2',name:'Внедрить P&L таблицу',p:'critical'},{id:'f3',name:'Создать план-факт на месяц',p:'high'},{id:'f4',name:'Рассчитать точку безубыточности',p:'high'},{id:'f5',name:'Настроить учёт материалов',p:'medium'}],
+  hr:[{id:'h1',name:'Создать оргструктуру',p:'high'},{id:'h2',name:'Написать должностные инструкции',p:'critical'},{id:'h3',name:'Разработать KPI',p:'critical'},{id:'h4',name:'Создать систему мотивации',p:'high'},{id:'h5',name:'Внедрить регулярные собрания',p:'medium'}],
+  sales:[{id:'s1',name:'Написать скрипты администраторов',p:'critical'},{id:'s2',name:'Внедрить систему допродаж',p:'high'},{id:'s3',name:'Запустить программу лояльности',p:'high'},{id:'s4',name:'Настроить контроль конверсии',p:'medium'},{id:'s5',name:'Запустить продажу абонементов',p:'medium'}],
+  clients:[{id:'c1',name:'Настроить автонапоминания',p:'high'},{id:'c2',name:'Внедрить сбор обратной связи',p:'medium'},{id:'c3',name:'Запустить реферальную программу',p:'medium'}],
+  ops:[{id:'o1',name:'Создать чек-лист открытия смены',p:'critical'},{id:'o2',name:'Создать чек-лист закрытия смены',p:'critical'},{id:'o3',name:'Написать регламент закупок',p:'high'},{id:'o4',name:'Внедрить контроль качества',p:'high'},{id:'o5',name:'Регламент работы с жалобами',p:'medium'}],
+  owner:[{id:'ow1',name:'Составить стратегический план',p:'high'},{id:'ow2',name:'Создать систему делегирования',p:'high'},{id:'ow3',name:'Еженедельный контроль метрик',p:'medium'}],
+  marketing:[{id:'m1',name:'Создать контент-план',p:'high'},{id:'m2',name:'Настроить рекламу в Instagram',p:'high'},{id:'m3',name:'Запустить email / SMS рассылку',p:'medium'}]
+};
+const PRIO_LABELS = {critical:'Критично',high:'Важно',medium:'Плановое'};
+const PRIO_COLORS = {critical:'var(--red)',high:'var(--amber)',medium:'var(--blue)'};
+
 // ═══════════════════════════════════════════
 // STATE & UTILS
 // ═══════════════════════════════════════════
@@ -563,7 +576,6 @@ const screenLoaders = {
   heatmap: loadHeatmap,
   benchmarks: loadBenchmarks,
   insights: () => {},
-  documents: () => loadDocuments(1),
   payments: () => loadPayments(1),
   client360: () => {}
 };
@@ -765,109 +777,216 @@ async function exportUsersCSV() {
 }
 
 // ═══════════════════════════════════════════
-// CLIENT 360
+// CLIENT 360 — FULL CARD
 // ═══════════════════════════════════════════
 async function openClient360(id) {
   showScreen('client360');
   const el = document.getElementById('c360-content');
-  el.innerHTML = '<div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>';
+  el.innerHTML = '<div class="loading-dots" style="padding:40px"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>';
   try {
     const d = await adminApi('/users/' + id);
-    const p = d.profile; const a = d.audit; const an = d.analysis;
+    const p = d.profile;
+    const a = d.audit;
+    const an = d.analysis;
     const ob = p.onboarding || {};
     const scores = a?.scores || {};
-    const blocks = [
-      ['finance','Финансы'],['hr','Персонал'],['sales','Продажи'],
-      ['clients','Клиенты'],['ops','Операционка'],['owner','Собственник'],['marketing','Маркетинг']
-    ];
+    const completedSet = new Set(Array.isArray(a?.completed_tasks) ? a.completed_tasks : []);
+    const totalTasks = Object.values(ROADMAP_TASKS).flat().length;
+    const doneTasks = [...completedSet].length;
 
     el.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <!-- ── HEADER ── -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid var(--border)">
         <div>
-          <h1 style="font-size:20px;font-weight:700">${p.name || p.email}</h1>
-          <div style="font-size:13px;color:var(--t2)">${p.email} · Зарег. ${fmtDate(p.created_at)}</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--rose-l);color:var(--rose-d);font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center">
+              ${(p.name || p.email).charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 style="font-size:20px;font-weight:700;margin-bottom:2px">${p.name || p.email}</h1>
+              <div style="font-size:13px;color:var(--t2)">${p.email} · Зарег. ${fmtDate(p.created_at)}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            ${p.has_access ? `<span class="badge badge-green">✓ Доступ активен до ${fmtDate(p.access_expires_at)}</span>` : `<span class="badge badge-gray">Бесплатный доступ</span>`}
+            ${scores.overall ? `<span class="badge badge-blue">Рейтинг: ${Math.round(scores.overall)}%</span>` : ''}
+            ${d.documents.length ? `<span class="badge badge-amber">${d.documents.length} документов</span>` : ''}
+            ${doneTasks ? `<span class="badge" style="background:var(--gbg);color:var(--green)">${doneTasks}/${totalTasks} задач</span>` : ''}
+          </div>
         </div>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:8px">
           ${p.has_access
             ? `<button class="btn-secondary-sm" onclick="toggleUserAccess('${p.id}',true);openClient360('${p.id}')">Отозвать доступ</button>`
-            : `<button class="btn-primary-sm" onclick="toggleUserAccess('${p.id}',false);openClient360('${p.id}')">Выдать доступ</button>`}
+            : `<button class="btn-primary-sm" onclick="toggleUserAccess('${p.id}',false);openClient360('${p.id}')">Выдать доступ (+3 мес)</button>`}
         </div>
       </div>
 
-      <div class="c360-grid">
-        <div>
-          <div class="c360-card">
-            <div class="c360-card-title">Основное</div>
-            <div class="c360-field"><span class="c360-field-label">Email</span><span class="c360-field-val">${p.email}</span></div>
-            <div class="c360-field"><span class="c360-field-label">Имя</span><span class="c360-field-val">${p.name || '—'}</span></div>
-            <div class="c360-field"><span class="c360-field-label">Доступ</span><span class="c360-field-val">${p.has_access ? '<span class="badge badge-green">✓ Активен</span>' : '<span class="badge badge-gray">Нет</span>'}</span></div>
-            ${p.access_expires_at ? `<div class="c360-field"><span class="c360-field-label">До</span><span class="c360-field-val">${fmtDate(p.access_expires_at)}</span></div>` : ''}
-          </div>
-          <div class="c360-card">
-            <div class="c360-card-title">Бизнес</div>
-            <div class="c360-field"><span class="c360-field-label">Салон</span><span class="c360-field-val">${ob.name || p.salon_name || '—'}</span></div>
-            <div class="c360-field"><span class="c360-field-label">Город</span><span class="c360-field-val">${ob.city || p.city || '—'} ${ob.country ? '(' + ob.country + ')' : ''}</span></div>
-            <div class="c360-field"><span class="c360-field-label">Мастеров</span><span class="c360-field-val">${ob.masters || '—'}</span></div>
-            <div class="c360-field"><span class="c360-field-label">Адм.</span><span class="c360-field-val">${ob.admins || '—'}</span></div>
-            <div class="c360-field"><span class="c360-field-label">Средний чек</span><span class="c360-field-val">${ob.avgCheck ? ob.avgCheck + ' грн' : '—'}</span></div>
-            <div class="c360-field"><span class="c360-field-label">Выручка</span><span class="c360-field-val">${ob.revenue ? ob.revenue + ' грн/мес' : '—'}</span></div>
-          </div>
-          <div class="c360-card">
-            <div class="c360-card-title">Платежи (${d.payments.length})</div>
-            ${d.payments.length ? d.payments.map(pay => `
-              <div class="c360-field">
-                <span class="c360-field-label">${fmtDate(pay.created_at)}</span>
-                <span class="c360-field-val">${statusBadge(pay.status)} ${fmtUAH(pay.amount)}</span>
-              </div>`).join('') : '<div style="font-size:13px;color:var(--t2);padding:8px 0">Платежей нет</div>'}
-          </div>
+      <!-- ── ROW 1: BUSINESS INFO + PAYMENTS ── -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="c360-card">
+          <div class="c360-card-title">Профиль</div>
+          <div class="c360-field"><span class="c360-field-label">Салон</span><span class="c360-field-val">${ob.name || p.salon_name || '—'}</span></div>
+          <div class="c360-field"><span class="c360-field-label">Город</span><span class="c360-field-val">${ob.city || p.city || '—'} ${ob.country ? '· ' + ob.country : ''}</span></div>
+          <div class="c360-field"><span class="c360-field-label">Мастеров</span><span class="c360-field-val">${ob.masters || '—'}</span></div>
+          <div class="c360-field"><span class="c360-field-label">Администраторов</span><span class="c360-field-val">${ob.admins || '—'}</span></div>
+          <div class="c360-field"><span class="c360-field-label">Кабинетов</span><span class="c360-field-val">${ob.rooms || '—'}</span></div>
+          <div class="c360-field"><span class="c360-field-label">CRM</span><span class="c360-field-val">${ob.crm || '—'}</span></div>
+          ${ob.services?.length ? `<div class="c360-field"><span class="c360-field-label">Услуги</span><span class="c360-field-val" style="font-size:11px">${ob.services.join(', ')}</span></div>` : ''}
         </div>
+        <div class="c360-card">
+          <div class="c360-card-title">Финансы</div>
+          <div class="c360-field"><span class="c360-field-label">Средний чек</span><span class="c360-field-val" style="font-weight:700">${ob.avgCheck ? ob.avgCheck + ' грн' : '—'}</span></div>
+          <div class="c360-field"><span class="c360-field-label">Выручка/мес</span><span class="c360-field-val">${ob.revenue ? ob.revenue + ' грн' : '—'}</span></div>
+          <div class="c360-field"><span class="c360-field-label">Прибыль/мес</span><span class="c360-field-val">${ob.profit ? ob.profit + ' грн' : '—'}</span></div>
+        </div>
+        <div class="c360-card">
+          <div class="c360-card-title">Оплаты (${d.payments.length})</div>
+          ${d.payments.length ? d.payments.map(pay =>
+            `<div class="c360-field"><span class="c360-field-label">${fmtDate(pay.created_at)}</span><span class="c360-field-val">${statusBadge(pay.status)} ${fmtUAH(pay.amount)}</span></div>`
+          ).join('') : '<div style="font-size:13px;color:var(--t2);padding:6px 0">Платежей нет</div>'}
+        </div>
+      </div>
 
-        <div>
-          ${a ? `
-          <div class="c360-card">
-            <div class="c360-card-title">Рейтинги аудита · Общий: <span style="font-weight:700;color:${scoreColor(scores.overall)}">${scores.overall || 0}%</span></div>
-            ${blocks.map(([k, n]) => {
-              const s = Math.round(scores[k] || 0);
-              const c = scoreColor(s);
-              return `<div class="score-bar-wrap">
-                <div class="score-bar-label"><span>${n}</span><span style="font-weight:600;color:${c}">${s}%</span></div>
-                <div class="score-bar"><div class="score-bar-fill" style="width:${s}%;background:${c}"></div></div>
-              </div>`;
-            }).join('')}
-            <canvas id="chart-client-scores" style="margin-top:14px;max-height:180px"></canvas>
-          </div>` : '<div class="c360-card"><div class="c360-card-title">Аудит</div><div style="font-size:13px;color:var(--t2)">Аудит не пройден</div></div>'}
+      <!-- ── ROW 2: AUDIT SCORES + AI ANALYSIS ── -->
+      ${a ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="c360-card">
+          <div class="c360-card-title">Рейтинги аудита · Общий: <span style="font-weight:700;color:${scoreColor(scores.overall)}">${Math.round(scores.overall || 0)}%</span></div>
+          ${BLOCKS.map(b => {
+            const s = Math.round(scores[b.id] || 0);
+            return `<div class="score-bar-wrap">
+              <div class="score-bar-label"><span>${b.name}</span><span style="font-weight:600;color:${scoreColor(s)}">${s}%</span></div>
+              <div class="score-bar"><div class="score-bar-fill" style="width:${s}%;background:${scoreColor(s)}"></div></div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center">
+          <canvas id="chart-client-scores" style="max-height:240px;max-width:300px"></canvas>
+        </div>
+      </div>` : ''}
 
-          ${an ? `
-          <div class="c360-card">
-            <div class="c360-card-title">AI Анализ</div>
-            ${an.analysis?.summary ? `<div style="font-size:13px;line-height:1.65;margin-bottom:12px">${an.analysis.summary}</div>` : ''}
-            ${an.analysis?.main_problems?.length ? `
-              <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">Главные проблемы</div>
-              ${an.analysis.main_problems.map(p => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">${p}</div>`).join('')}` : ''}
+      ${an?.analysis ? `
+      <div class="c360-card" style="margin-bottom:16px">
+        <div class="c360-card-title">AI Анализ</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+          ${an.analysis.main_problems?.length ? `<div>
+            <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:8px">Главные проблемы</div>
+            ${an.analysis.main_problems.map(x => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">${x}</div>`).join('')}
           </div>` : ''}
-
-          ${d.documents.length ? `
-          <div class="c360-card">
-            <div class="c360-card-title">Документы (${d.documents.length})</div>
-            ${d.documents.slice(0, 10).map(doc => `
-              <div class="c360-field">
-                <span class="c360-field-label" style="max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${doc.task_name}</span>
-                <span class="c360-field-val">${fmtDate(doc.created_at)}</span>
-              </div>`).join('')}
+          ${an.analysis.risks?.length ? `<div>
+            <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;margin-bottom:8px">Риски</div>
+            ${an.analysis.risks.map(x => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">${x}</div>`).join('')}
+          </div>` : ''}
+          ${an.analysis.priorities?.length ? `<div>
+            <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:8px">Приоритеты</div>
+            ${an.analysis.priorities.map(x => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">${x}</div>`).join('')}
           </div>` : ''}
         </div>
-      </div>`;
+        ${an.analysis.profit_losses ? `<div style="margin-top:12px;padding:10px;background:var(--rbg);border-radius:var(--r);font-size:13px;color:var(--red)">💸 ${an.analysis.profit_losses}</div>` : ''}
+        ${an.analysis.summary ? `<div style="margin-top:12px;font-size:13px;line-height:1.65;color:var(--t2);font-style:italic">"${an.analysis.summary}"</div>` : ''}
+      </div>` : ''}
 
-    // Radar chart for client scores
-    if (a && Object.keys(scores).length) {
+      <!-- ── AUDIT ANSWERS (collapsible by block) ── -->
+      ${a?.answers && Object.keys(a.answers).length ? `
+      <div class="c360-card" style="margin-bottom:16px">
+        <div class="c360-card-title" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="toggleSection('answers-body')">
+          Ответы аудита (63 вопроса)
+          <span id="answers-toggle" style="font-size:14px;color:var(--t2)">▼</span>
+        </div>
+        <div id="answers-body" style="display:none;margin-top:12px">
+          ${BLOCKS.map(b => {
+            const qs = QUESTIONS[b.id] || [];
+            const answered = qs.filter((_,i) => a.answers[b.id+'_'+i]?.val).length;
+            return `<div style="margin-bottom:16px">
+              <div style="font-size:12px;font-weight:700;color:${b.color};text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid ${b.color}40">
+                ${b.name} · ${answered}/${qs.length} ответов · <span style="color:${scoreColor(scores[b.id]||0)}">${Math.round(scores[b.id]||0)}%</span>
+              </div>
+              ${qs.map((q, i) => {
+                const ans = a.answers[b.id+'_'+i];
+                const val = ans?.val;
+                const comment = ans?.comment;
+                const icon  = val==='yes' ? '✓' : val==='partly' ? '≈' : val==='no' ? '✕' : '—';
+                const color = val==='yes' ? 'var(--green)' : val==='partly' ? 'var(--amber)' : val==='no' ? 'var(--red)' : 'var(--t3)';
+                const bg    = val==='yes' ? 'var(--gbg)' : val==='partly' ? 'var(--abg)' : val==='no' ? 'var(--rbg)' : 'var(--s2)';
+                return `<div style="display:flex;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
+                  <span style="min-width:22px;height:22px;border-radius:50%;background:${bg};color:${color};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon}</span>
+                  <div style="flex:1">
+                    <div style="font-size:12px;color:var(--text)">${q}</div>
+                    ${comment ? `<div style="font-size:11px;color:var(--t2);margin-top:2px;font-style:italic">${comment}</div>` : ''}
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
+
+      <!-- ── IMPLEMENTATION PROGRESS ── -->
+      <div class="c360-card" style="margin-bottom:16px">
+        <div class="c360-card-title" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="toggleSection('progress-body')">
+          <span>Прогресс внедрения · <span style="color:${doneTasks > 0 ? 'var(--green)' : 'var(--t2)'}">${doneTasks} / ${totalTasks} задач</span></span>
+          <span id="progress-toggle" style="font-size:14px;color:var(--t2)">▼</span>
+        </div>
+        <div style="height:6px;background:var(--s3);border-radius:3px;margin:10px 0 4px;overflow:hidden">
+          <div style="height:100%;width:${totalTasks > 0 ? Math.round(doneTasks/totalTasks*100) : 0}%;background:linear-gradient(90deg,var(--green),var(--gm));border-radius:3px;transition:width .5s"></div>
+        </div>
+        <div id="progress-body" style="display:none;margin-top:14px">
+          ${BLOCKS.map(b => {
+            const tasks = ROADMAP_TASKS[b.id] || [];
+            const blockDone = tasks.filter(t => completedSet.has(t.id)).length;
+            return `<div style="margin-bottom:14px">
+              <div style="font-size:12px;font-weight:700;color:${b.color};text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">
+                ${b.name} · ${blockDone}/${tasks.length}
+              </div>
+              ${tasks.map(t => {
+                const done = completedSet.has(t.id);
+                return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border)">
+                  <span style="width:18px;height:18px;border-radius:4px;background:${done ? 'var(--green)' : 'var(--border2)'};color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${done ? '✓' : ''}</span>
+                  <span style="font-size:12px;${done ? 'text-decoration:line-through;color:var(--t3)' : 'color:var(--text)'}">${t.name}</span>
+                  <span style="margin-left:auto;font-size:10px;font-weight:600;color:${PRIO_COLORS[t.p]}">${PRIO_LABELS[t.p]}</span>
+                </div>`;
+              }).join('')}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- ── DOCUMENTS ── -->
+      ${d.documents.length ? `
+      <div class="c360-card">
+        <div class="c360-card-title">Документы (${d.documents.length})</div>
+        <div id="docs-list-${id}">
+          ${d.documents.map((doc, idx) => `
+            <div style="border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:var(--s2)" onclick="toggleDoc('doc-${id}-${idx}')">
+                <div>
+                  <span style="font-size:13px;font-weight:500">${doc.task_name}</span>
+                  <span style="font-size:11px;color:var(--t3);margin-left:10px">${fmtDateTime(doc.created_at)}</span>
+                </div>
+                <span style="font-size:12px;color:var(--t2)" id="doc-toggle-${id}-${idx}">▼ Открыть</span>
+              </div>
+              <div id="doc-${id}-${idx}" style="display:none;padding:16px 18px;border-top:1px solid var(--border)">
+                <div style="font-size:13px;line-height:1.75;white-space:pre-wrap;color:var(--text);max-height:400px;overflow-y:auto">${escHtml(doc.content)}</div>
+                <div style="margin-top:12px;display:flex;gap:8px">
+                  <button class="btn-secondary-sm" onclick="copyDocContent('doc-${id}-${idx}')">⎘ Копировать</button>
+                  <button class="btn-primary-sm" onclick="downloadDocAdmin('${escAttr(doc.task_name)}','doc-${id}-${idx}')">⬇ Скачать .doc</button>
+                </div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>` : '<div class="c360-card"><div class="c360-card-title">Документы</div><div style="font-size:13px;color:var(--t2)">Документов нет</div></div>'}
+    `;
+
+    // Radar chart
+    if (a && scores.overall) {
       setTimeout(() => {
         makeChart('chart-client-scores', {
           type: 'radar',
           data: {
-            labels: BLOCK_LABELS,
+            labels: BLOCKS.map(b => b.name),
             datasets: [{
-              label: 'Рейтинг', data: BLOCK_KEYS.map(k => scores[k] || 0),
-              borderColor: '#C2185B', backgroundColor: 'rgba(194,24,91,.12)', pointBackgroundColor: '#C2185B'
+              label: 'Рейтинг', data: BLOCKS.map(b => Math.round(scores[b.id] || 0)),
+              borderColor: '#C2185B', backgroundColor: 'rgba(194,24,91,.12)', pointBackgroundColor: '#C2185B', pointRadius: 4
             }]
           },
           options: { responsive: true, maintainAspectRatio: true, scales: { r: { beginAtZero: true, max: 100, ticks: { display: false } } }, plugins: { legend: { display: false } } }
@@ -875,8 +994,47 @@ async function openClient360(id) {
       }, 100);
     }
   } catch (e) {
-    if (e.message !== 'Forbidden') { el.innerHTML = '<div style="padding:20px;color:var(--red)">Ошибка загрузки</div>'; }
+    if (e.message !== 'Forbidden') el.innerHTML = '<div style="padding:20px;color:var(--red)">Ошибка загрузки</div>';
   }
+}
+
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  const toggleId = id === 'answers-body' ? 'answers-toggle' : 'progress-toggle';
+  const btn = document.getElementById(toggleId);
+  if (btn) btn.textContent = isHidden ? '▲' : '▼';
+}
+
+function toggleDoc(id) {
+  const el = document.getElementById(id);
+  const btn = document.getElementById('doc-toggle-' + id.split('doc-')[1]);
+  if (!el) return;
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  if (btn) btn.textContent = isHidden ? '▲ Закрыть' : '▼ Открыть';
+}
+
+function escHtml(str) { return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(str) { return String(str || '').replace(/'/g,'&apos;').replace(/"/g,'&quot;'); }
+
+function copyDocContent(elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const text = el.querySelector('div').innerText || '';
+  navigator.clipboard.writeText(text).then(() => { alert('Скопировано!'); }).catch(() => {});
+}
+
+function downloadDocAdmin(taskName, elId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const content = el.querySelector('div').innerHTML || '';
+  const wordHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:2cm;font-size:11pt;line-height:1.5}</style></head><body><h1>${taskName}</h1>${content}</body></html>`;
+  const blob = new Blob(['﻿' + wordHtml], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = taskName.slice(0,40) + '.doc'; a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ═══════════════════════════════════════════
