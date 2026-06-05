@@ -163,7 +163,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* AUTH GATE */
 #auth-gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
-.auth-gate-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:40px;text-align:center;max-width:360px;box-shadow:var(--shm)}
+.auth-gate-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:40px;text-align:center;max-width:380px;width:100%;box-shadow:var(--shm)}
+.auth-field{margin-bottom:14px;text-align:left}
+.auth-field label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px}
+.auth-field input{width:100%;padding:10px 14px;border:1px solid var(--border2);border-radius:var(--r);font-size:14px;font-family:inherit;outline:none;background:var(--s2);color:var(--text);transition:border-color .15s}
+.auth-field input:focus{border-color:var(--rose);background:#fff;box-shadow:0 0 0 3px rgba(194,24,91,.1)}
+.auth-error{font-size:12px;color:var(--red);background:var(--rbg);padding:8px 12px;border-radius:var(--r);margin-bottom:12px;display:none;text-align:left}
 
 /* TOOLTIP */
 [title]{cursor:help}
@@ -174,13 +179,28 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </head>
 <body>
 
-<!-- AUTH GATE -->
+<!-- AUTH GATE / LOGIN FORM -->
 <div id="auth-gate">
   <div class="auth-gate-box">
-    <div style="font-size:40px;margin-bottom:16px">🔒</div>
-    <div style="font-size:18px;font-weight:600;margin-bottom:8px">Нет доступа</div>
-    <div style="font-size:13px;color:var(--t2);margin-bottom:20px">Необходимы права администратора</div>
-    <a href="/" style="color:var(--rose);font-size:13px">← Вернуться на сайт</a>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:24px">
+      <div class="logo-dot" style="width:12px;height:12px"></div>
+      <span style="font-size:16px;font-weight:700;letter-spacing:-.3px">Beauty OS Admin</span>
+    </div>
+    <div id="login-error" class="auth-error"></div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="admin@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    </div>
+    <div class="auth-field">
+      <label>Пароль</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    </div>
+    <button id="login-btn" onclick="doAdminLogin()" style="width:100%;padding:11px;background:var(--rose);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;transition:background .15s" onmouseover="this.style.background='var(--rose-d)'" onmouseout="this.style.background='var(--rose)'">
+      Войти в Admin Panel →
+    </button>
+    <div style="margin-top:16px">
+      <a href="/" style="font-size:12px;color:var(--t2);text-decoration:none">← Вернуться на сайт</a>
+    </div>
   </div>
 </div>
 
@@ -1390,20 +1410,74 @@ function renderPagination(containerId, currentPage, total, limit, onPageChange) 
 }
 
 // ═══════════════════════════════════════════
-// INIT
+// ADMIN LOGIN
+// ═══════════════════════════════════════════
+async function doAdminLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+
+  if (!email || !password) {
+    errEl.textContent = 'Введите email и пароль';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Входим...';
+
+  try {
+    // Log in via main auth API
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Ошибка входа');
+
+    // Check admin rights
+    const kpisRes = await fetch('/api/admin/kpis', { credentials: 'include' });
+    if (kpisRes.status === 403) {
+      // Log out and show error
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      throw new Error('У этого аккаунта нет прав администратора');
+    }
+    if (!kpisRes.ok) throw new Error('Ошибка проверки прав');
+
+    showAdminPanel();
+    loadExecutive();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Войти в Admin Panel →';
+  }
+}
+
+function showAdminPanel() {
+  document.getElementById('auth-gate').style.display = 'none';
+  document.getElementById('sidebar').style.display = 'flex';
+  document.getElementById('main').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════
+// INIT — check if already logged in as admin
 // ═══════════════════════════════════════════
 async function init() {
   try {
-    const kpis = await adminApi('/kpis');
-    // Success — hide auth gate, show UI
-    document.getElementById('auth-gate').style.display = 'none';
-    document.getElementById('sidebar').style.display = 'flex';
-    document.getElementById('main').style.display = 'block';
+    await adminApi('/kpis');
+    showAdminPanel();
     loadExecutive();
   } catch (e) {
-    if (e.message !== 'Forbidden') {
-      document.getElementById('auth-gate').style.display = 'flex';
-    }
+    // Not logged in or not admin — show login form
+    document.getElementById('auth-gate').style.display = 'flex';
+    document.getElementById('sidebar').style.display = 'none';
+    document.getElementById('main').style.display = 'none';
   }
 }
 
