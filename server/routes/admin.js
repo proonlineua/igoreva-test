@@ -30,10 +30,10 @@ router.get('/kpis', async (req, res) => {
       ),
       revenue AS (
         SELECT
-          COALESCE(SUM(amount), 0)                                                             AS total_revenue,
-          COALESCE(SUM(amount) FILTER (WHERE created_at > NOW() - INTERVAL '30 days'), 0)     AS revenue_30d,
-          COUNT(*) FILTER (WHERE status = 'paid')                                              AS total_payments,
-          COUNT(*) FILTER (WHERE status = 'paid' AND created_at > NOW() - INTERVAL '30 days') AS payments_30d
+          COALESCE(SUM(amount) FILTER (WHERE status = 'paid'), 0)                                                             AS total_revenue,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND created_at > NOW() - INTERVAL '30 days'), 0)                 AS revenue_30d,
+          COUNT(*) FILTER (WHERE status = 'paid')                                                                              AS total_payments,
+          COUNT(*) FILTER (WHERE status = 'paid' AND created_at > NOW() - INTERVAL '30 days')                                 AS payments_30d
         FROM payments
       ),
       audits_agg AS (
