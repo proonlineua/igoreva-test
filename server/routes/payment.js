@@ -80,7 +80,7 @@ router.post('/checkout', requireAuth, async (req, res) => {
 });
 
 // POST /api/payment/callback — вызывается Wayforpay после оплаты
-router.post('/callback', express.json(), async (req, res) => {
+router.post('/callback', express.json(), express.urlencoded({ extended: true }), async (req, res) => {
   try {
     const body = req.body;
 

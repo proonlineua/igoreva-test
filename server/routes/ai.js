@@ -42,11 +42,14 @@ router.post('/analyze', async (req, res) => {
   try {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
+      max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }]
     });
     const text = message.content.map(c => c.text || '').join('');
-    const result = JSON.parse(text.replace(/```json|```/g, '').trim());
+    // Robust JSON extraction — find the first { ... } block
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON in Claude response');
+    const result = JSON.parse(jsonMatch[0]);
 
     await query(
       'INSERT INTO audit_analyses (user_id, scores, analysis) VALUES ($1, $2, $3)',
