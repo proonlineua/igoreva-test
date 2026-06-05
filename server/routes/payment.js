@@ -82,7 +82,16 @@ router.post('/checkout', requireAuth, async (req, res) => {
 // POST /api/payment/callback — вызывается Wayforpay после оплаты
 router.post('/callback', express.json(), express.urlencoded({ extended: true }), async (req, res) => {
   try {
-    const body = req.body;
+    // Диагностика: логируем raw тело и content-type
+    const contentType = req.headers['content-type'] || 'unknown';
+    console.log('[CALLBACK RAW] content-type:', contentType, '| body keys:', Object.keys(req.body || {}).join(',') || 'EMPTY');
+
+    let body = req.body || {};
+
+    // Если тело пустое — Wayforpay мог прислать данные как строку
+    if (!body.transactionStatus && req.body && typeof req.body === 'string') {
+      try { body = JSON.parse(req.body); } catch {}
+    }
 
     // Верификация подписи
     const signFields = [
@@ -93,7 +102,6 @@ router.post('/callback', express.json(), express.urlencoded({ extended: true }),
     const expected = wayforpaySign(signFields);
     if (body.merchantSignature !== expected) {
       console.warn('[CALLBACK] Invalid signature, expected:', expected, 'got:', body.merchantSignature);
-      // Не блокируем — Wayforpay иногда присылает разные форматы подписи
     }
 
     const status = body.transactionStatus;
