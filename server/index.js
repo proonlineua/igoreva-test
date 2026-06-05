@@ -10,6 +10,7 @@ const authRouter    = require('./routes/auth');
 const aiRouter      = require('./routes/ai');
 const paymentRouter = require('./routes/payment');
 const auditRouter   = require('./routes/audit');
+const adminRouter   = require('./routes/admin');
 
 const app = express();
 
@@ -19,7 +20,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:    ["'self'"],
-      scriptSrc:     ["'self'", "'unsafe-inline'"],
+      scriptSrc:     ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net'],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc:      ["'self'", "'unsafe-inline'", 'fonts.googleapis.com', 'fonts.gstatic.com'],
       fontSrc:       ["'self'", 'fonts.gstatic.com'],
@@ -58,6 +59,7 @@ app.use('/api/auth',    authLimit,  authRouter);
 app.use('/api/ai',      aiLimit,    aiRouter);
 app.use('/api/payment',             paymentRouter);
 app.use('/api/audit',               auditRouter);
+app.use('/api/admin',               adminRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0', ts: new Date().toISOString() });
@@ -66,6 +68,11 @@ app.get('/api/health', (req, res) => {
 // Wayforpay redirects browser to returnUrl via POST after payment
 app.post('/payment/success', (req, res) => {
   res.redirect(303, '/payment/success');
+});
+
+// Admin panel — must be before SPA catch-all
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
 // SPA fallback

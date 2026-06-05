@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beauty OS — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --rose:#C2185B;--rose-l:#FCE4EC;--rose-d:#880E4F;--rose-m:#F48FB1;
+  --bg:#F8F7F5;--surface:#fff;--s2:#F5F4F2;--s3:#EEECE9;
+  --text:#1A1A1A;--t2:#6B6B6B;--t3:#9E9E9E;
+  --border:#E5E3DF;--border2:#D0CEC9;
+  --green:#2E7D32;--gbg:#E8F5E9;--gm:#66BB6A;
+  --amber:#E65100;--abg:#FFF3E0;--am:#FFA726;
+  --red:#C62828;--rbg:#FFEBEE;--rm:#EF9A9A;
+  --blue:#1565C0;--bbg:#E3F2FD;
+  --r:8px;--rl:12px;--rxl:16px;
+  --sh:0 1px 3px rgba(0,0,0,.08);--shm:0 4px 12px rgba(0,0,0,.1);
+  --sidebar:220px
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
+.sidebar-logo{display:flex;align-items:center;gap:8px;padding:18px 20px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:14px;letter-spacing:-.3px}
+.logo-dot{width:10px;height:10px;border-radius:50%;background:var(--rose);flex-shrink:0}
+.sidebar-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;padding:16px 20px 6px}
+.sidebar-nav{flex:1;overflow-y:auto;padding-bottom:12px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 20px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .15s;border-radius:0}
+.nav-item:hover{color:var(--text);background:var(--s2)}
+.nav-item.active{color:var(--rose);background:var(--rose-l);font-weight:600}
+.nav-item .ni{font-size:15px;width:20px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
+.sidebar-user{font-size:12px;color:var(--t2);margin-bottom:8px}
+.btn-logout{width:100%;padding:7px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--t2);transition:all .15s}
+.btn-logout:hover{background:var(--rbg);border-color:var(--rm);color:var(--red)}
+
+/* MAIN */
+.main{margin-left:var(--sidebar);flex:1;padding:28px 32px;min-height:100vh}
+.screen{display:none}
+.screen.active{display:block}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
+.page-header p{font-size:13px;color:var(--t2)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;box-shadow:var(--sh)}
+.kpi-label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.kpi-value{font-size:26px;font-weight:700;letter-spacing:-.5px;color:var(--text)}
+.kpi-sub{font-size:12px;color:var(--t2);margin-top:3px}
+.kpi-rose .kpi-value{color:var(--rose)}
+.kpi-green .kpi-value{color:var(--green)}
+.kpi-blue .kpi-value{color:var(--blue)}
+
+/* CHARTS */
+.charts-row{display:grid;gap:16px;margin-bottom:20px}
+.charts-2{grid-template-columns:1fr 1fr}
+.charts-3{grid-template-columns:1fr 1fr 1fr}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:20px;box-shadow:var(--sh)}
+.chart-title{font-size:13px;font-weight:600;color:var(--t2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.3px}
+.chart-wrap{position:relative;height:200px}
+
+/* TABLES */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);margin-bottom:20px}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.table-title{font-size:14px;font-weight:600}
+.table-actions{display:flex;gap:8px;align-items:center}
+.admin-table{width:100%;border-collapse:collapse}
+.admin-table th{background:var(--s2);font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;padding:9px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.admin-table td{font-size:13px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.admin-table tr:last-child td{border-bottom:none}
+.admin-table tr:hover td{background:var(--s2)}
+.admin-table a{color:var(--rose);cursor:pointer;text-decoration:none;font-weight:500}
+.admin-table a:hover{text-decoration:underline}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-green{background:var(--gbg);color:var(--green)}
+.badge-red{background:var(--rbg);color:var(--red)}
+.badge-amber{background:var(--abg);color:var(--amber)}
+.badge-blue{background:var(--bbg);color:var(--blue)}
+.badge-gray{background:var(--s3);color:var(--t2)}
+
+/* FILTERS */
+.filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.filter-input{padding:7px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;background:var(--surface);min-width:200px;color:var(--text)}
+.filter-input:focus{border-color:var(--rose)}
+.filter-select{padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;outline:none;background:var(--surface);cursor:pointer;color:var(--text)}
+.btn-filter{padding:7px 14px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--t2);transition:all .15s}
+.btn-filter:hover,.btn-filter.active{background:var(--rose-l);border-color:var(--rose-m);color:var(--rose-d)}
+.btn-primary-sm{padding:7px 14px;border:none;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;background:var(--rose);color:#fff;transition:all .15s}
+.btn-primary-sm:hover{background:var(--rose-d)}
+.btn-secondary-sm{padding:7px 14px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--t2);transition:all .15s}
+.btn-secondary-sm:hover{background:var(--s2)}
+
+/* PAGINATION */
+.pagination{display:flex;gap:4px;align-items:center;padding:12px 18px;justify-content:flex-end;border-top:1px solid var(--border)}
+.page-btn{padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;cursor:pointer;background:var(--surface);color:var(--t2);transition:all .15s}
+.page-btn:hover{background:var(--s2)}
+.page-btn.active{background:var(--rose);border-color:var(--rose);color:#fff}
+.page-info{font-size:12px;color:var(--t2);margin-right:8px}
+
+/* CLIENT 360 */
+.c360-grid{display:grid;grid-template-columns:320px 1fr;gap:20px}
+.c360-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:16px;box-shadow:var(--sh)}
+.c360-card-title{font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+.c360-field{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.c360-field:last-child{border-bottom:none}
+.c360-field-label{color:var(--t2)}
+.c360-field-val{font-weight:500;text-align:right;max-width:60%}
+.score-bar-wrap{margin-bottom:8px}
+.score-bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.score-bar{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;margin-bottom:18px;padding:6px 0;border:none;background:none}
+.back-btn:hover{color:var(--rose)}
+
+/* FUNNEL */
+.funnel-wrap{padding:10px 0}
+.funnel-step{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.funnel-label{font-size:13px;color:var(--t2);width:160px;flex-shrink:0}
+.funnel-bar-outer{flex:1;background:var(--s3);border-radius:4px;height:28px;overflow:hidden;position:relative}
+.funnel-bar-inner{height:100%;background:linear-gradient(90deg,var(--rose),var(--rose-m));border-radius:4px;transition:width .6s;display:flex;align-items:center;padding-left:10px}
+.funnel-count{font-size:12px;font-weight:700;color:#fff;white-space:nowrap}
+.funnel-pct{font-size:12px;color:var(--t3);width:50px;text-align:right;flex-shrink:0}
+
+/* AI INSIGHTS */
+.insight-card{background:linear-gradient(135deg,var(--rose-l),#fff);border:1px solid var(--rose-m);border-radius:var(--rl);padding:22px;margin-bottom:16px}
+.insight-text{font-size:14px;line-height:1.75;color:var(--text);white-space:pre-wrap}
+.insight-date{font-size:11px;color:var(--t3);margin-top:12px}
+.loading-dots{display:flex;gap:5px;align-items:center;padding:20px}
+.loading-dot{width:7px;height:7px;border-radius:50%;background:var(--rose);animation:pulse .8s infinite alternate}
+.loading-dot:nth-child(2){animation-delay:.2s}
+.loading-dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{from{opacity:.3}to{opacity:1}}
+
+/* HEATMAP */
+.heatmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:24px}
+.heat-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;transition:all .15s}
+.heat-block-name{font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px}
+.heat-block-pct{font-size:22px;font-weight:700}
+.heat-block-label{font-size:10px;color:var(--t3);margin-top:2px}
+
+/* BENCHMARK */
+.bench-user-select{margin-bottom:20px}
+.bench-comparison{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.bench-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.bench-block-name{font-size:11px;color:var(--t2);margin-bottom:6px}
+.bench-user-val{font-size:20px;font-weight:700;color:var(--rose)}
+.bench-market-val{font-size:12px;color:var(--t3)}
+.bench-delta{font-size:11px;font-weight:600;margin-top:3px}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:48px 24px;color:var(--t2)}
+.empty-state-icon{font-size:40px;margin-bottom:12px}
+.empty-state h3{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+
+/* AUTH GATE */
+#auth-gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.auth-gate-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:40px;text-align:center;max-width:360px;box-shadow:var(--shm)}
+
+/* TOOLTIP */
+[title]{cursor:help}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="auth-gate">
+  <div class="auth-gate-box">
+    <div style="font-size:40px;margin-bottom:16px">🔒</div>
+    <div style="font-size:18px;font-weight:600;margin-bottom:8px">Нет доступа</div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:20px">Необходимы права администратора</div>
+    <a href="/" style="color:var(--rose);font-size:13px">← Вернуться на сайт</a>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar" style="display:none">
+  <div class="sidebar-logo"><div class="logo-dot"></div>Beauty OS Admin</div>
+  <div class="sidebar-nav">
+    <div class="sidebar-label">Обзор</div>
+    <button class="nav-item active" onclick="showScreen('executive')" id="nav-executive"><span class="ni">📊</span>Executive</button>
+    <div class="sidebar-label">Клиенты</div>
+    <button class="nav-item" onclick="showScreen('users')" id="nav-users"><span class="ni">👥</span>Users & Clients</button>
+    <button class="nav-item" onclick="showScreen('payments')" id="nav-payments"><span class="ni">💳</span>Payments</button>
+    <div class="sidebar-label">Аналитика</div>
+    <button class="nav-item" onclick="showScreen('sales')" id="nav-sales"><span class="ni">📈</span>Sales Analytics</button>
+    <button class="nav-item" onclick="showScreen('product')" id="nav-product"><span class="ni">🔧</span>Product Analytics</button>
+    <button class="nav-item" onclick="showScreen('documents')" id="nav-documents"><span class="ni">📄</span>Documents</button>
+    <div class="sidebar-label">Индустрия</div>
+    <button class="nav-item" onclick="showScreen('industry')" id="nav-industry"><span class="ni">🌍</span>Industry Analytics</button>
+    <button class="nav-item" onclick="showScreen('heatmap')" id="nav-heatmap"><span class="ni">🔥</span>Problem Heatmap</button>
+    <button class="nav-item" onclick="showScreen('benchmarks')" id="nav-benchmarks"><span class="ni">⚖️</span>Benchmarks</button>
+    <button class="nav-item" onclick="showScreen('insights')" id="nav-insights"><span class="ni">🤖</span>AI Insights</button>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-user" id="admin-email"></div>
+    <button class="btn-logout" onclick="window.location='/'">← Вернуться на сайт</button>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main" id="main" style="display:none">
+
+<!-- ═══════════════════════════════════ -->
+<!-- EXECUTIVE DASHBOARD                -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen active" id="screen-executive">
+  <div class="page-header">
+    <h1>Executive Dashboard</h1>
+    <p>Ключевые метрики платформы</p>
+  </div>
+
+  <div class="kpi-grid" id="exec-kpis">
+    <div class="kpi-card"><div class="kpi-label">Всего пользователей</div><div class="kpi-value" id="kpi-total">—</div></div>
+    <div class="kpi-card kpi-rose"><div class="kpi-label">Платных пользователей</div><div class="kpi-value" id="kpi-paid">—</div><div class="kpi-sub" id="kpi-conv">—</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-label">Выручка всего</div><div class="kpi-value" id="kpi-revenue">—</div><div class="kpi-sub" id="kpi-rev30">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Новых за 30 дней</div><div class="kpi-value" id="kpi-new30">—</div><div class="kpi-sub" id="kpi-new7">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Завершено аудитов</div><div class="kpi-value" id="kpi-audits">—</div><div class="kpi-sub" id="kpi-avg-score">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Создано документов</div><div class="kpi-value" id="kpi-docs">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Задач внедрено</div><div class="kpi-value" id="kpi-tasks">—</div></div>
+    <div class="kpi-card kpi-blue"><div class="kpi-label">Платежей за 30 дней</div><div class="kpi-value" id="kpi-pay30">—</div></div>
+  </div>
+
+  <div class="charts-row charts-2">
+    <div class="chart-card">
+      <div class="chart-title">Регистрации (30 дней)</div>
+      <div class="chart-wrap"><canvas id="chart-registrations"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Выручка по месяцам</div>
+      <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-row charts-2">
+    <div class="chart-card">
+      <div class="chart-title">Средние рейтинги по блокам</div>
+      <div class="chart-wrap"><canvas id="chart-block-avg"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Платные vs Бесплатные</div>
+      <div class="chart-wrap" style="height:160px"><canvas id="chart-user-split"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- USERS & CLIENTS                    -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-users">
+  <div class="page-header">
+    <h1>Users & Clients</h1>
+    <p id="users-count-label">Загружаем...</p>
+  </div>
+
+  <div class="filter-bar">
+    <input class="filter-input" id="user-search" placeholder="🔍 Email, имя, салон..." oninput="debounceLoadUsers()">
+    <select class="filter-select" id="filter-access" onchange="loadUsers(1)">
+      <option value="">Все тарифы</option>
+      <option value="true">Платные</option>
+      <option value="false">Бесплатные</option>
+    </select>
+    <select class="filter-select" id="filter-audit" onchange="loadUsers(1)">
+      <option value="">Все</option>
+      <option value="true">Аудит завершён</option>
+      <option value="false">Без аудита</option>
+    </select>
+    <button class="btn-secondary-sm" onclick="exportUsersCSV()">⬇ CSV</button>
+  </div>
+
+  <div class="table-card">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Пользователь</th>
+          <th>Салон / Город</th>
+          <th>Рейтинг</th>
+          <th>Доступ</th>
+          <th>Документы</th>
+          <th>Дата регистрации</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody id="users-tbody">
+        <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--t2)">Загружаем...</td></tr>
+      </tbody>
+    </table>
+    <div class="pagination" id="users-pagination"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- CLIENT 360                         -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-client360">
+  <button class="back-btn" onclick="showScreen('users')">← Назад к списку</button>
+  <div id="c360-content">
+    <div style="text-align:center;padding:40px;color:var(--t2)">Выберите пользователя из списка</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- SALES ANALYTICS                    -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-sales">
+  <div class="page-header"><h1>Sales Analytics</h1><p>Выручка, конверсии, когорты</p></div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi-card kpi-green"><div class="kpi-label">Общая выручка</div><div class="kpi-value" id="s-total-rev">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Выручка за 30 дней</div><div class="kpi-value" id="s-rev30">—</div></div>
+    <div class="kpi-card kpi-rose"><div class="kpi-label">Всего платежей</div><div class="kpi-value" id="s-payments">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Средний чек</div><div class="kpi-value" id="s-avg-check">—</div></div>
+  </div>
+
+  <div class="charts-row charts-2">
+    <div class="chart-card">
+      <div class="chart-title">Выручка по месяцам</div>
+      <div class="chart-wrap"><canvas id="chart-rev-monthly"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Конверсия по когортам (%)</div>
+      <div class="chart-wrap"><canvas id="chart-cohorts-bar"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header"><div class="table-title">Когорты по месяцам</div></div>
+    <table class="admin-table">
+      <thead><tr><th>Месяц</th><th>Зарегистрировалось</th><th>Купили</th><th>Конверсия</th></tr></thead>
+      <tbody id="cohorts-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- PRODUCT ANALYTICS                  -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-product">
+  <div class="page-header"><h1>Product Analytics</h1><p>Воронка, использование инструментов</p></div>
+
+  <div class="charts-row charts-2">
+    <div class="chart-card" style="grid-column:1">
+      <div class="chart-title">Воронка конверсии</div>
+      <div id="funnel-viz" class="funnel-wrap"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Топ инструментов AI</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chart-tool-usage"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- INDUSTRY ANALYTICS                 -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-industry">
+  <div class="page-header"><h1>Industry Analytics</h1><p>Статистика рынка красоты по аудитам</p></div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi-card"><div class="kpi-label">Аудитов в базе</div><div class="kpi-value" id="ind-audits">—</div></div>
+    <div class="kpi-card kpi-rose"><div class="kpi-label">Средний рейтинг</div><div class="kpi-value" id="ind-avg">—</div><div class="kpi-sub">из 100%</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-label">Лучший блок</div><div class="kpi-value" id="ind-best">—</div></div>
+    <div class="kpi-card kpi-blue"><div class="kpi-label">Слабый блок</div><div class="kpi-value" id="ind-worst">—</div></div>
+  </div>
+
+  <div class="charts-row charts-2">
+    <div class="chart-card">
+      <div class="chart-title">Распределение рейтингов</div>
+      <div class="chart-wrap"><canvas id="chart-score-dist"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Средние рейтинги по блокам</div>
+      <div class="chart-wrap"><canvas id="chart-market-radar"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- PROBLEM HEATMAP                    -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-heatmap">
+  <div class="page-header"><h1>Problem Heatmap</h1><p>Самые распространённые проблемы рынка</p></div>
+
+  <div class="heatmap-grid" id="heatmap-blocks"></div>
+
+  <div class="chart-card">
+    <div class="chart-title">ТОП-20 проблем индустрии (% салонов ответили «Нет»)</div>
+    <div class="chart-wrap" style="height:340px"><canvas id="chart-heatmap"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- BENCHMARK CENTER                   -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-benchmarks">
+  <div class="page-header"><h1>Benchmark Center</h1><p>Сравнение салонов со средними по рынку</p></div>
+
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px">
+    <select class="filter-select" id="bench-user-select" onchange="renderBenchmarkUser()" style="min-width:260px">
+      <option value="">Выберите пользователя</option>
+    </select>
+    <span style="font-size:13px;color:var(--t2)" id="bench-sample"></span>
+  </div>
+
+  <div id="bench-comparison" class="bench-comparison" style="display:none"></div>
+
+  <div class="charts-row charts-2" id="bench-charts" style="display:none">
+    <div class="chart-card">
+      <div class="chart-title">Пользователь vs Рынок</div>
+      <div class="chart-wrap"><canvas id="chart-benchmark"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Рейтинги по городам</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="chart-city-bench"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header"><div class="table-title">Все пользователи — рейтинговая таблица</div></div>
+    <table class="admin-table">
+      <thead><tr><th>#</th><th>Пользователь</th><th>Салон</th><th>Город</th><th>Общий</th><th>Финансы</th><th>HR</th><th>Продажи</th></tr></thead>
+      <tbody id="bench-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- AI INSIGHTS                        -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-insights">
+  <div class="page-header"><h1>AI Insights Center</h1><p>Автоматический анализ рынка красоты</p></div>
+
+  <div style="display:flex;gap:12px;margin-bottom:20px">
+    <button class="btn-primary-sm" onclick="loadInsights(true)" id="insights-btn">✦ Сгенерировать инсайты</button>
+    <span style="font-size:12px;color:var(--t2);align-self:center" id="insights-cache-info"></span>
+  </div>
+
+  <div id="insights-content">
+    <div class="empty-state">
+      <div class="empty-state-icon">🤖</div>
+      <h3>Нажмите «Сгенерировать»</h3>
+      <p>AI проанализирует все данные платформы и создаст инсайты о рынке красоты</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- DOCUMENT CENTER                    -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-documents">
+  <div class="page-header"><h1>Document Center</h1><p id="docs-count-label">Все сгенерированные документы</p></div>
+
+  <div class="filter-bar">
+    <input class="filter-input" id="docs-search" placeholder="🔍 Задача, email..." oninput="debounceLoadDocs()">
+  </div>
+
+  <div class="table-card">
+    <table class="admin-table">
+      <thead><tr><th>Задача</th><th>Пользователь</th><th>Салон</th><th>Дата</th><th>Предпросмотр</th></tr></thead>
+      <tbody id="docs-tbody"></tbody>
+    </table>
+    <div class="pagination" id="docs-pagination"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ -->
+<!-- PAYMENTS                           -->
+<!-- ═══════════════════════════════════ -->
+<div class="screen" id="screen-payments">
+  <div class="page-header"><h1>Payments</h1><p>История всех транзакций</p></div>
+
+  <div class="filter-bar">
+    <select class="filter-select" id="pay-filter-status" onchange="loadPayments(1)">
+      <option value="">Все статусы</option>
+      <option value="paid">Оплачены</option>
+      <option value="pending">Ожидают</option>
+      <option value="failed">Неудачные</option>
+    </select>
+  </div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+    <div class="kpi-card kpi-green"><div class="kpi-label">Оплачено</div><div class="kpi-value" id="pay-kpi-paid">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Ожидают</div><div class="kpi-value" id="pay-kpi-pending">—</div></div>
+    <div class="kpi-card kpi-rose"><div class="kpi-label">Неудачных</div><div class="kpi-value" id="pay-kpi-failed">—</div></div>
+    <div class="kpi-card kpi-blue"><div class="kpi-label">Всего транзакций</div><div class="kpi-value" id="pay-kpi-total">—</div></div>
+  </div>
+
+  <div class="table-card">
+    <table class="admin-table">
+      <thead><tr><th>Order ID</th><th>Пользователь</th><th>Салон</th><th>Сумма</th><th>Статус</th><th>Дата</th></tr></thead>
+      <tbody id="payments-tbody"></tbody>
+    </table>
+    <div class="pagination" id="payments-pagination"></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE & UTILS
+// ═══════════════════════════════════════════
+const charts = {};
+let usersData = [], benchmarkData = null;
+let usersSearchTimeout = null, docsSearchTimeout = null;
+
+async function adminApi(path, opts = {}) {
+  const res = await fetch('/api/admin' + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    credentials: 'include'
+  });
+  if (res.status === 401 || res.status === 403) {
+    document.getElementById('auth-gate').style.display = 'flex';
+    document.getElementById('sidebar').style.display = 'none';
+    document.getElementById('main').style.display = 'none';
+    throw new Error('Forbidden');
+  }
+  return res.json();
+}
+
+function fmt(n) { return Number(n || 0).toLocaleString('ru'); }
+function fmtUAH(n) { return fmt(n) + ' грн'; }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('ru', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'; }
+function fmtDateTime(d) { return d ? new Date(d).toLocaleString('ru', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'; }
+function scoreColor(s) { return s >= 60 ? '#2E7D32' : s >= 40 ? '#E65100' : '#C62828'; }
+function statusBadge(s) {
+  const map = { paid: 'badge-green', pending: 'badge-amber', failed: 'badge-red', refunded: 'badge-blue' };
+  const labels = { paid: '✓ Оплачен', pending: '⏳ Ожидает', failed: '✗ Ошибка', refunded: '↩ Возврат' };
+  return `<span class="badge ${map[s] || 'badge-gray'}">${labels[s] || s}</span>`;
+}
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function debounceLoadUsers() {
+  clearTimeout(usersSearchTimeout);
+  usersSearchTimeout = setTimeout(() => loadUsers(1), 400);
+}
+function debounceLoadDocs() {
+  clearTimeout(docsSearchTimeout);
+  docsSearchTimeout = setTimeout(() => loadDocuments(1), 400);
+}
+
+// ═══════════════════════════════════════════
+// SCREEN ROUTER
+// ═══════════════════════════════════════════
+const screenLoaders = {
+  executive: loadExecutive,
+  users: () => loadUsers(1),
+  sales: loadSales,
+  product: loadProduct,
+  industry: loadIndustry,
+  heatmap: loadHeatmap,
+  benchmarks: loadBenchmarks,
+  insights: () => {},
+  documents: () => loadDocuments(1),
+  payments: () => loadPayments(1),
+  client360: () => {}
+};
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  const nav = document.getElementById('nav-' + name);
+  if (screen) screen.classList.add('active');
+  if (nav) nav.classList.add('active');
+  if (screenLoaders[name]) screenLoaders[name]();
+}
+
+// ═══════════════════════════════════════════
+// CHART HELPERS
+// ═══════════════════════════════════════════
+function makeChart(id, config) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, config);
+  return charts[id];
+}
+
+const BLOCK_LABELS = ['Финансы','Персонал','Продажи','Клиенты','Операционка','Собственник','Маркетинг'];
+const BLOCK_KEYS   = ['finance','hr','sales','clients','ops','owner','marketing'];
+const BRAND_COLORS = ['#C2185B','#E91E63','#F06292','#F48FB1','#E65100','#1565C0','#2E7D32'];
+
+// ═══════════════════════════════════════════
+// EXECUTIVE DASHBOARD
+// ═══════════════════════════════════════════
+async function loadExecutive() {
+  try {
+    const [kpis, regs, revTrend, blockAvg] = await Promise.all([
+      adminApi('/kpis'),
+      adminApi('/registrations?period=30'),
+      adminApi('/revenue-trend'),
+      adminApi('/block-averages')
+    ]);
+
+    document.getElementById('kpi-total').textContent   = fmt(kpis.total_users);
+    document.getElementById('kpi-paid').textContent    = fmt(kpis.paid_users);
+    document.getElementById('kpi-conv').textContent    = kpis.total_users > 0 ? Math.round(kpis.paid_users / kpis.total_users * 100) + '% конверсия' : '';
+    document.getElementById('kpi-revenue').textContent = fmtUAH(kpis.total_revenue);
+    document.getElementById('kpi-rev30').textContent   = fmtUAH(kpis.revenue_30d) + ' / 30 дней';
+    document.getElementById('kpi-new30').textContent   = fmt(kpis.new_users_30d);
+    document.getElementById('kpi-new7').textContent    = fmt(kpis.new_7d) + ' за 7 дней';
+    document.getElementById('kpi-audits').textContent  = fmt(kpis.audits_done);
+    document.getElementById('kpi-avg-score').textContent = 'Средний балл: ' + (kpis.avg_score || '—') + '%';
+    document.getElementById('kpi-docs').textContent    = fmt(kpis.docs_total);
+    document.getElementById('kpi-tasks').textContent   = fmt(kpis.tasks_completed);
+    document.getElementById('kpi-pay30').textContent   = fmt(kpis.payments_30d);
+
+    // Registrations line chart
+    makeChart('chart-registrations', {
+      type: 'line',
+      data: {
+        labels: regs.map(r => new Date(r.day).toLocaleDateString('ru', { day: '2-digit', month: 'short' })),
+        datasets: [{
+          label: 'Регистрации', data: regs.map(r => r.registrations),
+          borderColor: '#C2185B', backgroundColor: 'rgba(194,24,91,.08)',
+          tension: .4, fill: true, pointRadius: 2
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    // Revenue bar chart
+    makeChart('chart-revenue', {
+      type: 'bar',
+      data: {
+        labels: revTrend.map(r => r.month),
+        datasets: [{ label: 'Выручка (грн)', data: revTrend.map(r => Number(r.revenue)), backgroundColor: '#C2185B', borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    // Block averages horizontal bar
+    makeChart('chart-block-avg', {
+      type: 'bar',
+      data: {
+        labels: BLOCK_LABELS,
+        datasets: [{ label: 'Средний %', data: BLOCK_KEYS.map(k => blockAvg[k] || 0), backgroundColor: BRAND_COLORS, borderRadius: 4 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, max: 100 } }
+      }
+    });
+
+    // User split doughnut
+    const paid = Number(kpis.paid_users), free = Number(kpis.total_users) - paid;
+    makeChart('chart-user-split', {
+      type: 'doughnut',
+      data: {
+        labels: ['Платные', 'Бесплатные'],
+        datasets: [{ data: [paid, free], backgroundColor: ['#C2185B', '#E5E3DF'], borderWidth: 0 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } }, cutout: '65%' }
+    });
+  } catch (e) {
+    if (e.message !== 'Forbidden') console.error('[EXEC]', e);
+  }
+}
+
+// ═══════════════════════════════════════════
+// USERS TABLE
+// ═══════════════════════════════════════════
+let usersPagination = { page: 1, total: 0, limit: 20 };
+
+async function loadUsers(page = 1) {
+  usersPagination.page = page;
+  const search = document.getElementById('user-search')?.value || '';
+  const access = document.getElementById('filter-access')?.value || '';
+  const audit  = document.getElementById('filter-audit')?.value || '';
+  const tbody  = document.getElementById('users-tbody');
+  if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--t2)">Загружаем...</td></tr>`;
+
+  try {
+    const params = new URLSearchParams({ page, limit: usersPagination.limit });
+    if (search) params.set('search', search);
+    if (access) params.set('access', access);
+    if (audit)  params.set('audit', audit);
+
+    const data = await adminApi('/users?' + params);
+    usersData = data.users;
+    usersPagination.total = data.total;
+
+    document.getElementById('users-count-label').textContent = `Всего: ${fmt(data.total)} пользователей`;
+
+    if (!usersData.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--t2)">Ничего не найдено</td></tr>`;
+      document.getElementById('users-pagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = usersData.map(u => `
+      <tr>
+        <td>
+          <div style="font-weight:500">${u.name || '—'}</div>
+          <div style="font-size:11px;color:var(--t2)">${u.email}</div>
+        </td>
+        <td>
+          <div>${u.salon_name || '—'}</div>
+          <div style="font-size:11px;color:var(--t2)">${u.city || ''} ${u.country ? '· ' + u.country : ''}</div>
+        </td>
+        <td>
+          ${u.overall_score
+            ? `<span style="font-weight:700;color:${scoreColor(u.overall_score)}">${Math.round(u.overall_score)}%</span>`
+            : '<span style="color:var(--t3)">—</span>'}
+        </td>
+        <td>
+          ${u.has_access
+            ? `<span class="badge badge-green">✓ Актив</span>`
+            : `<span class="badge badge-gray">Бесплатно</span>`}
+        </td>
+        <td>${u.doc_count || 0}</td>
+        <td style="white-space:nowrap">${fmtDate(u.created_at)}</td>
+        <td>
+          <a onclick="openClient360('${u.id}')">360°</a>
+          &nbsp;
+          <a onclick="toggleUserAccess('${u.id}', ${u.has_access})" style="color:${u.has_access ? 'var(--red)' : 'var(--green)'}">
+            ${u.has_access ? 'Отозвать' : 'Выдать'}
+          </a>
+        </td>
+      </tr>
+    `).join('');
+
+    renderPagination('users-pagination', page, data.total, usersPagination.limit, loadUsers);
+  } catch (e) {
+    if (e.message !== 'Forbidden') console.error('[USERS]', e);
+  }
+}
+
+async function toggleUserAccess(id, currentlyHas) {
+  const grant = !currentlyHas;
+  const label = grant ? 'Выдать доступ на 3 месяца?' : 'Отозвать доступ?';
+  if (!confirm(label)) return;
+  try {
+    await adminApi('/users/' + id + '/access', { method: 'POST', body: JSON.stringify({ grant }) });
+    loadUsers(usersPagination.page);
+  } catch (e) { alert('Ошибка: ' + e.message); }
+}
+
+async function exportUsersCSV() {
+  try {
+    const data = await adminApi('/users?limit=2000');
+    const cols = ['email','name','salon_name','city','country','has_access','overall_score','doc_count','created_at'];
+    const header = ['Email','Имя','Салон','Город','Страна','Доступ','Рейтинг','Документы','Дата регистрации'];
+    const rows = [header, ...data.users.map(u => cols.map(c => u[c] ?? ''))];
+    const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'beauty-os-users.csv'; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) { alert('Ошибка: ' + e.message); }
+}
+
+// ═══════════════════════════════════════════
+// CLIENT 360
+// ═══════════════════════════════════════════
+async function openClient360(id) {
+  showScreen('client360');
+  const el = document.getElementById('c360-content');
+  el.innerHTML = '<div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>';
+  try {
+    const d = await adminApi('/users/' + id);
+    const p = d.profile; const a = d.audit; const an = d.analysis;
+    const ob = p.onboarding || {};
+    const scores = a?.scores || {};
+    const blocks = [
+      ['finance','Финансы'],['hr','Персонал'],['sales','Продажи'],
+      ['clients','Клиенты'],['ops','Операционка'],['owner','Собственник'],['marketing','Маркетинг']
+    ];
+
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <h1 style="font-size:20px;font-weight:700">${p.name || p.email}</h1>
+          <div style="font-size:13px;color:var(--t2)">${p.email} · Зарег. ${fmtDate(p.created_at)}</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          ${p.has_access
+            ? `<button class="btn-secondary-sm" onclick="toggleUserAccess('${p.id}',true);openClient360('${p.id}')">Отозвать доступ</button>`
+            : `<button class="btn-primary-sm" onclick="toggleUserAccess('${p.id}',false);openClient360('${p.id}')">Выдать доступ</button>`}
+        </div>
+      </div>
+
+      <div class="c360-grid">
+        <div>
+          <div class="c360-card">
+            <div class="c360-card-title">Основное</div>
+            <div class="c360-field"><span class="c360-field-label">Email</span><span class="c360-field-val">${p.email}</span></div>
+            <div class="c360-field"><span class="c360-field-label">Имя</span><span class="c360-field-val">${p.name || '—'}</span></div>
+            <div class="c360-field"><span class="c360-field-label">Доступ</span><span class="c360-field-val">${p.has_access ? '<span class="badge badge-green">✓ Активен</span>' : '<span class="badge badge-gray">Нет</span>'}</span></div>
+            ${p.access_expires_at ? `<div class="c360-field"><span class="c360-field-label">До</span><span class="c360-field-val">${fmtDate(p.access_expires_at)}</span></div>` : ''}
+          </div>
+          <div class="c360-card">
+            <div class="c360-card-title">Бизнес</div>
+            <div class="c360-field"><span class="c360-field-label">Салон</span><span class="c360-field-val">${ob.name || p.salon_name || '—'}</span></div>
+            <div class="c360-field"><span class="c360-field-label">Город</span><span class="c360-field-val">${ob.city || p.city || '—'} ${ob.country ? '(' + ob.country + ')' : ''}</span></div>
+            <div class="c360-field"><span class="c360-field-label">Мастеров</span><span class="c360-field-val">${ob.masters || '—'}</span></div>
+            <div class="c360-field"><span class="c360-field-label">Адм.</span><span class="c360-field-val">${ob.admins || '—'}</span></div>
+            <div class="c360-field"><span class="c360-field-label">Средний чек</span><span class="c360-field-val">${ob.avgCheck ? ob.avgCheck + ' грн' : '—'}</span></div>
+            <div class="c360-field"><span class="c360-field-label">Выручка</span><span class="c360-field-val">${ob.revenue ? ob.revenue + ' грн/мес' : '—'}</span></div>
+          </div>
+          <div class="c360-card">
+            <div class="c360-card-title">Платежи (${d.payments.length})</div>
+            ${d.payments.length ? d.payments.map(pay => `
+              <div class="c360-field">
+                <span class="c360-field-label">${fmtDate(pay.created_at)}</span>
+                <span class="c360-field-val">${statusBadge(pay.status)} ${fmtUAH(pay.amount)}</span>
+              </div>`).join('') : '<div style="font-size:13px;color:var(--t2);padding:8px 0">Платежей нет</div>'}
+          </div>
+        </div>
+
+        <div>
+          ${a ? `
+          <div class="c360-card">
+            <div class="c360-card-title">Рейтинги аудита · Общий: <span style="font-weight:700;color:${scoreColor(scores.overall)}">${scores.overall || 0}%</span></div>
+            ${blocks.map(([k, n]) => {
+              const s = Math.round(scores[k] || 0);
+              const c = scoreColor(s);
+              return `<div class="score-bar-wrap">
+                <div class="score-bar-label"><span>${n}</span><span style="font-weight:600;color:${c}">${s}%</span></div>
+                <div class="score-bar"><div class="score-bar-fill" style="width:${s}%;background:${c}"></div></div>
+              </div>`;
+            }).join('')}
+            <canvas id="chart-client-scores" style="margin-top:14px;max-height:180px"></canvas>
+          </div>` : '<div class="c360-card"><div class="c360-card-title">Аудит</div><div style="font-size:13px;color:var(--t2)">Аудит не пройден</div></div>'}
+
+          ${an ? `
+          <div class="c360-card">
+            <div class="c360-card-title">AI Анализ</div>
+            ${an.analysis?.summary ? `<div style="font-size:13px;line-height:1.65;margin-bottom:12px">${an.analysis.summary}</div>` : ''}
+            ${an.analysis?.main_problems?.length ? `
+              <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:6px">Главные проблемы</div>
+              ${an.analysis.main_problems.map(p => `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)">${p}</div>`).join('')}` : ''}
+          </div>` : ''}
+
+          ${d.documents.length ? `
+          <div class="c360-card">
+            <div class="c360-card-title">Документы (${d.documents.length})</div>
+            ${d.documents.slice(0, 10).map(doc => `
+              <div class="c360-field">
+                <span class="c360-field-label" style="max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${doc.task_name}</span>
+                <span class="c360-field-val">${fmtDate(doc.created_at)}</span>
+              </div>`).join('')}
+          </div>` : ''}
+        </div>
+      </div>`;
+
+    // Radar chart for client scores
+    if (a && Object.keys(scores).length) {
+      setTimeout(() => {
+        makeChart('chart-client-scores', {
+          type: 'radar',
+          data: {
+            labels: BLOCK_LABELS,
+            datasets: [{
+              label: 'Рейтинг', data: BLOCK_KEYS.map(k => scores[k] || 0),
+              borderColor: '#C2185B', backgroundColor: 'rgba(194,24,91,.12)', pointBackgroundColor: '#C2185B'
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: true, scales: { r: { beginAtZero: true, max: 100, ticks: { display: false } } }, plugins: { legend: { display: false } } }
+        });
+      }, 100);
+    }
+  } catch (e) {
+    if (e.message !== 'Forbidden') { el.innerHTML = '<div style="padding:20px;color:var(--red)">Ошибка загрузки</div>'; }
+  }
+}
+
+// ═══════════════════════════════════════════
+// SALES ANALYTICS
+// ═══════════════════════════════════════════
+async function loadSales() {
+  try {
+    const [kpis, cohorts, revTrend] = await Promise.all([
+      adminApi('/kpis'), adminApi('/cohorts'), adminApi('/revenue-trend')
+    ]);
+
+    document.getElementById('s-total-rev').textContent = fmtUAH(kpis.total_revenue);
+    document.getElementById('s-rev30').textContent = fmtUAH(kpis.revenue_30d);
+    document.getElementById('s-payments').textContent = fmt(kpis.total_payments);
+    document.getElementById('s-avg-check').textContent = kpis.total_payments > 0
+      ? fmtUAH(Math.round(kpis.total_revenue / kpis.total_payments)) : '—';
+
+    makeChart('chart-rev-monthly', {
+      type: 'line',
+      data: {
+        labels: revTrend.map(r => r.month),
+        datasets: [{ label: 'Выручка', data: revTrend.map(r => Number(r.revenue)), borderColor: '#C2185B', backgroundColor: 'rgba(194,24,91,.08)', fill: true, tension: .3 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    makeChart('chart-cohorts-bar', {
+      type: 'bar',
+      data: {
+        labels: cohorts.map(c => c.cohort_month),
+        datasets: [{ label: 'Конверсия %', data: cohorts.map(c => Number(c.conversion_rate) || 0), backgroundColor: '#C2185B', borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+
+    document.getElementById('cohorts-tbody').innerHTML = cohorts.map(c => `
+      <tr>
+        <td>${c.cohort_month}</td>
+        <td>${fmt(c.registered)}</td>
+        <td>${fmt(c.converted)}</td>
+        <td><span style="font-weight:600;color:${Number(c.conversion_rate) > 10 ? 'var(--green)' : 'var(--amber)'}">${c.conversion_rate || 0}%</span></td>
+      </tr>`).join('');
+  } catch (e) { if (e.message !== 'Forbidden') console.error('[SALES]', e); }
+}
+
+// ═══════════════════════════════════════════
+// PRODUCT ANALYTICS
+// ═══════════════════════════════════════════
+async function loadProduct() {
+  try {
+    const [funnel, tools] = await Promise.all([adminApi('/funnel'), adminApi('/tool-usage')]);
+
+    const steps = [
+      { label: 'Зарегистрировались', count: funnel.registered },
+      { label: 'Заполнили профиль', count: funnel.onboarded },
+      { label: 'Завершили аудит', count: funnel.completed_audit },
+      { label: 'Получили AI-анализ', count: funnel.ran_ai },
+      { label: 'Начали оплату', count: funnel.initiated_payment },
+      { label: 'Оплатили', count: funnel.converted }
+    ];
+    const max = Number(steps[0].count) || 1;
+
+    document.getElementById('funnel-viz').innerHTML = steps.map((s, i) => {
+      const pct = Math.round(Number(s.count) / max * 100);
+      const convPct = i > 0 && steps[i - 1].count > 0 ? Math.round(Number(s.count) / Number(steps[i - 1].count) * 100) : null;
+      return `<div class="funnel-step">
+        <div class="funnel-label">${s.label}</div>
+        <div class="funnel-bar-outer">
+          <div class="funnel-bar-inner" style="width:${pct}%">
+            <span class="funnel-count">${fmt(s.count)}</span>
+          </div>
+        </div>
+        <div class="funnel-pct">${convPct !== null ? convPct + '%' : ''}</div>
+      </div>`;
+    }).join('');
+
+    if (tools.length) {
+      makeChart('chart-tool-usage', {
+        type: 'bar',
+        data: {
+          labels: tools.map(t => t.task_name.slice(0, 28)),
+          datasets: [{ label: 'Создано', data: tools.map(t => t.count), backgroundColor: '#C2185B', borderRadius: 3 }]
+        },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+      });
+    }
+  } catch (e) { if (e.message !== 'Forbidden') console.error('[PRODUCT]', e); }
+}
+
+// ═══════════════════════════════════════════
+// INDUSTRY ANALYTICS
+// ═══════════════════════════════════════════
+async function loadIndustry() {
+  try {
+    const [blockAvg, dist] = await Promise.all([adminApi('/block-averages'), adminApi('/score-distribution')]);
+
+    document.getElementById('ind-audits').textContent  = fmt(blockAvg.sample_size);
+    document.getElementById('ind-avg').textContent     = (blockAvg.overall || 0) + '%';
+    const vals = BLOCK_KEYS.map(k => ({ k, v: Number(blockAvg[k] || 0) }));
+    const best  = vals.reduce((a, b) => b.v > a.v ? b : a, vals[0]);
+    const worst = vals.reduce((a, b) => b.v < a.v ? b : a, vals[0]);
+    const labelMap = { finance:'Финансы', hr:'Персонал', sales:'Продажи', clients:'Клиенты', ops:'Операционка', owner:'Собственник', marketing:'Маркетинг' };
+    document.getElementById('ind-best').textContent  = labelMap[best.k]  + ' ' + best.v + '%';
+    document.getElementById('ind-worst').textContent = labelMap[worst.k] + ' ' + worst.v + '%';
+
+    makeChart('chart-score-dist', {
+      type: 'bar',
+      data: {
+        labels: dist.map(d => d.bucket_start + '–' + (Number(d.bucket_start) + 9) + '%'),
+        datasets: [{ label: 'Салонов', data: dist.map(d => d.count), backgroundColor: dist.map(d => scoreColor(Number(d.bucket_start) + 5)), borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    makeChart('chart-market-radar', {
+      type: 'radar',
+      data: {
+        labels: BLOCK_LABELS,
+        datasets: [{
+          label: 'Рынок', data: BLOCK_KEYS.map(k => blockAvg[k] || 0),
+          borderColor: '#C2185B', backgroundColor: 'rgba(194,24,91,.12)', pointBackgroundColor: '#C2185B'
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, max: 100 } }, plugins: { legend: { display: false } } }
+    });
+  } catch (e) { if (e.message !== 'Forbidden') console.error('[INDUSTRY]', e); }
+}
+
+// ═══════════════════════════════════════════
+// PROBLEM HEATMAP
+// ═══════════════════════════════════════════
+async function loadHeatmap() {
+  try {
+    const data = await adminApi('/heatmap');
+    const bs = data.block_stats || {};
+    const BLOCK_ORDER = ['finance','hr','sales','clients','ops','owner','marketing'];
+    const BNAMES = { finance:'Финансы', hr:'Персонал', sales:'Продажи', clients:'Клиенты', ops:'Операционка', owner:'Собственник', marketing:'Маркетинг' };
+    const heatColors = pct => pct >= 70 ? '#C62828' : pct >= 50 ? '#E65100' : pct >= 30 ? '#F9A825' : '#2E7D32';
+
+    document.getElementById('heatmap-blocks').innerHTML = BLOCK_ORDER.map(k => {
+      const b = bs[k] || { no_pct: 0 };
+      const c = heatColors(b.no_pct);
+      return `<div class="heat-block" style="border-top:3px solid ${c}">
+        <div class="heat-block-name">${BNAMES[k]}</div>
+        <div class="heat-block-pct" style="color:${c}">${b.no_pct}%</div>
+        <div class="heat-block-label">проблем</div>
+      </div>`;
+    }).join('');
+
+    if (data.top_problems?.length) {
+      makeChart('chart-heatmap', {
+        type: 'bar',
+        data: {
+          labels: data.top_problems.map(p => `[${p.block_name}] Q${p.key.split('_')[1]}`),
+          datasets: [{
+            label: '% ответили «Нет»', data: data.top_problems.map(p => p.no_pct),
+            backgroundColor: data.top_problems.map(p => scoreColor(100 - p.no_pct)),
+            borderRadius: 3
+          }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw}% (${data.top_problems[ctx.dataIndex].no}/${data.top_problems[ctx.dataIndex].total})` } } },
+          scales: { x: { beginAtZero: true, max: 100 } }
+        }
+      });
+    }
+  } catch (e) { if (e.message !== 'Forbidden') console.error('[HEATMAP]', e); }
+}
+
+// ═══════════════════════════════════════════
+// BENCHMARK CENTER
+// ═══════════════════════════════════════════
+async function loadBenchmarks() {
+  try {
+    const data = await adminApi('/benchmarks');
+    benchmarkData = data;
+
+    document.getElementById('bench-sample').textContent = `Выборка: ${data.users.length} салонов`;
+
+    // Populate user select
+    const sel = document.getElementById('bench-user-select');
+    sel.innerHTML = '<option value="">Выберите пользователя</option>' +
+      data.users.map(u => `<option value="${u.id}">${u.name || u.id.slice(0,8)} — ${u.salon_name || 'без названия'} (${Math.round(u.overall)}%)</option>`).join('');
+
+    // Leaderboard table
+    document.getElementById('bench-tbody').innerHTML = data.users.map((u, i) => `
+      <tr>
+        <td style="font-weight:600;color:var(--t2)">${i + 1}</td>
+        <td><a onclick="openClient360('${u.id}')">${u.name || u.id.slice(0,8)}</a></td>
+        <td>${u.salon_name || '—'}</td>
+        <td>${u.city || '—'}</td>
+        <td style="font-weight:700;color:${scoreColor(u.overall)}">${Math.round(u.overall || 0)}%</td>
+        <td>${Math.round(u.finance || 0)}%</td>
+        <td>${Math.round(u.hr || 0)}%</td>
+        <td>${Math.round(u.sales || 0)}%</td>
+      </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--t2)">Нет данных</td></tr>';
+
+    // City benchmark chart
+    if (data.by_city?.length) {
+      makeChart('chart-city-bench', {
+        type: 'bar',
+        data: {
+          labels: data.by_city.map(c => c.city),
+          datasets: [{ label: 'Средний рейтинг', data: data.by_city.map(c => Number(c.avg_overall)), backgroundColor: '#C2185B', borderRadius: 3 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+      });
+    }
+  } catch (e) { if (e.message !== 'Forbidden') console.error('[BENCH]', e); }
+}
+
+function renderBenchmarkUser() {
+  if (!benchmarkData) return;
+  const id = document.getElementById('bench-user-select').value;
+  if (!id) { document.getElementById('bench-comparison').style.display = 'none'; document.getElementById('bench-charts').style.display = 'none'; return; }
+
+  const user = benchmarkData.users.find(u => u.id === id);
+  const global = benchmarkData.global;
+  if (!user || !global) return;
+
+  const BNAMES = { finance:'Финансы', hr:'Персонал', sales:'Продажи', clients:'Клиенты', ops:'Операционка', owner:'Собственник', marketing:'Маркетинг' };
+  document.getElementById('bench-comparison').style.display = 'grid';
+  document.getElementById('bench-comparison').innerHTML = BLOCK_KEYS.map(k => {
+    const uv = Math.round(user[k] || 0), mv = Math.round(global[k] || 0), delta = uv - mv;
+    return `<div class="bench-card">
+      <div class="bench-block-name">${BNAMES[k]}</div>
+      <div class="bench-user-val">${uv}%</div>
+      <div class="bench-market-val">Рынок: ${mv}%</div>
+      <div class="bench-delta" style="color:${delta >= 0 ? 'var(--green)' : 'var(--red)'}">${delta >= 0 ? '+' : ''}${delta}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('bench-charts').style.display = 'grid';
+  makeChart('chart-benchmark', {
+    type: 'bar',
+    data: {
+      labels: BLOCK_LABELS,
+      datasets: [
+        { label: user.salon_name || user.name, data: BLOCK_KEYS.map(k => Math.round(user[k] || 0)), backgroundColor: 'rgba(194,24,91,.7)', borderRadius: 3 },
+        { label: 'Рынок', data: BLOCK_KEYS.map(k => Math.round(global[k] || 0)), backgroundColor: 'rgba(149,117,205,.5)', borderRadius: 3 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } }, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+// ═══════════════════════════════════════════
+// AI INSIGHTS
+// ═══════════════════════════════════════════
+async function loadInsights(forceGenerate = false) {
+  const el = document.getElementById('insights-content');
+  const btn = document.getElementById('insights-btn');
+  const info = document.getElementById('insights-cache-info');
+  el.innerHTML = '<div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div><span style="font-size:13px;color:var(--t2);margin-left:8px">Анализируем рынок...</span></div>';
+  btn.disabled = true;
+  try {
+    const data = await adminApi('/ai-insights');
+    const text = data.insight.replace(/\n/g, '<br>');
+    el.innerHTML = `<div class="insight-card">
+      <div class="insight-text">${text}</div>
+      <div class="insight-date">📅 ${data.date} ${data.cached ? '· (кэшировано)' : '· только что сгенерировано'}</div>
+    </div>`;
+    info.textContent = data.cached ? 'Обновляется раз в день' : 'Свежий анализ';
+  } catch (e) {
+    el.innerHTML = '<div style="padding:20px;color:var(--red)">Ошибка генерации. Попробуйте ещё раз.</div>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════
+// DOCUMENTS
+// ═══════════════════════════════════════════
+let docsPagination = { page: 1, total: 0, limit: 25 };
+
+async function loadDocuments(page = 1) {
+  docsPagination.page = page;
+  const search = document.getElementById('docs-search')?.value || '';
+  const tbody = document.getElementById('docs-tbody');
+  if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--t2)">Загружаем...</td></tr>`;
+  try {
+    const params = new URLSearchParams({ page, limit: docsPagination.limit });
+    if (search) params.set('search', search);
+    const data = await adminApi('/documents?' + params);
+    docsPagination.total = data.total;
+    document.getElementById('docs-count-label').textContent = `Всего: ${fmt(data.total)} документов`;
+    tbody.innerHTML = data.documents.map(d => `
+      <tr>
+        <td style="font-weight:500">${d.task_name}</td>
+        <td><div>${d.name || '—'}</div><div style="font-size:11px;color:var(--t2)">${d.email}</div></td>
+        <td>${d.salon_name || '—'}</td>
+        <td style="white-space:nowrap">${fmtDateTime(d.created_at)}</td>
+        <td style="font-size:12px;color:var(--t2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.preview || ''}</td>
+      </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--t2)">Нет документов</td></tr>`;
+    renderPagination('docs-pagination', page, data.total, docsPagination.limit, loadDocuments);
+  } catch (e) { if (e.message !== 'Forbidden') console.error('[DOCS]', e); }
+}
+
+// ═══════════════════════════════════════════
+// PAYMENTS
+// ═══════════════════════════════════════════
+let paysPagination = { page: 1, total: 0, limit: 25 };
+
+async function loadPayments(page = 1) {
+  paysPagination.page = page;
+  const status = document.getElementById('pay-filter-status')?.value || '';
+  const tbody = document.getElementById('payments-tbody');
+  if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--t2)">Загружаем...</td></tr>`;
+  try {
+    const params = new URLSearchParams({ page, limit: paysPagination.limit });
+    if (status) params.set('status', status);
+    const data = await adminApi('/payments?' + params);
+    paysPagination.total = data.total;
+
+    // KPI counts
+    const all = await adminApi('/payments?limit=1000');
+    const counts = { paid: 0, pending: 0, failed: 0 };
+    all.payments.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
+    document.getElementById('pay-kpi-paid').textContent    = fmt(counts.paid);
+    document.getElementById('pay-kpi-pending').textContent = fmt(counts.pending);
+    document.getElementById('pay-kpi-failed').textContent  = fmt(counts.failed);
+    document.getElementById('pay-kpi-total').textContent   = fmt(all.total);
+
+    tbody.innerHTML = data.payments.map(p => `
+      <tr>
+        <td style="font-size:11px;color:var(--t3);font-family:monospace">${p.order_id?.slice(0,20) || '—'}</td>
+        <td><div style="font-weight:500">${p.name || '—'}</div><div style="font-size:11px;color:var(--t2)">${p.email}</div></td>
+        <td>${p.salon_name || '—'}</td>
+        <td style="font-weight:600">${fmtUAH(p.amount)}</td>
+        <td>${statusBadge(p.status)}</td>
+        <td style="white-space:nowrap">${fmtDateTime(p.created_at)}</td>
+      </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--t2)">Нет платежей</td></tr>`;
+    renderPagination('payments-pagination', page, data.total, paysPagination.limit, loadPayments);
+  } catch (e) { if (e.message !== 'Forbidden') console.error('[PAYS]', e); }
+}
+
+// ═══════════════════════════════════════════
+// PAGINATION HELPER
+// ═══════════════════════════════════════════
+function renderPagination(containerId, currentPage, total, limit, onPageChange) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const pages = Math.ceil(total / limit);
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  const info = `<span class="page-info">Стр. ${currentPage} из ${pages} · ${fmt(total)}</span>`;
+  const prev = currentPage > 1 ? `<button class="page-btn" onclick="(${onPageChange.name || 'loadUsers'})(${currentPage - 1})">←</button>` : '';
+  const next = currentPage < pages ? `<button class="page-btn" onclick="(${onPageChange.name || 'loadUsers'})(${currentPage + 1})">→</button>` : '';
+  const nums = [...new Set([1, Math.max(1,currentPage-1), currentPage, Math.min(pages,currentPage+1), pages])]
+    .filter(p => p >= 1 && p <= pages)
+    .map(p => `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="${onPageChange.name}(${p})">${p}</button>`).join('');
+  el.innerHTML = info + prev + nums + next;
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+async function init() {
+  try {
+    const kpis = await adminApi('/kpis');
+    // Success — hide auth gate, show UI
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('sidebar').style.display = 'flex';
+    document.getElementById('main').style.display = 'block';
+    loadExecutive();
+  } catch (e) {
+    if (e.message !== 'Forbidden') {
+      document.getElementById('auth-gate').style.display = 'flex';
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

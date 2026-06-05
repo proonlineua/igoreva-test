@@ -35,4 +35,11 @@ async function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth };
+async function requireAdmin(req, res, next) {
+  requireAuth(req, res, () => {
+    if (!req.user?.is_admin) return res.status(403).json({ error: 'Доступ запрещён' });
+    next();
+  });
+}
+
+module.exports = { requireAuth, requireAdmin };
