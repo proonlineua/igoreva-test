@@ -422,7 +422,38 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <div class="auth-field"><label>Пароль</label><input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
       <button class="btn-primary" style="width:100%;justify-content:center" id="login-btn" onclick="doLogin()">Войти →</button>
       <div class="auth-switch">Нет аккаунта? <a onclick="show('register')">Зарегистрироваться</a></div>
-      <div class="auth-switch" style="margin-top:8px"><a onclick="doForgotPassword()">Забыли пароль?</a></div>
+      <div class="auth-switch" style="margin-top:8px"><a onclick="show('forgot')">Забыли пароль?</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FORGOT PASSWORD ═══ -->
+<div class="screen" id="screen-forgot">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo"><div class="logo-dot auth-logo-dot"></div></div>
+      <div class="auth-title">Восстановление пароля</div>
+      <div class="auth-sub">Введите email — пришлём ссылку для сброса</div>
+      <div class="auth-err" id="forgot-err"></div>
+      <div id="forgot-ok" style="display:none;font-size:14px;color:var(--green);background:var(--gbg);padding:12px 14px;border-radius:var(--r);margin-bottom:16px;text-align:center"></div>
+      <div class="auth-field"><label>Email</label><input id="forgot-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center" id="forgot-btn" onclick="doForgotPassword()">Отправить ссылку →</button>
+      <div class="auth-switch" style="margin-top:16px"><a onclick="show('login')">← Вернуться ко входу</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESET PASSWORD ═══ -->
+<div class="screen" id="screen-reset">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo"><div class="logo-dot auth-logo-dot"></div></div>
+      <div class="auth-title">Новый пароль</div>
+      <div class="auth-sub">Придумайте надёжный пароль</div>
+      <div class="auth-err" id="reset-err"></div>
+      <div class="auth-field"><label>Новый пароль (минимум 8 символов)</label><input id="reset-pass" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+      <div class="auth-field"><label>Повторите пароль</label><input id="reset-pass2" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center" id="reset-btn" onclick="doResetPassword()">Сохранить пароль →</button>
     </div>
   </div>
 </div>
@@ -878,16 +909,42 @@ async function doLogout() {
 }
 
 async function doForgotPassword() {
-  const email = document.getElementById('login-email').value.trim();
-  if (!email) {
-    const errEl = document.getElementById('login-err');
-    errEl.textContent = 'Введите email в поле выше'; errEl.style.display = 'block'; return;
-  }
+  const email = document.getElementById('forgot-email').value.trim();
+  const errEl = document.getElementById('forgot-err');
+  const okEl  = document.getElementById('forgot-ok');
+  const btn   = document.getElementById('forgot-btn');
+  errEl.style.display = 'none'; okEl.style.display = 'none';
+  if (!email) { errEl.textContent = 'Введите email'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Отправляем...';
   try {
     await api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
-    toast('Письмо со ссылкой сброса отправлено на ' + email);
+    okEl.textContent = 'Письмо отправлено на ' + email + '. Проверьте папку «Спам», если не найдёте в inbox.';
+    okEl.style.display = 'block';
+    btn.style.display = 'none';
   } catch (e) {
-    toast('Ошибка: ' + e.message, true);
+    errEl.textContent = 'Ошибка: ' + e.message; errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Отправить ссылку →';
+  }
+}
+
+async function doResetPassword() {
+  const token = new URLSearchParams(window.location.search).get('token');
+  const pass  = document.getElementById('reset-pass').value;
+  const pass2 = document.getElementById('reset-pass2').value;
+  const errEl = document.getElementById('reset-err');
+  const btn   = document.getElementById('reset-btn');
+  errEl.style.display = 'none';
+  if (pass.length < 8) { errEl.textContent = 'Пароль минимум 8 символов'; errEl.style.display = 'block'; return; }
+  if (pass !== pass2)  { errEl.textContent = 'Пароли не совпадают'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Сохраняем...';
+  try {
+    await api('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password: pass }) });
+    history.replaceState({}, '', '/');
+    toast('Пароль успешно изменён! Войдите с новым паролем.');
+    show('login');
+  } catch (e) {
+    errEl.textContent = e.message; errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Сохранить пароль →';
   }
 }
 
@@ -1597,6 +1654,8 @@ document.addEventListener('keydown', e => {
     const active = document.querySelector('.screen.active');
     if (active?.id === 'screen-register') doRegister();
     if (active?.id === 'screen-login') doLogin();
+    if (active?.id === 'screen-forgot') doForgotPassword();
+    if (active?.id === 'screen-reset') doResetPassword();
   }
 });
 
@@ -1605,6 +1664,24 @@ document.addEventListener('keydown', e => {
 // ══════════════════════════════════════════════════
 async function init() {
   renderTemplates('all');
+  const resetToken = new URLSearchParams(window.location.search).get('token');
+  if (resetToken) {
+    show('reset');
+    return;
+  }
+  const impToken = new URLSearchParams(window.location.search).get('impersonate');
+  if (impToken) {
+    try {
+      const res = await api('/api/auth/impersonate?token=' + encodeURIComponent(impToken));
+      if (res.user) {
+        history.replaceState({}, '', '/');
+        setUser(res.user);
+        await loadAudit();
+        show(S.scores.overall ? 'dashboard' : 'onboarding');
+        return;
+      }
+    } catch {}
+  }
   await tryAutoLogin();
   checkPaymentSuccess();
 }
