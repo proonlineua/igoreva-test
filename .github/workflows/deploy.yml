@@ -23,27 +23,20 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 173.242.49.111 >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: SSH ping
-        run: ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=no root@173.242.49.111 "echo OK && id && ls /var/www/"
-
-      - name: Pack files
+      - name: Copy files to server
         run: |
           tar -czf /tmp/deploy.tar.gz \
             --exclude='.git' --exclude='node_modules' --exclude='.env' .
-          ls -lh /tmp/deploy.tar.gz
+          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
+            /tmp/deploy.tar.gz root@173.242.49.111:/tmp/
 
-      - name: SCP tarball
-        run: scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no /tmp/deploy.tar.gz root@173.242.49.111:/tmp/
-
-      - name: Extract on server
+      - name: Install & restart
         run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@173.242.49.111 \
-            "tar -xzf /tmp/deploy.tar.gz -C /var/www/beauty-os && rm /tmp/deploy.tar.gz && echo EXTRACTED"
-
-      - name: Install deps & restart
-        run: |
-          ssh -o IdentitiesOnly=yes root@173.242.49.111 'bash -s' <<'REMOTE'
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@173.242.49.111 'bash -s' <<'REMOTE'
           set -euo pipefail
+
+          tar -xzf /tmp/deploy.tar.gz -C /var/www/beauty-os && rm /tmp/deploy.tar.gz
+
           cd /var/www/beauty-os
 
           # Postfix (перший запуск)
@@ -56,16 +49,14 @@ jobs:
             systemctl enable postfix && systemctl restart postfix
           fi
 
-          # .env — додати відсутні змінні
           ENV=/var/www/beauty-os/.env
-          grep -q '^APP_URL=' "$ENV"          || echo 'APP_URL=https://beauty.proonline.com.ua' >> "$ENV"
-          grep -q '^SMTP_HOST=' "$ENV"        || echo 'SMTP_HOST=localhost'                      >> "$ENV"
-          grep -q '^SMTP_PORT=' "$ENV"        || echo 'SMTP_PORT=25'                             >> "$ENV"
-          grep -q '^SMTP_USER=' "$ENV"        || echo 'SMTP_USER=noreply@beauty.proonline.com.ua' >> "$ENV"
-          grep -q '^DEPLOY_SECRET=' "$ENV"    || echo "DEPLOY_SECRET=${{ secrets.DEPLOY_SECRET }}" >> "$ENV"
+          grep -q '^APP_URL='   "$ENV" || echo 'APP_URL=https://beauty.proonline.com.ua'      >> "$ENV"
+          grep -q '^SMTP_HOST=' "$ENV" || echo 'SMTP_HOST=localhost'                           >> "$ENV"
+          grep -q '^SMTP_PORT=' "$ENV" || echo 'SMTP_PORT=25'                                  >> "$ENV"
+          grep -q '^SMTP_USER=' "$ENV" || echo 'SMTP_USER=noreply@beauty.proonline.com.ua'     >> "$ENV"
 
           npm ci --omit=dev
           pm2 reload beauty-os --update-env || pm2 start server/index.js --name beauty-os
           pm2 save
-          echo "Done: $(date)"
+          echo "Deployed at $(date)"
           REMOTE
