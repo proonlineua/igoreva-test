@@ -25,12 +25,14 @@ jobs:
 
       - name: Copy files to server
         run: |
-          tar -czf - \
+          tar -czf /tmp/deploy.tar.gz \
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='.env' \
-            . | ssh -o IdentitiesOnly=yes root@173.242.49.111 \
-              "mkdir -p /var/www/beauty-os && tar -xzf - -C /var/www/beauty-os"
+            .
+          scp -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes /tmp/deploy.tar.gz root@173.242.49.111:/tmp/deploy.tar.gz
+          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes root@173.242.49.111 \
+            "mkdir -p /var/www/beauty-os && tar -xzf /tmp/deploy.tar.gz -C /var/www/beauty-os && rm /tmp/deploy.tar.gz"
 
       - name: Install deps & restart
         run: |
