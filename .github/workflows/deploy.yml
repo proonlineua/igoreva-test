@@ -23,16 +23,22 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 173.242.49.111 >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Copy files to server
+      - name: SSH ping
+        run: ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=no root@173.242.49.111 "echo OK && id && ls /var/www/"
+
+      - name: Pack files
         run: |
           tar -czf /tmp/deploy.tar.gz \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='.env' \
-            .
-          scp -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes /tmp/deploy.tar.gz root@173.242.49.111:/tmp/deploy.tar.gz
-          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes root@173.242.49.111 \
-            "mkdir -p /var/www/beauty-os && tar -xzf /tmp/deploy.tar.gz -C /var/www/beauty-os && rm /tmp/deploy.tar.gz"
+            --exclude='.git' --exclude='node_modules' --exclude='.env' .
+          ls -lh /tmp/deploy.tar.gz
+
+      - name: SCP tarball
+        run: scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no /tmp/deploy.tar.gz root@173.242.49.111:/tmp/
+
+      - name: Extract on server
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@173.242.49.111 \
+            "tar -xzf /tmp/deploy.tar.gz -C /var/www/beauty-os && rm /tmp/deploy.tar.gz && echo EXTRACTED"
 
       - name: Install deps & restart
         run: |
