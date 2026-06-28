@@ -16,49 +16,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure SSH
-        env:
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
-
       - name: Copy files to server
-        run: |
-          tar -czf /tmp/deploy.tar.gz \
-            --exclude='.git' --exclude='node_modules' --exclude='.env' .
-          scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no \
-            /tmp/deploy.tar.gz ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "."
+          target: "/var/www/beauty-os"
+          rm: false
+          exclude: ".git,node_modules,.env,.github"
 
       - name: Install & restart
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} 'bash -s' <<'REMOTE'
-          set -euo pipefail
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            cd /var/www/beauty-os
 
-          tar -xzf /tmp/deploy.tar.gz -C /var/www/beauty-os && rm /tmp/deploy.tar.gz
+            if ! command -v postfix &>/dev/null; then
+              DEBIAN_FRONTEND=noninteractive apt-get install -y postfix mailutils
+              postconf -e "myhostname=beauty.proonline.com.ua"
+              postconf -e "myorigin=beauty.proonline.com.ua"
+              postconf -e "inet_interfaces=loopback-only"
+              postconf -e "mydestination="
+              systemctl enable postfix && systemctl restart postfix
+            fi
 
-          cd /var/www/beauty-os
+            ENV=/var/www/beauty-os/.env
+            grep -q '^APP_URL='   "$ENV" || echo 'APP_URL=https://beauty.proonline.com.ua'       >> "$ENV"
+            grep -q '^SMTP_HOST=' "$ENV" || echo 'SMTP_HOST=localhost'                            >> "$ENV"
+            grep -q '^SMTP_PORT=' "$ENV" || echo 'SMTP_PORT=25'                                   >> "$ENV"
+            grep -q '^SMTP_USER=' "$ENV" || echo 'SMTP_USER=noreply@beauty.proonline.com.ua'      >> "$ENV"
 
-          # Postfix (перший запуск)
-          if ! command -v postfix &>/dev/null; then
-            DEBIAN_FRONTEND=noninteractive apt-get install -y postfix mailutils
-            postconf -e "myhostname=beauty.proonline.com.ua"
-            postconf -e "myorigin=beauty.proonline.com.ua"
-            postconf -e "inet_interfaces=loopback-only"
-            postconf -e "mydestination="
-            systemctl enable postfix && systemctl restart postfix
-          fi
-
-          ENV=/var/www/beauty-os/.env
-          grep -q '^APP_URL='   "$ENV" || echo 'APP_URL=https://beauty.proonline.com.ua'      >> "$ENV"
-          grep -q '^SMTP_HOST=' "$ENV" || echo 'SMTP_HOST=localhost'                           >> "$ENV"
-          grep -q '^SMTP_PORT=' "$ENV" || echo 'SMTP_PORT=25'                                  >> "$ENV"
-          grep -q '^SMTP_USER=' "$ENV" || echo 'SMTP_USER=noreply@beauty.proonline.com.ua'     >> "$ENV"
-
-          npm ci --omit=dev
-          pm2 reload beauty-os --update-env || pm2 start server/index.js --name beauty-os
-          pm2 save
-          echo "Deployed at $(date)"
-          REMOTE
+            npm ci --omit=dev
+            pm2 reload beauty-os --update-env || pm2 start server/index.js --name beauty-os
+            pm2 save
+            echo "Deployed at $(date)"
