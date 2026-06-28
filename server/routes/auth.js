@@ -128,7 +128,7 @@ router.post('/forgot-password', async (req, res) => {
     if (process.env.SMTP_HOST) {
       const mailer = getMailer();
       await mailer.sendMail({
-        from: `Beauty OS <${process.env.SMTP_USER || 'noreply@beauty.proonline.com.ua'}>`,
+        from: `Beauty OS <${process.env.SMTP_USER || 'noreply@proonline.com.ua'}>`,
         to: email,
         subject: 'Сброс пароля — Beauty Operations OS',
         html: `<p>Для сброса пароля перейдите по ссылке:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Ссылка действительна 1 час.</p>`
