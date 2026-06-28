@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js",
+    "start": "bash scripts/setup-server.sh 2>/dev/null; node server/index.js",
     "dev": "nodemon server/index.js"
   },
   "dependencies": {

@@ -1,4 +1,25 @@
 require('dotenv').config();
+
+// Auto-configure missing .env values on first start
+const fs = require('fs');
+const envPath = require('path').join(__dirname, '..', '.env');
+const envDefaults = {
+  APP_URL:   'https://beauty.proonline.com.ua',
+  SMTP_HOST: 'localhost',
+  SMTP_PORT: '25',
+  SMTP_USER: 'noreply@beauty.proonline.com.ua',
+};
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  const lines = Object.entries(envDefaults)
+    .filter(([k]) => !envContent.includes(`${k}=`))
+    .map(([k, v]) => `${k}=${v}`);
+  if (lines.length) {
+    fs.appendFileSync(envPath, '\n' + lines.join('\n') + '\n');
+    lines.forEach(l => { const [k,v] = l.split('='); process.env[k] = v; });
+    console.log('[ENV] Added defaults:', lines.map(l => l.split('=')[0]).join(', '));
+  }
+}
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -118,3 +139,13 @@ app.listen(PORT, () => {
   console.log(`Beauty OS running on port ${PORT}`);
   console.log(`URL: ${process.env.APP_URL || 'http://localhost:' + PORT}`);
 });
+
+// Auto-restart when deploy.trigger file changes (written by git-pull cron)
+const fs = require('fs');
+const TRIGGER = path.join(__dirname, '..', 'deploy.trigger');
+if (fs.existsSync(TRIGGER)) {
+  fs.watch(TRIGGER, () => {
+    console.log('[RESTART] deploy.trigger changed, restarting...');
+    process.exit(0); // PM2 will restart automatically
+  });
+}
