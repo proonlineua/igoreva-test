@@ -11,6 +11,8 @@ const aiRouter      = require('./routes/ai');
 const paymentRouter = require('./routes/payment');
 const auditRouter   = require('./routes/audit');
 const adminRouter   = require('./routes/admin');
+const crypto        = require('crypto');
+const { execFile }  = require('child_process');
 
 const app = express();
 
@@ -63,6 +65,32 @@ app.use('/api/admin',               adminRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0', ts: new Date().toISOString() });
+});
+
+// GitHub webhook auto-deploy
+app.post('/api/deploy', express.raw({ type: 'application/json' }), (req, res) => {
+  const secret = process.env.DEPLOY_SECRET;
+  if (!secret) return res.status(403).json({ error: 'not configured' });
+
+  const sig = req.headers['x-hub-signature-256'];
+  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(req.body).digest('hex');
+  if (!crypto.timingSafeEqual(Buffer.from(sig || ''), Buffer.from(expected))) {
+    return res.status(401).json({ error: 'invalid signature' });
+  }
+
+  res.json({ ok: true });
+
+  const appDir = path.join(__dirname, '..');
+  execFile('bash', ['-c', `
+    cd ${appDir} &&
+    git fetch --prune origin main &&
+    git reset --hard origin/main &&
+    npm ci --omit=dev &&
+    pm2 reload beauty-os --update-env
+  `], (err, stdout, stderr) => {
+    if (err) console.error('[DEPLOY ERROR]', stderr);
+    else console.log('[DEPLOY OK]', stdout.trim().split('\n').pop());
+  });
 });
 
 // Wayforpay redirects browser to returnUrl via POST after payment
