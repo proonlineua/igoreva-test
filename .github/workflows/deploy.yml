@@ -25,10 +25,31 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes root@173.242.49.111 'bash -s' <<'REMOTE'
           set -euo pipefail
           cd /var/www/beauty-os
+
+          # --- code update ---
           git fetch --prune origin main
           git reset --hard origin/main
           npm ci --omit=dev
-          pm2 reload beauty-os || pm2 start server/index.js --name beauty-os
+
+          # --- postfix (local mailer) ---
+          if ! command -v postfix &>/dev/null; then
+            DEBIAN_FRONTEND=noninteractive apt-get install -y postfix mailutils
+            postconf -e "myhostname=beauty.proonline.com.ua"
+            postconf -e "myorigin=beauty.proonline.com.ua"
+            postconf -e "inet_interfaces=loopback-only"
+            postconf -e "mydestination="
+            systemctl enable postfix && systemctl restart postfix
+          fi
+
+          # --- .env: add missing keys ---
+          ENV=/var/www/beauty-os/.env
+          grep -q '^APP_URL=' "$ENV" || echo 'APP_URL=https://beauty.proonline.com.ua' >> "$ENV"
+          grep -q '^SMTP_HOST=' "$ENV" || echo 'SMTP_HOST=localhost' >> "$ENV"
+          grep -q '^SMTP_PORT=' "$ENV" || echo 'SMTP_PORT=25' >> "$ENV"
+          grep -q '^SMTP_USER=' "$ENV" || echo 'SMTP_USER=noreply@beauty.proonline.com.ua' >> "$ENV"
+
+          # --- restart app ---
+          pm2 reload beauty-os --update-env || pm2 start server/index.js --name beauty-os
           pm2 save
           echo "Deployed $(git rev-parse --short HEAD) at $(date)"
           REMOTE

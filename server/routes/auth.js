@@ -10,6 +10,15 @@ const router = express.Router();
 const SALT_ROUNDS = 12;
 
 function getMailer() {
+  const isLocal = !process.env.SMTP_PASS || process.env.SMTP_HOST === 'localhost';
+  if (isLocal) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'localhost',
+      port: Number(process.env.SMTP_PORT) || 25,
+      secure: false,
+      ignoreTLS: true
+    });
+  }
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,
@@ -69,6 +78,11 @@ router.post('/login', async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'Неверный email или пароль' });
 
+    await query(
+      'UPDATE users SET last_login_at = NOW(), login_count = COALESCE(login_count, 0) + 1 WHERE id = $1',
+      [user.id]
+    );
+
     const token = sign({ userId: user.id, email: user.email });
     setTokenCookie(res, token);
 
@@ -114,7 +128,7 @@ router.post('/forgot-password', async (req, res) => {
     if (process.env.SMTP_HOST) {
       const mailer = getMailer();
       await mailer.sendMail({
-        from: `Beauty OS <${process.env.SMTP_USER}>`,
+        from: `Beauty OS <${process.env.SMTP_USER || 'noreply@beauty.proonline.com.ua'}>`,
         to: email,
         subject: 'Сброс пароля — Beauty Operations OS',
         html: `<p>Для сброса пароля перейдите по ссылке:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Ссылка действительна 1 час.</p>`
@@ -153,6 +167,35 @@ router.post('/reset-password', async (req, res) => {
   } catch (err) {
     console.error('[RESET PASSWORD]', err.message);
     res.status(500).json({ error: 'Ошибка сброса пароля' });
+  }
+});
+
+// GET /api/auth/impersonate?token=xxx — client view mode
+router.get('/impersonate', async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) return res.status(400).json({ error: 'Token required' });
+
+    const { rows } = await query(
+      `DELETE FROM impersonate_tokens WHERE token = $1 AND expires_at > NOW() RETURNING user_id`,
+      [token]
+    );
+    if (!rows.length) return res.status(401).json({ error: 'Токен недействителен или истёк' });
+
+    const { rows: userRows } = await query(
+      `SELECT u.id, u.email, u.name, p.has_access, p.is_admin, p.salon_name
+       FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE u.id = $1`,
+      [rows[0].user_id]
+    );
+    if (!userRows.length) return res.status(404).json({ error: 'Пользователь не найден' });
+
+    const user = userRows[0];
+    const jwtToken = sign({ userId: user.id, email: user.email });
+    setTokenCookie(res, jwtToken);
+    res.json({ user: { id: user.id, email: user.email, name: user.name, has_access: user.has_access || false } });
+  } catch (err) {
+    console.error('[IMPERSONATE]', err.message);
+    res.status(500).json({ error: 'Ошибка' });
   }
 });
 
