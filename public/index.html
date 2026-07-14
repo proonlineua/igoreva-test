@@ -1244,7 +1244,7 @@ function renderRoadmap() {
           <div class="phase-num">0${pi+1}</div>
           <div class="phase-info"><h3>${block?.name||bid}</h3><p>${done} из ${tasks.length} выполнено</p></div>
         </div>
-        <div><div class="phase-score" style="color:${c}">${s}%</div><div class="phase-lv" style="color:${lv.color}">${lv.label}</div></div>
+        <div><div class="phase-score" style="color:${c}">${s}%<span style="font-size:10px;font-weight:normal;opacity:0.6;margin-left:3px">аудит</span></div><div class="phase-lv" style="color:${lv.color}">${lv.label}</div></div>
       </div>
       <div class="task-list">
         ${tasks.map(t => {
@@ -1289,13 +1289,18 @@ function openTool(taskId, taskName, tool) {
   if (!S.user) { show('register'); return; }
   if (!S.user.has_access) { showPaywall(); return; }
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
+  const OB_DEFAULTS = {
+    'Средний чек (₴)': S.ob?.avgCheck || '',
+    'Средний чек сейчас (₴)': S.ob?.avgCheck || '',
+    'Мастеров в смене': S.ob?.masters || ''
+  };
   document.getElementById('modal-title').textContent = cfg.title;
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-intro">AI задаст вопросы и создаст готовый документ для <strong>${S.ob.name||'вашего салона'}</strong>.</div>
-    ${cfg.qs.map(q=>`<div class="mfield"><label>${q.label}</label><input id="mq-${q.id}" type="text" placeholder="Введите ответ..."></div>`).join('')}
+    ${cfg.qs.map(q=>`<div class="mfield"><label>${q.label}</label><input id="mq-${q.id}" type="text" placeholder="Введите ответ..." value="${OB_DEFAULTS[q.label]||''}"></div>`).join('')}
     <div class="btn-row">
       <button class="btn-outline" onclick="closeModal()">Отмена</button>
-      <button class="btn-primary" id="gen-btn" onclick="generateDoc('${taskName.replace(/'/g,"\\'")}','${tool}')">✦ Сгенерировать</button>
+      <button class="btn-primary" id="gen-btn" onclick="generateDoc('${taskName.replace(/'/g,"\\'")}','${tool}','${taskId}')">✦ Сгенерировать</button>
     </div>
     <div id="modal-result"></div>`;
   document.getElementById('modal-bg').classList.add('open');
@@ -1383,7 +1388,7 @@ function downloadDoc(taskName) {
   toast('Документ скачивается...');
 }
 
-async function generateDoc(taskName, tool) {
+async function generateDoc(taskName, tool, taskId) {
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
   const answers = cfg.qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
   const btn = document.getElementById('gen-btn');
@@ -1397,6 +1402,10 @@ async function generateDoc(taskName, tool) {
       body: JSON.stringify({ taskName, answers, salonData: S.ob })
     });
     renderDoc(res.content, taskName, resultEl);
+    if (taskId && !S.completedTasks.has(taskId)) {
+      const task = Object.values(ROADMAP_TASKS).flat().find(t => t.id === taskId);
+      toggleTask(taskId, task?.name || taskName);
+    }
     S.recentActions.unshift({text:'Создан: '+taskName, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
   } catch(e) {
     resultEl.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--red)">${e.message.includes('подписк')?'🔒 Требуется активная подписка':'Ошибка генерации. Попробуйте снова.'}</div>`;
@@ -1476,7 +1485,7 @@ function renderDashboard() {
     return `<div class="bbar-row">
       <div class="bbar-name">${b.name}</div>
       <div class="bbar-track"><div class="bbar-fill" style="width:${s}%;background:${c2}"></div></div>
-      <div class="bbar-val" style="color:${c2}">${s}%</div>
+      <div class="bbar-val" style="color:${c2}" title="Результат аудита">${s}%</div>
     </div>`;
   }).join('');
 
