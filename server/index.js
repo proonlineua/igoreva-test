@@ -1,8 +1,10 @@
 require('dotenv').config();
 
 // Auto-configure missing .env values on first start
-const fs = require('fs');
-const envPath = require('path').join(__dirname, '..', '.env');
+const fs     = require('fs');
+const path   = require('path');
+const crypto = require('crypto');
+const envPath = path.join(__dirname, '..', '.env');
 const envDefaults = {
   APP_URL:   'https://beauty.proonline.com.ua',
   SMTP_HOST: 'localhost',
@@ -11,6 +13,13 @@ const envDefaults = {
 };
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, 'utf8');
+  // Auto-generate BOT_ENCRYPTION_KEY if missing
+  if (!envContent.includes('BOT_ENCRYPTION_KEY=')) {
+    const key = crypto.randomBytes(16).toString('hex');
+    fs.appendFileSync(envPath, `\nBOT_ENCRYPTION_KEY=${key}\n`);
+    process.env.BOT_ENCRYPTION_KEY = key;
+    console.log('[ENV] Generated BOT_ENCRYPTION_KEY');
+  }
   const lines = Object.entries(envDefaults)
     .filter(([k]) => !envContent.includes(`${k}=`))
     .map(([k, v]) => `${k}=${v}`);
@@ -25,16 +34,14 @@ const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
 
-const authRouter    = require('./routes/auth');
-const aiRouter      = require('./routes/ai');
-const paymentRouter = require('./routes/payment');
-const auditRouter   = require('./routes/audit');
+const authRouter         = require('./routes/auth');
+const aiRouter           = require('./routes/ai');
+const paymentRouter      = require('./routes/payment');
+const auditRouter        = require('./routes/audit');
 const adminRouter        = require('./routes/admin');
 const integrationsRouter = require('./routes/integrations');
-const crypto        = require('crypto');
-const { execFile }  = require('child_process');
+const { execFile }       = require('child_process');
 
 const app = express();
 
@@ -138,6 +145,28 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+// Auto-run pending migrations on startup
+async function runMigrations() {
+  const { query } = require('./lib/db');
+  try {
+    await query(`CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT NOW())`);
+    const migrationsDir = path.join(__dirname, '..', 'migrations');
+    const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+    for (const file of files) {
+      const { rows } = await query('SELECT 1 FROM _migrations WHERE name = $1', [file]);
+      if (rows.length) continue;
+      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+      await query(sql);
+      await query('INSERT INTO _migrations (name) VALUES ($1)', [file]);
+      console.log(`[MIGRATION] Applied: ${file}`);
+    }
+  } catch (err) {
+    console.error('[MIGRATION ERROR]', err.message);
+  }
+}
+runMigrations();
+
 // Init Telegram bot
 const beautyBot = require('./bot');
 beautyBot.init();
