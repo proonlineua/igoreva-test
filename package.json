@@ -1,6 +1,6 @@
 {
   "name": "beauty-operations-os",
-  "version": "1.0.0",
+  "version": "2.5.0",
   "main": "server/index.js",
   "scripts": {
     "start": "bash scripts/setup-server.sh 2>/dev/null; node server/index.js",

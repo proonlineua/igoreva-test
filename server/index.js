@@ -95,7 +95,7 @@ app.use('/api/integrations',        integrationsRouter);
 app.use('/api/bot',                 require('./routes/bot'));
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '1.0.0', ts: new Date().toISOString() });
+  res.json({ status: 'ok', version: '2.5.0', ts: new Date().toISOString() });
 });
 
 // GitHub webhook auto-deploy
