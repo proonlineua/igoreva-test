@@ -488,6 +488,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .crm-field label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;display:block}
 .crm-actions{display:flex;gap:6px;margin-top:10px}
 .crm-sync-info{font-size:11px;color:var(--t3);margin-top:6px}
+.fin-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.fin-field{display:flex;flex-direction:column;gap:4px}
+.fin-field label{font-size:12px;color:var(--muted,var(--t2));font-weight:500}
+.fin-hint{display:block;font-size:11px;color:var(--t3);font-weight:normal;margin-top:1px}
+.fin-input-wrap{position:relative;display:flex;align-items:center}
+.fin-input-wrap input{width:100%;padding:8px 36px 8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:15px;box-sizing:border-box;font-family:inherit}
+.fin-suffix{position:absolute;right:10px;color:var(--t3);font-size:13px;pointer-events:none}
+@media(max-width:480px){.fin-form{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1147,12 +1155,27 @@ const TOOL_CONFIGS = {
   kpi:{title:'Создать KPI',qs:[{id:'q1',label:'Должность',type:'select',options:['Мастер','Администратор','Управляющий/Директор','Все роли']}]},
   job_desc:{title:'Должностная инструкция',qs:[{id:'q1',label:'Должность',type:'select',options:['Мастер','Администратор','Управляющий']}]},
   motivation:{title:'Система мотивации',qs:[{id:'q1',label:'Текущий тип оплаты',type:'select',options:['% от выручки','Оклад','Оклад + % (смешанная)','Пока без системы']}]},
-  bep_calc:{title:'Расчёт точки безубыточности',qs:[{id:'q1',label:'Постоянные расходы в месяц (аренда + коммунальные + зарплаты фиксированные)'}]},
+  bep_calc:{title:'Точка безубыточности',inputType:'financial',fields:[
+    {id:'rent',label:'Аренда помещения',suffix:'₴'},
+    {id:'fot_fixed',label:'Зарплата администратора (фикс)',suffix:'₴'},
+    {id:'utilities',label:'Коммунальные + связь',suffix:'₴'},
+    {id:'other_fixed',label:'Прочие постоянные расходы',suffix:'₴'},
+    {id:'fot_pct',label:'ФОТ мастеров от выручки',suffix:'%',hint:'обычно 45–55%'},
+    {id:'materials_pct',label:'Материалы от выручки',suffix:'%',hint:'обычно 10–16%'},
+  ],qs:[]},
   // Прямая генерация — без вопросов, используется данные аудита и онбординга
   scripts:{title:'Скрипты для администраторов',directGenerate:true,qs:[]},
   open_checklist:{title:'Чек-лист открытия смены',directGenerate:true,qs:[]},
   close_checklist:{title:'Чек-лист закрытия смены',directGenerate:true,qs:[]},
-  pl_template:{title:'Внедрение P&L',directGenerate:true,qs:[]},
+  pl_template:{title:'P&L — отчёт о прибыли и убытках',inputType:'financial',fields:[
+    {id:'revenue',label:'Выручка за месяц',suffix:'₴',hint:'из кассы или CRM'},
+    {id:'rent',label:'Аренда помещения',suffix:'₴'},
+    {id:'fot_masters',label:'Выплаты мастерам',suffix:'₴',hint:'суммарно за месяц'},
+    {id:'fot_admin',label:'Зарплата администратора',suffix:'₴'},
+    {id:'materials',label:'Расходные материалы',suffix:'₴'},
+    {id:'marketing',label:'Реклама и маркетинг',suffix:'₴'},
+    {id:'other',label:'Прочие расходы',suffix:'₴'},
+  ],qs:[]},
   loyalty:{title:'Программа лояльности',directGenerate:true,qs:[]},
   upsell:{title:'Система допродаж',directGenerate:true,qs:[]},
   content_plan:{title:'Контент-план Instagram',directGenerate:true,qs:[]},
@@ -1172,8 +1195,18 @@ const TOOL_CONFIGS = {
   weekly_review:{title:'Еженедельный контроль метрик',directGenerate:true,qs:[]},
   targeting:{title:'Реклама в Instagram',directGenerate:true,qs:[]},
   email_campaign:{title:'Email / SMS рассылка',directGenerate:true,qs:[]},
-  cost_calc:{title:'Расчёт себестоимости услуг',directGenerate:true,qs:[]},
-  plan_fact:{title:'План-факт',directGenerate:true,qs:[]},
+  cost_calc:{title:'Себестоимость услуг',inputType:'financial',fields:[
+    {id:'top_service',label:'Топ-услуга (название + цена)',type:'text',hint:'напр: Стрижка 500₴'},
+    {id:'material_cost',label:'Материалы на 1 процедуру',suffix:'₴'},
+    {id:'procedure_time',label:'Время процедуры',suffix:'мин'},
+    {id:'master_pct',label:'% мастера с процедуры',suffix:'%',hint:'обычно 35–50%'},
+  ],qs:[]},
+  plan_fact:{title:'План-факт',inputType:'financial',fields:[
+    {id:'plan_revenue',label:'План выручки на месяц',suffix:'₴'},
+    {id:'fact_revenue',label:'Факт на сегодня (0 если н/д)',suffix:'₴'},
+    {id:'work_days',label:'Рабочих дней в месяце',suffix:'дней'},
+    {id:'masters_count',label:'Количество мастеров',suffix:'чел'},
+  ],qs:[]},
   expenses:{title:'Учёт материалов',directGenerate:true,qs:[]},
   cashflow:{title:'Cash Flow',directGenerate:true,qs:[]},
   default:{title:'AI-инструмент',directGenerate:true,qs:[]}
@@ -1852,6 +1885,9 @@ function renderRoadmap() {
             <button class="rm-fbtn ${S_rmFilter==='undone'?'active':''}" onclick="setRmFilter('undone',this)">Невыполненные</button>
             <button class="rm-fbtn ${S_rmFilter==='done'?'active':''}" onclick="setRmFilter('done',this)">Выполненные</button>
           </div>
+          <div style="margin-top:10px;text-align:right">
+            <button class="btn-outline" style="font-size:12px;padding:6px 14px" onclick="createBook()">📚 Книга внедрения</button>
+          </div>
         </div>
       </div>`;
   }
@@ -1924,6 +1960,52 @@ function togglePhase(bid) {
   if (el) el.classList.toggle('collapsed');
 }
 
+async function createBook() {
+  if (!S.user) { show('register'); return; }
+  if (!S.user.has_access) { showPaywall(); return; }
+  document.getElementById('modal-title').textContent = '📚 Книга внедрения';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-intro" style="margin-bottom:8px">Составляем единую книгу для <strong>${(S.ob?.name||'вашего салона').replace(/</g,'&lt;')}</strong> из ваших документов...</div>
+    <div id="modal-result"><div id="doc-stream" style="font-size:13px;line-height:1.7;padding:4px 0"></div></div>`;
+  document.getElementById('modal-bg').classList.add('open');
+  let fullText = '';
+  try {
+    const resp = await fetch('/api/ai/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ salonData: S.ob }),
+      credentials: 'include',
+    });
+    if (!resp.ok) {
+      const e = await resp.json().catch(() => ({}));
+      const s = document.getElementById('doc-stream');
+      if (s) s.innerHTML = `<p style="color:var(--red)">${(e.error||'Ошибка').replace(/</g,'&lt;')}</p>`;
+      return;
+    }
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        let d;
+        try { d = JSON.parse(line.slice(6)); } catch { continue; }
+        if (d.chunk) { fullText += d.chunk; const s = document.getElementById('doc-stream'); if (s) s.innerHTML = mdToHtml(fullText); }
+        if (d.done) { const r = document.getElementById('modal-result'); if (r) renderDoc(fullText, 'Книга внедрения', r, 'book'); }
+        if (d.error) { const s = document.getElementById('doc-stream'); if (s) s.innerHTML = `<p style="color:var(--red)">${d.error.replace(/</g,'&lt;')}</p>`; }
+      }
+    }
+  } catch (err) {
+    const s = document.getElementById('doc-stream');
+    if (s) s.innerHTML = `<p style="color:var(--red)">Ошибка: ${err.message.replace(/</g,'&lt;')}</p>`;
+  }
+}
+
 function setRmFilter(filter, btn) {
   S_rmFilter = filter;
   document.querySelectorAll('.rm-fbtn').forEach(b => b.classList.remove('active'));
@@ -1994,6 +2076,34 @@ function openTool(taskId, taskName, tool) {
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
 
   document.getElementById('modal-title').textContent = cfg.title;
+
+  // financial: structured numeric input form
+  if (cfg.inputType === 'financial') {
+    const ctr = S.ob?.country || '';
+    const cur = /испан|германи|итали|франци|португал/i.test(ctr) ? '€'
+              : /польш/i.test(ctr) ? 'zł' : '₴';
+    const prefill = { revenue: S.ob?.revenue||'', masters_count: S.ob?.masters||'', work_days: S.ob?.workDays||'' };
+    const fieldsHtml = cfg.fields.map(f => {
+      const v = prefill[f.id] != null ? prefill[f.id] : '';
+      const sfx = f.suffix === '₴' ? cur : (f.suffix || '');
+      const inp = f.type === 'text'
+        ? `<input type="text" id="ff-${f.id}" placeholder="${(f.hint||'').replace(/'/g,"&#39;")}" value="${String(v).replace(/"/g,'&quot;')}">`
+        : `<input type="number" id="ff-${f.id}" placeholder="0" value="${v}" min="0">`;
+      const hintHtml = f.hint && f.type !== 'text' ? `<span class="fin-hint">${f.hint}</span>` : '';
+      return `<div class="fin-field"><label>${f.label}${hintHtml}</label><div class="fin-input-wrap">${inp}${sfx?`<span class="fin-suffix">${sfx}</span>`:''}</div></div>`;
+    }).join('');
+    const tn = taskName.replace(/'/g,"\\'"), tl = tool.replace(/'/g,"\\'"), ti = taskId.replace(/'/g,"\\'");
+    document.getElementById('modal-body').innerHTML = `
+      <div class="modal-intro" style="margin-bottom:12px">Введите данные — AI создаст документ с реальными расчётами для <strong>${(S.ob?.name||'вашего салона').replace(/</g,'&lt;')}</strong></div>
+      <div class="fin-form">${fieldsHtml}</div>
+      <div class="btn-row">
+        <button class="btn-outline" onclick="closeModal()">Отмена</button>
+        <button class="btn-primary" id="gen-btn" onclick="submitFinancialForm('${tn}','${tl}','${ti}')">✦ Сгенерировать</button>
+      </div>
+      <div id="modal-result"></div>`;
+    document.getElementById('modal-bg').classList.add('open');
+    return;
+  }
 
   // directGenerate: skip form, start generation immediately
   if (cfg.directGenerate) {
@@ -2186,13 +2296,26 @@ function downloadDoc(taskName) {
     toast('Открываем документ...');
   }
 }
-async function generateDoc(taskName, tool, taskId) {
+function submitFinancialForm(taskName, tool, taskId) {
+  const cfg = TOOL_CONFIGS[tool] || {};
+  const parts = (cfg.fields || []).map(f => {
+    const v = (document.getElementById('ff-' + f.id)?.value || '').trim();
+    if (!v || v === '0') return null;
+    const sfx = f.suffix && f.suffix !== '₴' ? f.suffix : (f.suffix === '₴' ? (S.ob?.country && /испан|германи/i.test(S.ob.country) ? '€' : '₴') : '');
+    return `${f.label}: ${v}${sfx ? ' ' + sfx : ''}`;
+  }).filter(Boolean);
+  generateDoc(taskName, tool, taskId, parts.join('\n'));
+}
+
+async function generateDoc(taskName, tool, taskId, answersOverride) {
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
   const qs = cfg.qs || [];
-  const answers = qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
+  const answers = answersOverride != null
+    ? answersOverride
+    : qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
 
-  // Soft validation — warn but don't block (skip for directGenerate tools)
-  const hasInput = qs.some(q => (document.getElementById('mq-'+q.id)?.value||'').trim());
+  // Soft validation — warn but don't block (skip for directGenerate / financial tools)
+  const hasInput = answersOverride != null || qs.some(q => (document.getElementById('mq-'+q.id)?.value||'').trim());
   if (!hasInput && qs.length > 0) toast('Заполните поля для более точного результата', true);
 
   const btn = document.getElementById('gen-btn');

@@ -657,6 +657,100 @@ ${originalContent.slice(0, 3000)}
   }
 });
 
+// ─── BOOK ────────────────────────────────────────────────────────────────────
+
+router.post('/book', async (req, res) => {
+  const { salonData } = req.body;
+  const { rows: docs } = await query(
+    `SELECT task_name, content FROM generated_documents WHERE user_id=$1 ORDER BY created_at ASC LIMIT 30`,
+    [req.user.id]
+  ).catch(() => ({ rows: [] }));
+
+  if (!docs.length) {
+    return res.status(400).json({ error: 'Нет документов. Сначала сгенерируйте хотя бы несколько инструментов через Роадмап.' });
+  }
+
+  const cur     = getCurrency(salonData?.country || '');
+  const country = salonData?.country || 'Украина';
+  const name    = (salonData?.name || 'Салон').slice(0, 60);
+  const masters = salonData?.masters || '?';
+
+  const docBlock = docs.map(d =>
+    `### ${d.task_name}\n${d.content.slice(0, 2000)}${d.content.length > 2000 ? '\n...[сокращено]' : ''}`
+  ).join('\n\n---\n\n');
+
+  const prompt = `Ты операционный директор, работающий с салоном красоты "${name}" (${country}, ${masters} мастеров).
+
+Ниже — ${docs.length} документов, уже разработанных для этого салона.
+На их основе составь ЕДИНУЮ КНИГУ ВНЕДРЕНИЯ для руководителя.
+
+${docBlock}
+
+СТРУКТУРА КНИГИ ВНЕДРЕНИЯ:
+
+# Книга внедрения Beauty OS — ${name}
+
+## Введение: Что показал аудит
+Суммируй ключевые проблемы на основе всех документов.
+Посчитай: сколько ${cur}/мес теряет салон прямо сейчас — покажи расчёт.
+Потенциал роста после полного внедрения: +X ${cur}/мес.
+
+## Приоритеты внедрения
+Топ-5 шагов с максимальным эффектом. Что делать, кто делает, за сколько дней.
+Таблица: | # | Действие | Ответственный | Срок | Ожидаемый эффект ${cur}/мес |
+
+## 30 дней — База
+Что внедрить в первый месяц. Список конкретных задач с результатами.
+
+## 60 дней — Рост
+Что делать во второй месяц. Фокус на максимальном росте.
+
+## 90 дней — Масштаб
+Третий месяц: оптимизация, делегирование, выход из операционки.
+
+## Метрики успеха
+Таблица: | Метрика | Сейчас | Цель через 90 дней |
+Минимум 8 метрик: выручка, загрузка, retention, средний чек, ФОТ%, конверсия, LTV, NPS.
+
+## Ожидаемый результат
+Выручка через 3 и 6 месяцев. Расчёт ROI от внедрения.
+
+ТРЕБОВАНИЯ:
+- Все суммы в ${cur}
+- Таблицы Markdown везде где есть числа
+- Ноль воды — каждый пункт: конкретное действие или конкретная цифра
+- Книга самодостаточна: руководитель берёт и сразу знает что делать`;
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  let fullText = '';
+  try {
+    const stream = await anthropic.messages.stream({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 6000,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    for await (const chunk of stream) {
+      if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') {
+        fullText += chunk.delta.text;
+        res.write(`data: ${JSON.stringify({ chunk: chunk.delta.text })}\n\n`);
+      }
+    }
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    await query(
+      'INSERT INTO generated_documents (user_id, task_name, content) VALUES ($1, $2, $3)',
+      [req.user.id, 'Книга внедрения', fullText]
+    ).catch(() => {});
+  } catch (e) {
+    console.error('[AI BOOK]', e.message);
+    res.write(`data: ${JSON.stringify({ error: e.message })}\n\n`);
+  } finally {
+    res.end();
+  }
+});
+
 // ─── DOCUMENTS ───────────────────────────────────────────────────────────────
 
 router.get('/documents', async (req, res) => {
