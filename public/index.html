@@ -2636,7 +2636,11 @@ async function loadMyDocuments() {
     }
     el.innerHTML = res.documents.map(doc => {
       const date = new Date(doc.created_at).toLocaleDateString('ru', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-      const preview = doc.content.slice(0, 120).replace(/[#*\n]/g,' ');
+      const preview = doc.content
+        .replace(/\n/g, ' ').replace(/\\n/g, ' ')
+        .replace(/#{1,6}\s?/g, '').replace(/[*_`|~>]/g, '')
+        .replace(/!?\[.*?\]\(.*?\)/g, '').replace(/-{2,}/g, '')
+        .replace(/\s+/g, ' ').trim().slice(0, 160);
       return `<div style="border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--rose-m)'" onmouseout="this.style.borderColor='var(--border)'" onclick="viewDoc(${JSON.stringify(doc.task_name)},${JSON.stringify(doc.content)})">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
           <strong style="font-size:13px">${doc.task_name}</strong>
