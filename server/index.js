@@ -146,15 +146,28 @@ async function runMigrations() {
   const { query } = require('./lib/db');
   try {
     await query(`CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT NOW())`);
+
+    // If tables already exist under another owner, mark 001 as applied without running it
+    const { rows: usersExists } = await query(
+      `SELECT 1 FROM information_schema.tables WHERE table_name='users' AND table_schema='public'`
+    );
+    if (usersExists.length) {
+      await query(`INSERT INTO _migrations (name) VALUES ('001_initial_schema.sql') ON CONFLICT DO NOTHING`);
+    }
+
     const migrationsDir = path.join(__dirname, '..', 'migrations');
     const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
     for (const file of files) {
       const { rows } = await query('SELECT 1 FROM _migrations WHERE name = $1', [file]);
       if (rows.length) continue;
       const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
-      await query(sql);
-      await query('INSERT INTO _migrations (name) VALUES ($1)', [file]);
-      console.log(`[MIGRATION] Applied: ${file}`);
+      try {
+        await query(sql);
+        await query('INSERT INTO _migrations (name) VALUES ($1)', [file]);
+        console.log(`[MIGRATION] Applied: ${file}`);
+      } catch (err) {
+        console.error(`[MIGRATION ERROR] ${file}: ${err.message}`);
+      }
     }
   } catch (err) {
     console.error('[MIGRATION ERROR]', err.message);

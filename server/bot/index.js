@@ -16,7 +16,14 @@ function init() {
   }
   if (bot) return bot;
 
-  bot = new TelegramBot(TOKEN, { polling: true });
+  try {
+    bot = new TelegramBot(TOKEN, { polling: true });
+  } catch (err) {
+    console.error('[BOT] Failed to create bot:', err.message);
+    return null;
+  }
+  bot.on('polling_error', (err) => console.error('[BOT POLLING]', err.message));
+  bot.on('error', (err) => console.error('[BOT ERROR]', err.message));
   console.log('[BOT] Started polling');
 
   setupHandlers(bot);
