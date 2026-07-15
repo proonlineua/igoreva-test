@@ -224,6 +224,57 @@ ${fid === 'sl'
 }
 
 
+// ─── Audit context → tell AI what problems were found ────────────────────────
+
+const TOOL_AUDIT_MAP = {
+  kpi:['hr'], job_desc:['hr'], motivation:['hr'], orgchart:['hr'],
+  meetings:['hr'], delegation:['hr'], weekly_review:['owner'],
+  scripts:['sales'], upsell:['sales'], loyalty:['sales'],
+  subscriptions:['sales'], conversion:['sales'], referral:['sales'],
+  bep_calc:['finance'], pl_template:['finance'], cost_calc:['finance'],
+  plan_fact:['finance'], cashflow:['finance'], expenses:['finance'],
+  open_checklist:['ops'], close_checklist:['ops'], procurement:['ops'],
+  quality:['ops'], complaints:['ops'], reminders:['clients'],
+  feedback:['clients'], content_plan:['marketing','clients'],
+  targeting:['marketing'], email_campaign:['marketing'],
+  strategy:['owner'],
+};
+
+const BLOCK_QUESTIONS = {
+  finance:['Ведёте P&L?','Знаете себестоимость?','Есть план-факт?','Рассчитана БЭП?','Учитываете материалы?','ФОТ ≤45%?','Аренда ≤15%?','Учёт дебиторки?','Финподушка?'],
+  hr:['Должностные инструкции?','Система мотивации+KPI?','Регулярные собрания?','Система адаптации?','Обучение мастеров?','Оргструктура?','Стандартизирован найм?','Система оценки?','Текучесть <30%?'],
+  sales:['Скрипты у администраторов?','Допродажа при визите?','Программа лояльности?','Учёт конверсии звонков?','Администраторы знают план?','Работа с отзывами?','Продаёте сертификаты?','Акции при простое?','Знаете прибыльные услуги?'],
+  clients:['База клиентов с историей?','Знаете retention rate?','Авторемайндеры?','ДР поздравления?','Работа с отменами?','Обратная связь?','Реферальная программа?','Знаете LTV?','Retention >50%?'],
+  ops:['Чек-лист открытия?','Чек-лист закрытия?','Регламент закупок?','Стандарты чистоты?','Процедура жалоб?','Мониторинг загрузки?','Стандарт опозданий?','Кассовая дисциплина?','Контроль качества?'],
+  owner:['Работаете в бизнесе <50%?','Бизнес работает без вас неделю?','Есть управляющий?','Стратплан на 6–12 мес?','Отслеживаете метрики еженедельно?','Решения на основе данных?','Финцели на год?','Инвестируете в развитие?','Система делегирования?'],
+  marketing:['Instagram/TikTok 3+ поста/нед?','Таргетированная реклама?','Google My Business?','Email/SMS-рассылка?','Знаете CAC?','Анализ каналов?','Коллаборации?','Контент-план?','Активности для клиентов?'],
+};
+
+function buildAuditContext(auditData, toolId) {
+  if (!auditData || !auditData.answers) return '';
+  const blocks = TOOL_AUDIT_MAP[toolId] || [];
+  if (!blocks.length) return '';
+  const lines = [];
+  for (const block of blocks) {
+    const qs = BLOCK_QUESTIONS[block] || [];
+    qs.forEach((q, i) => {
+      const a = auditData.answers[`${block}_${i}`];
+      if (!a) return;
+      const icon = a.val === 'yes' ? '✅' : a.val === 'partly' ? '⚠️' : '❌';
+      lines.push(`${icon} ${q}${a.comment ? ` — ${a.comment}` : ''}`);
+    });
+  }
+  if (auditData.scores) {
+    const sc = blocks.map(b => auditData.scores[b]).filter(v => v != null);
+    if (sc.length) {
+      const avg = Math.round(sc.reduce((a, b) => a + b, 0) / sc.length);
+      lines.unshift(`Оценка блока: ${avg}%\n`);
+    }
+  }
+  if (!lines.length) return '';
+  return `\nРЕЗУЛЬТАТЫ АУДИТА ПО ТЕМЕ ДОКУМЕНТА:\n${lines.join('\n')}\n\nВАЖНО: Документ должен РЕШАТЬ выявленные ❌ и ⚠️ проблемы этого конкретного салона, а не быть абстрактным шаблоном. Если аудит показал что чего-то нет — создай это с нуля для данного салона.\n`;
+}
+
 // ─── Enrich prompt with real metrics from DB ─────────────────────────────────
 async function getLatestMetrics(userId) {
   if (!userId) return null;
@@ -327,7 +378,12 @@ router.post('/analyze', async (req, res) => {
     .filter(k => (scores[k]||0) < 50)
     .map(k => `${k}: ${scores[k]}%`).join(', ') || 'нет';
 
-  const prompt = `Ты операционный директор сети салонов красоты с 10-летним опытом. Анализируй с учётом специфики рынка ${country}.
+  try {
+    // Load metrics BEFORE building prompt (prevents ReferenceError)
+    const metrics    = await getLatestMetrics(req.user?.id);
+    const metricsCtx = buildMetricsContext(metrics, cur);
+
+    const prompt = `Ты операционный директор сети салонов красоты с 10-летним опытом. Анализируй с учётом специфики рынка ${country}.
 
 ДАННЫЕ САЛОНА:
 Название: ${onboarding.name || 'Салон'}, ${onboarding.city || ''}, ${country}
@@ -360,11 +416,6 @@ ${getMarketContext(country, onboarding.city, new Date().getFullYear())}${metrics
   "summary": "2-3 предложения: главный вывод и ключевая возможность"
 }`;
 
-  try {
-    // Enrich with real metrics if available
-    const metrics = await getLatestMetrics(req.user?.id);
-    const metricsCtx = buildMetricsContext(metrics, cur);
-
     const msg  = await anthropic.messages.create({
       model: 'claude-sonnet-4-6', max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }]
@@ -393,7 +444,7 @@ router.post('/generate', async (req, res) => {
     return res.status(403).json({ error: 'Требуется план внедрения', code: 'ACCESS_REQUIRED' });
   }
 
-  const { taskName, answers, salonData } = req.body;
+  const { taskName, answers, salonData, auditContext, toolId } = req.body;
   if (!taskName || taskName.length > 150) return res.status(400).json({ error: 'Некорректное название задачи' });
 
   const safeAnswers = (answers || '').toString().slice(0, 2000);
@@ -478,6 +529,7 @@ ${country === 'Испания' ? '- ФОТ мастеров: 33–42% (если 
     // Load metrics BEFORE building prompt (was a ReferenceError bug before)
     const metrics    = await getLatestMetrics(req.user?.id);
     const metricsCtx = buildMetricsContext(metrics, cur);
+    const auditCtx   = buildAuditContext(auditContext, toolId || '');
 
     const prompt = `Ты операционный консультант для салонов красоты. Создай профессиональный рабочий документ который можно использовать с первого дня.
 
@@ -493,6 +545,7 @@ ${country === 'Испания' ? '- ФОТ мастеров: 33–42% (если 
 
 ${market}
 ${metricsCtx}
+${auditCtx}
 ${taskExtra}
 
 ДОКУМЕНТ: "${taskName}"

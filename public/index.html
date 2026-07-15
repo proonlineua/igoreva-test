@@ -1143,17 +1143,20 @@ const ROADMAP_TASKS = {
 };
 
 const TOOL_CONFIGS = {
-  kpi:{title:'Создать KPI',qs:[{id:'q1',label:'Должность'},{id:'q2',label:'Основные обязанности'},{id:'q3',label:'Целевые показатели (загрузка, конверсия, допродажи)'},{id:'q4',label:'Целевая выручка в месяц'},{id:'q5',label:'Система поощрений / бонусов'}]},
-  job_desc:{title:'Должностная инструкция',qs:[{id:'q1',label:'Должность'},{id:'q2',label:'Основные задачи'},{id:'q3',label:'Требования к кандидату'},{id:'q4',label:'График работы'}]},
-  motivation:{title:'Система мотивации',qs:[{id:'q1',label:'Текущий тип оплаты'},{id:'q2',label:'Выручка на мастера в месяц'},{id:'q3',label:'Текущий % или оклад'},{id:'q4',label:'Цель по росту выручки (%)'},{id:'q5',label:'Страна / что разрешено по трудовому праву (штрафы?)'}]},
-  scripts:{title:'Скрипты для администраторов',qs:[{id:'q1',label:'Тип скрипта (входящий / допродажа / возврат)'},{id:'q2',label:'Основные услуги'},{id:'q3',label:'Услуги с наибольшим потенциалом допродажи'},{id:'q4',label:'Топ-3 возражения клиентов'}]},
-  open_checklist:{title:'Чек-лист открытия смены',qs:[{id:'q1',label:'Время начала работы'},{id:'q2',label:'Мастеров в смене'},{id:'q3',label:'Есть кассовый аппарат?'},{id:'q4',label:'Специфические задачи'}]},
-  close_checklist:{title:'Чек-лист закрытия смены',qs:[{id:'q1',label:'Время окончания работы'},{id:'q2',label:'Нужен Z-отчёт?'},{id:'q3',label:'Кто делает уборку?'},{id:'q4',label:'Есть склад расходников?'}]},
-  bep_calc:{title:'Расчёт точки безубыточности',qs:[{id:'q1',label:'Постоянные расходы в месяц'},{id:'q2',label:'Среднемесячная выручка'},{id:'q3',label:'ФОТ мастеров (%) от выручки'},{id:'q4',label:'Материалы (%) от выручки'},{id:'q5',label:'Рабочих дней в месяц'}]},
-  pl_template:{title:'Внедрение P&L',qs:[{id:'q1',label:'Статьи постоянных расходов'},{id:'q2',label:'Статьи переменных расходов'},{id:'q3',label:'Источники выручки'},{id:'q4',label:'Периодичность отчётности'}]},
-  loyalty:{title:'Программа лояльности',qs:[{id:'q1',label:'Средний чек (₴)'},{id:'q2',label:'Визитов клиента в год'},{id:'q3',label:'Используете систему записи?'},{id:'q4',label:'Бюджет на бонусы (% выручки)'}]},
-  upsell:{title:'Система допродаж',qs:[{id:'q1',label:'Топ-3 услуги'},{id:'q2',label:'Средний чек сейчас (₴)'},{id:'q3',label:'Есть продукты для домашнего ухода?'},{id:'q4',label:'Цель по росту чека (%)'}]},
-  content_plan:{title:'Контент-план Instagram',qs:[{id:'q1',label:'Основные услуги'},{id:'q2',label:'Целевая аудитория'},{id:'q3',label:'Текущее число подписчиков'},{id:'q4',label:'Цель аккаунта'}]},
+  // Слим-формы — только 1 критически нужный вопрос
+  kpi:{title:'Создать KPI',qs:[{id:'q1',label:'Должность',type:'select',options:['Мастер','Администратор','Управляющий/Директор','Все роли']}]},
+  job_desc:{title:'Должностная инструкция',qs:[{id:'q1',label:'Должность',type:'select',options:['Мастер','Администратор','Управляющий']}]},
+  motivation:{title:'Система мотивации',qs:[{id:'q1',label:'Текущий тип оплаты',type:'select',options:['% от выручки','Оклад','Оклад + % (смешанная)','Пока без системы']}]},
+  bep_calc:{title:'Расчёт точки безубыточности',qs:[{id:'q1',label:'Постоянные расходы в месяц (аренда + коммунальные + зарплаты фиксированные)'}]},
+  // Прямая генерация — без вопросов, используется данные аудита и онбординга
+  scripts:{title:'Скрипты для администраторов',directGenerate:true,qs:[]},
+  open_checklist:{title:'Чек-лист открытия смены',directGenerate:true,qs:[]},
+  close_checklist:{title:'Чек-лист закрытия смены',directGenerate:true,qs:[]},
+  pl_template:{title:'Внедрение P&L',directGenerate:true,qs:[]},
+  loyalty:{title:'Программа лояльности',directGenerate:true,qs:[]},
+  upsell:{title:'Система допродаж',directGenerate:true,qs:[]},
+  content_plan:{title:'Контент-план Instagram',directGenerate:true,qs:[]},
+  // Форма по умолчанию для всех остальных инструментов
   default:{title:'AI-инструмент',qs:[{id:'q1',label:'Опишите ситуацию'},{id:'q2',label:'Что сейчас не работает?'},{id:'q3',label:'Ожидаемый результат'}]}
 };
 
@@ -1970,35 +1973,46 @@ function openTool(taskId, taskName, tool) {
   if (!S.user) { show('register'); return; }
   if (!S.user.has_access) { showPaywall(); return; }
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
+
+  document.getElementById('modal-title').textContent = cfg.title;
+
+  // directGenerate: skip form, start generation immediately
+  if (cfg.directGenerate) {
+    document.getElementById('modal-body').innerHTML = `
+      <div class="modal-intro" style="margin-bottom:4px">Генерируем на основе данных аудита <strong>${S.ob.name||'вашего салона'}</strong>...</div>
+      <div id="modal-result"></div>`;
+    document.getElementById('modal-bg').classList.add('open');
+    generateDoc(taskName, tool, taskId);
+    return;
+  }
+
   const cur = (S.ob?.country === 'Испания' || S.ob?.country === 'Германия' || S.ob?.country === 'Чехия') ? '€' :
               (S.ob?.country === 'Польша') ? 'zł' : '₴';
   const avgChk = S.ob?.avgCheck ? `${S.ob.avgCheck} ${cur}` : '';
-  const rev = S.ob?.revenue ? `${S.ob.revenue} ${cur}` : '';
+  const rev    = S.ob?.revenue ? `${S.ob.revenue} ${cur}` : '';
   const OB_DEFAULTS = {
-    'Средний чек (₴)': avgChk,
-    'Средний чек сейчас (₴)': avgChk,
-    'Средний чек': avgChk,
-    'Мастеров в смене': S.ob?.masters || '',
-    'Мастеров': S.ob?.masters || '',
-    'Количество мастеров': S.ob?.masters || '',
-    'Администраторов': S.ob?.admins || '',
-    'Выручка в месяц (₴)': rev,
-    'Выручка/мес': rev,
-    'Среднемесячная выручка (₴)': rev,
+    'Средний чек (₴)': avgChk, 'Средний чек сейчас (₴)': avgChk, 'Средний чек': avgChk,
+    'Мастеров в смене': S.ob?.masters || '', 'Мастеров': S.ob?.masters || '',
+    'Количество мастеров': S.ob?.masters || '', 'Администраторов': S.ob?.admins || '',
+    'Выручка в месяц (₴)': rev, 'Выручка/мес': rev, 'Среднемесячная выручка (₴)': rev,
     'Текущий % или оклад': S.ob?.country === 'Испания' ? '40% от выручки' : '45% от выручки',
-    'Целевая выручка в месяц (₴)': rev,
-    'Используете систему записи?': S.ob?.crm || '',
-    'Текущее число подписчиков': '',
-    'Основные услуги': (S.ob?.services||[]).join(', ') || '',
-    'Город': S.ob?.city || '',
+    'Целевая выручка в месяц (₴)': rev, 'Используете систему записи?': S.ob?.crm || '',
+    'Основные услуги': (S.ob?.services||[]).join(', ') || '', 'Город': S.ob?.city || '',
   };
-  document.getElementById('modal-title').textContent = cfg.title;
+
+  const tn = taskName.replace(/'/g, "\\'");
   document.getElementById('modal-body').innerHTML = `
-    <div class="modal-intro">AI задаст вопросы и создаст готовый документ для <strong>${S.ob.name||'вашего салона'}</strong>.</div>
-    ${cfg.qs.map(q=>`<div class="mfield"><label>${q.label}</label><input id="mq-${q.id}" type="text" placeholder="${getFieldHint(q.label)}" value="${OB_DEFAULTS[q.label]||''}"></div>`).join('')}
+    <div class="modal-intro">Уточните детали — AI создаст документ для <strong>${S.ob.name||'вашего салона'}</strong>.</div>
+    ${cfg.qs.map(q => {
+      if (q.type === 'select') {
+        const opts = (q.options||[]).map(o => `<option value="${o}">${o}</option>`).join('');
+        return `<div class="mfield"><label>${q.label}</label><select id="mq-${q.id}"><option value="">Выберите...</option>${opts}</select></div>`;
+      }
+      return `<div class="mfield"><label>${q.label}</label><input id="mq-${q.id}" type="text" placeholder="${getFieldHint(q.label)}" value="${OB_DEFAULTS[q.label]||''}"></div>`;
+    }).join('')}
     <div class="btn-row">
       <button class="btn-outline" onclick="closeModal()">Отмена</button>
-      <button class="btn-primary" id="gen-btn" onclick="generateDoc('${taskName.replace(/'/g,"\\'")}','${tool}','${taskId}')">✦ Сгенерировать</button>
+      <button class="btn-primary" id="gen-btn" onclick="generateDoc('${tn}','${tool}','${taskId}')">✦ Сгенерировать</button>
     </div>
     <div id="modal-result"></div>`;
   document.getElementById('modal-bg').classList.add('open');
@@ -2158,13 +2172,13 @@ async function generateDoc(taskName, tool, taskId) {
   const qs = cfg.qs || [];
   const answers = qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
 
-  // Soft validation — warn but don't block
+  // Soft validation — warn but don't block (skip for directGenerate tools)
   const hasInput = qs.some(q => (document.getElementById('mq-'+q.id)?.value||'').trim());
   if (!hasInput && qs.length > 0) toast('Заполните поля для более точного результата', true);
 
   const btn = document.getElementById('gen-btn');
   const resultEl = document.getElementById('modal-result');
-  btn.disabled = true; btn.textContent = 'Генерируем...';
+  if (btn) { btn.disabled = true; btn.textContent = 'Генерируем...'; }
   resultEl.innerHTML = `<div class="loading">
       <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
       <div style="font-size:13px;margin-top:8px">Создаём документ...</div>
@@ -2180,7 +2194,11 @@ async function generateDoc(taskName, tool, taskId) {
     const response = await fetch('/api/ai/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskName, answers, salonData: S.ob }),
+      body: JSON.stringify({
+        taskName, answers, salonData: S.ob,
+        auditContext: { answers: S.answers || {}, scores: S.scores || {} },
+        toolId: tool,
+      }),
       credentials: 'include',
     });
 
@@ -2231,7 +2249,7 @@ async function generateDoc(taskName, tool, taskId) {
     if (isAccess) setTimeout(() => { closeModal(); showPaywall(); }, 1500);
   } finally {
     clearInterval(timerInterval);
-    btn.disabled = false; btn.textContent = '✦ Сгенерировать';
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Сгенерировать'; }
   }
 }
 
