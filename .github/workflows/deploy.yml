@@ -22,10 +22,9 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "."
+          source: ".,!.git,!node_modules,!.env"
           target: "/var/www/beauty-os"
           rm: false
-          exclude: ".git,node_modules,.env,.github"
 
       - name: Install & restart
         uses: appleboy/ssh-action@v1.0.3
