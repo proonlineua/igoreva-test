@@ -31,7 +31,8 @@ const authRouter    = require('./routes/auth');
 const aiRouter      = require('./routes/ai');
 const paymentRouter = require('./routes/payment');
 const auditRouter   = require('./routes/audit');
-const adminRouter   = require('./routes/admin');
+const adminRouter        = require('./routes/admin');
+const integrationsRouter = require('./routes/integrations');
 const crypto        = require('crypto');
 const { execFile }  = require('child_process');
 
@@ -83,6 +84,8 @@ app.use('/api/ai',      aiLimit,    aiRouter);
 app.use('/api/payment',             paymentRouter);
 app.use('/api/audit',               auditRouter);
 app.use('/api/admin',               adminRouter);
+app.use('/api/integrations',        integrationsRouter);
+app.use('/api/bot',                 require('./routes/bot'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0', ts: new Date().toISOString() });
@@ -135,13 +138,20 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
+// Init Telegram bot
+const beautyBot = require('./bot');
+beautyBot.init();
+
+// Init background CRM sync scheduler
+const syncScheduler = require('./bot/syncScheduler');
+syncScheduler.init();
+
 app.listen(PORT, () => {
   console.log(`Beauty OS running on port ${PORT}`);
   console.log(`URL: ${process.env.APP_URL || 'http://localhost:' + PORT}`);
 });
 
 // Auto-restart when deploy.trigger file changes (written by git-pull cron)
-const fs = require('fs');
 const TRIGGER = path.join(__dirname, '..', 'deploy.trigger');
 if (fs.existsSync(TRIGGER)) {
   fs.watch(TRIGGER, () => {

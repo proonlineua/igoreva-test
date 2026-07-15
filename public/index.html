@@ -164,6 +164,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .bcard-name{font-size:13px;font-weight:500}
 .bcard-score{font-size:20px;font-weight:700;letter-spacing:-1px}
 .bcard-lv{font-size:11px;font-weight:600;text-align:right;margin-top:1px}
+
+/* ── RESULTS v2 ── */
+.res-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;transition:box-shadow .2s}
+.bcard:hover{box-shadow:var(--shm)}
+.bcard-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.bcard-name{font-size:13px;font-weight:600}
+.bcard-score{font-size:22px;font-weight:700;letter-spacing:-1px}
+.bcard-lv{font-size:11px;font-weight:600;text-align:right;margin-top:1px}
+.res-share{display:flex;gap:10px;align-items:center;margin-bottom:20px}
+.res-share-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--t2);transition:all .15s}
+.res-share-btn:hover{border-color:var(--border2);background:var(--s2)}
 .bbar{height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
 .bfill{height:100%;border-radius:2px;transition:width .6s}
 /* AI PANEL */
@@ -191,39 +203,51 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 @keyframes db{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-7px)}}
 
 /* ── ROADMAP ── */
-.phase{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:22px 26px;margin-bottom:16px}
-.phase-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
-.phase-left{display:flex;align-items:center;gap:12px}
-.phase-num{width:34px;height:34px;border-radius:10px;background:var(--rose-l);color:var(--rose-d);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
-.phase-info h3{font-size:16px;font-weight:600;margin-bottom:2px}
-.phase-info p{font-size:12px;color:var(--t3)}
-.phase-score{font-size:22px;font-weight:700;letter-spacing:-1px;text-align:right}
-.phase-lv{font-size:11px;font-weight:600}
-.task-list{display:flex;flex-direction:column}
-.task{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
-.task:last-child{border-bottom:none}
-.task-l{display:flex;align-items:center;gap:10px}
-.chk{width:20px;height:20px;border:1.5px solid var(--border2);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.chk:hover{border-color:var(--rose)}
-.chk.done{background:var(--green);border-color:var(--green)}
-.chk.done::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
-.task-name{font-size:14px;font-weight:500}
-.task-name.done{text-decoration:line-through;color:var(--t3)}
-.task-r{display:flex;align-items:center;gap:8px}
-.prio{font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px}
-.prio-critical{background:var(--rbg);color:var(--red)}
-.prio-high{background:var(--abg);color:var(--amber)}
-.prio-medium{background:var(--gbg);color:var(--green)}
-.btn-impl{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--t2);transition:all .15s;white-space:nowrap}
 .btn-impl:hover{background:var(--rose-l);border-color:var(--rose-m);color:var(--rose-d)}
 
+/* ── ROADMAP v2 ── */
+.rm-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.rm-overall{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 20px;min-width:220px;flex:1}
+.rm-overall-label{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.rm-overall-bar{height:8px;background:var(--s3);border-radius:4px;overflow:hidden;margin-bottom:6px}
+.rm-overall-fill{height:100%;background:linear-gradient(90deg,var(--rose),var(--rose-m));border-radius:4px;transition:width .6s}
+.rm-overall-nums{font-size:13px;color:var(--t2);display:flex;justify-content:space-between}
+.rm-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rm-filter-label{font-size:12px;color:var(--t2);font-weight:500}
+.rm-fbtn{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--t2);transition:all .15s}
+.rm-fbtn:hover{border-color:var(--border2)}
+.rm-fbtn.active{background:var(--rose);border-color:var(--rose);color:#fff}
+.phase{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);margin-bottom:14px;overflow:hidden;transition:all .2s}
+.phase.collapsed .task-list{display:none}
+.phase.done-phase{opacity:.7}
+.phase-top{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;cursor:pointer;user-select:none}
+.phase-top:hover{background:var(--s2)}
+.phase-num{width:32px;height:32px;border-radius:9px;background:#1A1A1A;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.phase-num.done-num{background:var(--green)}
+.phase-info h3{font-size:15px;font-weight:600;margin-bottom:2px}
+.phase-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.phase-score{font-size:20px;font-weight:700;letter-spacing:-1px;text-align:right}
+.phase-lv{font-size:10px;font-weight:600}
+.phase-chevron{font-size:14px;color:var(--t3);transition:transform .2s}
+.phase.collapsed .phase-chevron{transform:rotate(-90deg)}
+.phase-mini-bar{width:56px;height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:3px}
+.phase-mini-fill{height:100%;border-radius:2px;transition:width .5s}
+.task-list{border-top:1px solid var(--border)}
+.task{display:flex;align-items:center;justify-content:space-between;padding:11px 22px;border-bottom:1px solid var(--border)}
+.task-l{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.task-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.btn-impl:hover{background:var(--rose-l);border-color:var(--rose-m);color:var(--rose-d)}
+.rm-empty{text-align:center;padding:60px 20px}
+.rm-empty .empty-icon{font-size:48px;margin-bottom:16px}
+.rm-empty h3{font-size:18px;font-weight:600;margin-bottom:8px}
+.rm-empty p{font-size:14px;color:var(--t2);margin-bottom:20px}
+
 /* ── DASHBOARD ── */
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px}
 .metric-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
 .metric-val{font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:2px}
 .metric-sub{font-size:12px;color:var(--t3)}
-.d2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:20px 22px}
 .dcard-title{font-size:14px;font-weight:600;margin-bottom:14px}
 .bbar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -238,6 +262,69 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .tl-dot{width:6px;height:6px;border-radius:50%;background:var(--rose);margin-top:5px;flex-shrink:0}
 .tl-text{flex:1;color:var(--t2)}
 .tl-time{font-size:11px;color:var(--t3)}
+/* ── DASHBOARD v2 ── */
+.dash-top{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;transition:box-shadow .2s}
+.metric:hover{box-shadow:var(--shm)}
+.metric-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.metric-val{font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:2px}
+.metric-sub{font-size:12px;color:var(--t3)}
+.dash-mid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.dash-bottom{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:20px 22px}
+.dcard-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.dcard-title a{font-size:12px;font-weight:500;color:var(--rose);cursor:pointer;text-decoration:none}
+/* Radar */
+.radar-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+/* Progress bar block */
+.bbar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.bbar-row:last-child{margin-bottom:0}
+.bbar-name{font-size:13px;color:var(--t2);min-width:96px;font-weight:500}
+.bbar-track{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.bbar-fill{height:100%;border-radius:3px;transition:width .6s}
+.bbar-val{font-size:12px;font-weight:600;min-width:30px;text-align:right}
+/* Implement progress */
+.impl-bar-wrap{margin-bottom:14px}
+.impl-bar-track{height:8px;background:var(--s3);border-radius:4px;overflow:hidden;margin-top:6px}
+.impl-bar-fill{height:100%;background:linear-gradient(90deg,var(--rose),var(--rose-m));border-radius:4px;transition:width .6s}
+/* Level badge */
+.level-banner{border-radius:var(--rl);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px}
+.level-icon{font-size:28px;flex-shrink:0}
+.level-title{font-size:16px;font-weight:700;margin-bottom:2px}
+.level-desc{font-size:13px;opacity:.8;line-height:1.5}
+.level-score{font-size:28px;font-weight:700;margin-left:auto;flex-shrink:0}
+/* Quick actions */
+.qa-list{display:flex;flex-direction:column;gap:8px}
+.qa-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;color:var(--text)}
+.qa-item:hover{border-color:var(--rose-m);background:var(--rose-l);color:var(--rose-d)}
+.qa-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+/* Timeline */
+.timeline{list-style:none}
+.tl-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:6px;height:6px;border-radius:50%;background:var(--rose);margin-top:5px;flex-shrink:0}
+.tl-text{flex:1;color:var(--t2)}
+.tl-time{font-size:11px;color:var(--t3)}
+.empty-tl{font-size:13px;color:var(--t3);line-height:1.6;padding:8px 0}
+/* ── TAX FORM STEP + UNSUPPORTED ── */
+.tax-form-grid{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.tax-opt{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--rl);cursor:pointer;transition:all .15s;background:var(--surface)}
+.tax-opt:hover{border-color:var(--rose-m);background:var(--rose-l)}
+.tax-opt.selected{border-color:var(--rose);background:var(--rose-l)}
+.tax-opt-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tax-opt.selected .tax-opt-radio{border-color:var(--rose);background:var(--rose)}
+.tax-opt.selected .tax-opt-radio::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
+.tax-opt-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.tax-opt-hint{font-size:12px;color:var(--t2)}
+.unsupported-banner{background:var(--abg);border:1px solid var(--am);border-radius:var(--rxl);padding:28px 32px;text-align:center;margin-top:20px}
+.unsupported-banner h3{font-size:18px;font-weight:600;color:var(--amber);margin-bottom:10px}
+.unsupported-banner p{font-size:14px;color:var(--t2);margin-bottom:20px;line-height:1.6}
+.tg-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#229ED9;color:#fff;border:none;border-radius:var(--rl);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;text-decoration:none}
+.tg-btn:hover{background:#1a8bbf;transform:translateY(-1px)}
+@media(max-width:700px){
+  .dash-top{grid-template-columns:1fr 1fr}
+  .dash-mid,.dash-bottom{grid-template-columns:1fr}
+}
 .empty-tl{padding:20px 0;font-size:13px;color:var(--t3);text-align:center}
 
 /* ── TEMPLATES ── */
@@ -255,13 +342,33 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .tmpl-desc{font-size:13px;color:var(--t2);line-height:1.5}
 
 /* ── PROFILE ── */
-.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* ── PROFILE v2 ── */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .prof-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:22px 24px}
-.prof-card-title{font-size:14px;font-weight:600;margin-bottom:16px}
-.prof-field{margin-bottom:14px;font-size:14px}
-.prof-label{color:var(--t2);margin-bottom:3px;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
-.prof-val{font-weight:500}
-.prof-sub-status{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-weight:600;margin-bottom:12px}
+.prof-card-title{font-size:14px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.prof-card-title a{font-size:12px;font-weight:500;color:var(--rose);cursor:pointer}
+.prof-field{margin-bottom:12px;font-size:14px}
+.prof-label{color:var(--t2);margin-bottom:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.prof-val{font-weight:500;color:var(--text)}
+.prof-edit-row{display:flex;gap:8px;align-items:center;margin-top:4px}
+.prof-edit-row input{flex:1;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:inherit;color:var(--text);background:var(--s2);outline:none;transition:border-color .15s}
+.prof-edit-row input:focus{border-color:var(--rose);background:var(--surface)}
+.prof-salon-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.prof-salon-item{background:var(--s2);border-radius:var(--r);padding:10px 12px}
+.prof-salon-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.prof-salon-val{font-size:14px;font-weight:600;color:var(--text)}
+.prof-audit-btn{width:100%;padding:12px;border-radius:var(--r);border:2px dashed var(--border2);background:transparent;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .2s;text-align:center}
+.prof-audit-btn:hover{border-color:var(--rose-m);background:var(--rose-l);color:var(--rose-d)}
+.docs-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.doc-item{border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:all .15s}
+.doc-item:hover{border-color:var(--rose-m);background:var(--rose-l)}
+.doc-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.doc-item-name{font-size:13px;font-weight:600;color:var(--text)}
+.doc-item-date{font-size:11px;color:var(--t3)}
+.doc-item-preview{font-size:12px;color:var(--t2);line-height:1.4}
+.prof-full-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rxl);padding:22px 24px;margin-bottom:16px}
+.access-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);font-weight:700;margin-bottom:14px;font-size:14px}
 .sub-info{font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6}
 
 /* ── MODAL ── */
@@ -330,12 +437,57 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 
 
 @media(max-width:680px){
-  .feat-grid,.blocks-grid,.metrics,.d2col,.tmpl-grid,.ai-2col,.profile-grid,.plans-row,.form-grid{grid-template-columns:1fr}
+  .feat-grid,.blocks-grid,.dash-top,.dash-mid,.dash-bottom,.tmpl-grid,.ai-2col,.profile-grid,.plans-row,.form-grid{grid-template-columns:1fr}
   .hero h1{font-size:30px}
   .nav{padding:0 14px}
   .page{padding:24px 14px 60px}
   .svc-grid{grid-template-columns:1fr 1fr}
 }
+
+/* ── BOT SECTION ── */
+.bot-paywall{background:var(--s2);border:1.5px dashed var(--border2);border-radius:var(--rxl);padding:24px;text-align:center}
+.bot-paywall h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.bot-paywall p{font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6}
+.plan-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;text-align:left}
+.plan-card{padding:14px 16px;border-radius:var(--rl);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;background:var(--surface)}
+.plan-card:hover{border-color:var(--rose-m);background:var(--rose-l)}
+.plan-card.selected{border-color:var(--rose);background:var(--rose-l)}
+.plan-card-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.plan-card-price{font-size:20px;font-weight:700;color:var(--rose);margin-bottom:6px}
+.plan-card-features{font-size:11px;color:var(--t2);line-height:1.7}
+.bot-recipients{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.bot-recipient{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--s2);border-radius:var(--r);border:0.5px solid var(--border)}
+.bot-r-info{display:flex;align-items:center;gap:10px}
+.bot-r-avatar{width:32px;height:32px;border-radius:50%;background:var(--rose-m);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--rose-d);flex-shrink:0}
+.bot-link-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-top:10px}
+.bot-link-text{font-size:12px;font-family:monospace;flex:1;word-break:break-all}
+.bot-toggle{display:flex;align-items:center;gap:8px;padding:8px 0}
+.toggle-sw{position:relative;width:38px;height:22px;flex-shrink:0}
+.toggle-sw input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:11px;transition:.2s}
+.toggle-slider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle-sw input:checked+.toggle-slider{background:var(--rose)}
+.toggle-sw input:checked+.toggle-slider:before{transform:translateX(16px)}
+
+/* ── CRM INTEGRATIONS ── */
+.crm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:16px}
+.crm-card{border:1.5px solid var(--border);border-radius:var(--rl);padding:14px 16px;background:var(--surface);transition:all .15s;position:relative}
+.crm-card.connected{border-color:var(--gm);background:var(--gbg)}
+.crm-card.error{border-color:var(--rbg)}
+.crm-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.crm-logo{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--s2)}
+.crm-name{font-size:14px;font-weight:600;color:var(--text)}
+.crm-countries{font-size:11px;color:var(--t3)}
+.crm-status{font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px}
+.crm-status.ok{background:var(--gbg);color:var(--green)}
+.crm-status.err{background:var(--rbg);color:var(--red)}
+.crm-status.none{background:var(--s3);color:var(--t3)}
+.crm-fields{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.crm-field input{width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--s2);color:var(--text);outline:none;box-sizing:border-box;transition:border-color .15s}
+.crm-field input:focus{border-color:var(--rose);background:var(--surface)}
+.crm-field label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;display:block}
+.crm-actions{display:flex;gap:6px;margin-top:10px}
+.crm-sync-info{font-size:11px;color:var(--t3);margin-top:6px}
 </style>
 </head>
 <body>
@@ -517,7 +669,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
     <div class="fsec">Основная информация</div>
     <div class="form-grid">
       <div class="field fg-full"><label>Название салона</label><input id="ob-name" type="text" placeholder="Studio Bloom"></div>
-      <div class="field"><label>Страна</label><select id="ob-country"><option>Украина</option><option>Польша</option><option>Испания</option><option>Германия</option><option>Чехия</option><option>ОАЭ</option><option>Другая</option></select></div>
+      <div class="field"><label>Страна</label><select id="ob-country" onchange="onCountryChange(this.value)"><option>Украина</option><option>Польша</option><option>Испания</option><option>Германия</option><option>Чехия</option><option>ОАЭ</option><option>Казахстан</option><option>Другая</option></select></div>
       <div class="field"><label>Город</label><input id="ob-city" type="text" placeholder="Киев"></div>
     </div>
     <div class="divider"></div>
@@ -527,6 +679,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <div class="field"><label>Администраторов</label><input id="ob-admins" type="number" min="0" value="1"></div>
       <div class="field"><label>Кабинетов / мест</label><input id="ob-rooms" type="number" min="1" value="2"></div>
       <div class="field"><label>Система записи</label><select id="ob-crm"><option>DIKIDI</option><option>Yclients</option><option>Fresha</option><option>Google-таблицы</option><option>Без системы</option></select></div>
+      <div class="field"><label>Рабочих дней в неделю</label><input id="ob-workdays" type="number" min="1" max="7" placeholder="6"></div>
+      <div class="field"><label>Рабочие часы</label><input id="ob-workhours" type="text" placeholder="10:00–20:00"></div>
     </div>
     <div class="divider"></div>
     <div class="fsec">Финансы</div>
@@ -548,9 +702,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <div class="svc" onclick="toggleSvc(this)">Макияж / визаж</div>
       <div class="svc" onclick="toggleSvc(this)">Спа-процедуры</div>
     </div>
+    <div class="field fg-full" style="margin-top:12px">
+      <label>Прайс-лист (услуги + цены, по одной на строку)</label>
+      <textarea id="ob-pricelist" rows="4" placeholder="Стрижка женская — 350&#10;Окрашивание корней — 800&#10;Маникюр — 450" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--t1);resize:vertical"></textarea>
+    </div>
+    <div class="field fg-full">
+      <label>Цикл визита клиента (дней)</label>
+      <input id="ob-visitcycle" type="number" min="1" placeholder="30" style="max-width:200px">
+    </div>
+    <div class="divider"></div>
+    <div class="fsec">Форма налогообложения</div>
+    <div id="tax-form-wrap">
+      <div style="font-size:13px;color:var(--t2)">Выберите страну выше — мы покажем доступные формы</div>
+    </div>
+    <div id="unsupported-wrap" style="display:none"></div>
     <div class="btn-row">
       <button class="btn-outline" onclick="gotoHome()">Назад</button>
-      <button class="btn-primary" onclick="startAudit()">Начать аудит →</button>
+      <button class="btn-primary" id="start-audit-btn" onclick="startAudit()">Начать аудит →</button>
     </div>
   </div>
 </div>
@@ -580,7 +748,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
   <div class="page">
     <div class="page-h"><h2>Результаты аудита</h2><p>Операционный профиль вашего бизнеса</p></div>
     <div class="score-hero" id="score-hero"></div>
-    <div class="blocks-grid" id="blocks-grid"></div>
+    <div class="res-layout blocks-grid" id="blocks-grid"></div>
     <div class="ai-panel" id="ai-panel">
       <div class="ai-hdr"><div class="ai-dot pulse" id="ai-dot"></div><span style="font-size:12px;color:var(--t3)" id="ai-status">Анализируем...</span></div>
       <h3>AI-анализ вашего бизнеса</h3>
@@ -596,6 +764,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 <div class="screen" id="screen-roadmap">
   <div class="page">
     <div class="page-h"><h2>Роадмап внедрения</h2><p>Персональный план — от слабого к сильному</p></div>
+    <div id="rm-header-area"></div>
     <div id="roadmap-content"></div>
   </div>
 </div>
@@ -604,10 +773,39 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 <div class="screen" id="screen-dashboard">
   <div class="page page-lg">
     <div class="page-h"><h2 id="dash-title">Дашборд</h2><p id="dash-sub">Операционный статус бизнеса</p></div>
-    <div class="metrics" id="dash-metrics"></div>
-    <div class="d2col">
-      <div class="dcard"><div class="dcard-title">Прогресс по блокам</div><div id="dash-blocks"></div></div>
-      <div class="dcard"><div class="dcard-title">Последние действия</div><div id="dash-timeline"></div></div>
+
+    <!-- Level banner -->
+    <div id="dash-level-banner" class="level-banner" style="display:none"></div>
+
+    <!-- Top metrics -->
+    <div class="dash-top" id="dash-metrics"></div>
+
+    <!-- Mid: radar + block bars -->
+    <div class="dash-mid">
+      <div class="dcard">
+        <div class="dcard-title">Профиль бизнеса <a onclick="show('results')">Полные результаты →</a></div>
+        <div class="radar-wrap" id="dash-radar"></div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-title">Прогресс по блокам</div>
+        <div id="dash-blocks"></div>
+      </div>
+    </div>
+
+    <!-- Bottom: impl progress + quick actions + timeline -->
+    <div class="dash-bottom">
+      <div class="dcard">
+        <div class="dcard-title">Прогресс внедрения <a onclick="show('roadmap')">Открыть роадмап →</a></div>
+        <div id="dash-impl"></div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-title">Быстрые действия</div>
+        <div class="qa-list" id="dash-qa"></div>
+        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+          <div class="dcard-title" style="margin-bottom:10px">Последние действия</div>
+          <div id="dash-timeline"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -630,20 +828,197 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 <!-- ═══ PROFILE ═══ -->
 <div class="screen" id="screen-profile">
   <div class="page">
-    <div class="page-h"><h2>Профиль</h2><p>Настройки аккаунта и подписки</p></div>
+    <div class="page-h"><h2>Профиль</h2><p>Аккаунт, данные салона и документы</p></div>
+
+    <!-- Top 2-col: account + access -->
     <div class="profile-grid">
       <div class="prof-card">
-        <div class="prof-card-title">Аккаунт</div>
-        <div class="prof-field"><div class="prof-label">Имя</div><div class="prof-val" id="prof-name">—</div></div>
-        <div class="prof-field"><div class="prof-label">Email</div><div class="prof-val" id="prof-email">—</div></div>
-        <div class="prof-field"><div class="prof-label">Дата регистрации</div><div class="prof-val" id="prof-created">—</div></div>
-        <button class="btn-outline btn-sm" style="margin-top:8px" onclick="doLogout()">Выйти</button>
+        <div class="prof-card-title">
+          Аккаунт
+          <a onclick="doLogout()" style="color:var(--t3)">Выйти</a>
+        </div>
+        <div class="prof-field">
+          <div class="prof-label">Имя</div>
+          <div id="prof-name-wrap"></div>
+        </div>
+        <div class="prof-field">
+          <div class="prof-label">Email</div>
+          <div class="prof-val" id="prof-email">—</div>
+        </div>
       </div>
       <div class="prof-card">
-        <div class="prof-card-title">Доступ</div>
+        <div class="prof-card-title">Подписка</div>
         <div id="prof-sub-info"></div>
-        <button class="btn-primary btn-sm" onclick="showPaywall()" id="prof-upgrade-btn" style="display:none">Получить план внедрения</button>
+        <button class="btn-primary btn-sm" onclick="showPaywall()" id="prof-upgrade-btn" style="display:none">
+          Активировать AI Business Builder — 2999 ₴
+        </button>
       </div>
+    </div>
+
+    <!-- Salon data card -->
+    <div class="prof-full-card">
+      <div class="prof-card-title">
+        Данные салона
+        <a onclick="toggleSalonEdit()">✏️ Редактировать</a>
+      </div>
+      <div id="prof-salon-view"></div>
+      <div id="prof-salon-edit" style="display:none"></div>
+    </div>
+
+    <!-- Repeat audit card -->
+    <div class="prof-full-card">
+      <div class="prof-card-title">Аудит</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.6">
+        Повторяйте аудит раз в 1–2 месяца чтобы отслеживать прогресс. Предыдущие результаты будут заменены.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-outline" onclick="show('results')">📊 Последние результаты</button>
+        <button class="prof-audit-btn" style="width:auto;padding:8px 20px;border-style:solid" onclick="repeatAudit()">
+          🔄 Пройти аудит заново
+        </button>
+      </div>
+    </div>
+
+    <!-- CRM Integrations -->
+    <div class="prof-full-card">
+      <div class="prof-card-title">
+        Подключение сервисов
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="last-sync-label" style="font-size:11px;color:var(--t3)"></span>
+          <a onclick="toggleCrmSection()" id="crm-toggle-link">▼ Показать</a>
+        </div>
+      </div>
+      <div id="crm-section-body" style="display:none">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+          <div style="font-size:13px;color:var(--t2);line-height:1.6;flex:1">
+            Подключите систему записи — AI будет получать данные автоматически.<br>
+            <span style="font-size:12px;color:var(--t3)">Авто-синхронизация: 08:00, 14:00, 19:30 ежедневно</span>
+          </div>
+          <button class="btn-outline btn-sm" id="sync-all-btn" onclick="syncAllCrm(this)"
+            style="flex-shrink:0;white-space:nowrap;font-size:12px">
+            ↻ Синхронизировать всё
+          </button>
+        </div>
+        <div class="crm-grid" id="crm-grid">
+          <div style="font-size:13px;color:var(--t2)">Загружаем...</div>
+        </div>
+        <div id="crm-connect-result" style="display:none;margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- Business data input -->
+    <div class="prof-full-card" id="prof-data-card">
+      <div class="prof-card-title">
+        Данные бизнеса
+        <a onclick="toggleDataSection()" id="data-toggle-link">▼ Показать</a>
+      </div>
+      <div id="data-section-body" style="display:none">
+        <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.6">
+          Вводите ключевые метрики раз в месяц — AI будет использовать реальные данные вашего салона при генерации документов и отчётов.
+        </div>
+
+        <!-- Manual input tabs -->
+        <div class="data-period-tabs">
+          <div class="dpt active" onclick="switchDataTab('manual',this)">✎ Ручной ввод</div>
+          <div class="dpt" onclick="switchDataTab('csv',this)">⬆ Загрузить CSV</div>
+        </div>
+
+        <!-- Manual input form -->
+        <div id="data-tab-manual">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:600;color:var(--text)">Период:</div>
+            <input type="month" id="data-period"
+              style="padding:6px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;background:var(--s2)"
+              value="">
+          </div>
+          <div class="data-form-grid">
+            <div class="data-field">
+              <label>Выручка за период</label>
+              <input type="number" id="df-revenue" placeholder="0">
+              <div class="hint" id="df-revenue-hint">в валюте вашей страны</div>
+            </div>
+            <div class="data-field">
+              <label>Количество визитов</label>
+              <input type="number" id="df-visits" placeholder="0">
+            </div>
+            <div class="data-field">
+              <label>Средний чек</label>
+              <input type="number" id="df-avg" placeholder="0">
+              <div class="hint">или оставьте пустым — посчитаем автоматически</div>
+            </div>
+            <div class="data-field">
+              <label>Новых клиентов</label>
+              <input type="number" id="df-new" placeholder="0">
+            </div>
+            <div class="data-field">
+              <label>Retention / возврат (%)</label>
+              <input type="number" id="df-retention" placeholder="0" min="0" max="100">
+              <div class="hint">% клиентов которые вернулись</div>
+            </div>
+            <div class="data-field">
+              <label>ФОТ (% от выручки)</label>
+              <input type="number" id="df-fot" placeholder="0" min="0" max="100">
+              <div class="hint" id="df-fot-hint">норма зависит от страны</div>
+            </div>
+            <div class="data-field">
+              <label>Материалы (% от выручки)</label>
+              <input type="number" id="df-materials" placeholder="0" min="0" max="100">
+            </div>
+            <div class="data-field">
+              <label>Примечания</label>
+              <input type="text" id="df-notes" placeholder="Открыли новый кабинет, акция в июле...">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn-primary" onclick="saveManualData()">Сохранить данные</button>
+            <span id="data-save-status" style="font-size:13px;color:var(--green);display:none">✓ Сохранено!</span>
+          </div>
+        </div>
+
+        <!-- CSV Upload -->
+        <div id="data-tab-csv" style="display:none">
+          <div style="font-size:13px;color:var(--t2);margin-bottom:12px;line-height:1.6">
+            Скачайте отчёт из вашей системы и загрузите сюда — мы автоматически извлечём нужные данные.
+          </div>
+          <div class="csv-service-tabs">
+            <div class="csv-st active" onclick="selectCsvService('fresha',this)">Fresha</div>
+            <div class="csv-st" onclick="selectCsvService('treatwell',this)">Treatwell</div>
+            <div class="csv-st" onclick="selectCsvService('poster',this)">Poster</div>
+            <div class="csv-st" onclick="selectCsvService('yclients_export',this)">Yclients</div>
+          </div>
+          <div id="csv-instructions" style="font-size:12px;color:var(--t2);background:var(--s2);padding:10px 14px;border-radius:var(--r);margin-bottom:14px;line-height:1.7"></div>
+          <div class="csv-upload-area" onclick="document.getElementById('csv-file-input').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handleCsvDrop(event)">
+            <input type="file" id="csv-file-input" accept=".csv,.xlsx" onchange="handleCsvFile(this.files[0])">
+            <div style="font-size:28px;margin-bottom:8px">📂</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Перетащите файл или нажмите для выбора</div>
+            <div style="font-size:12px;color:var(--t3)">CSV или XLSX · максимум 5 МБ</div>
+          </div>
+          <div id="csv-result" style="margin-top:12px;display:none"></div>
+        </div>
+
+        <!-- History -->
+        <div id="data-history-wrap" style="margin-top:20px"></div>
+      </div>
+    </div>
+
+    <!-- AI Director bot -->
+    <div class="prof-full-card">
+      <div class="prof-card-title">
+        🤖 AI-директор
+        <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--rose-l);color:var(--rose-d)">Telegram бот</span>
+      </div>
+      <div id="bot-section-content">
+        <div style="font-size:13px;color:var(--t2)">Загружаем...</div>
+      </div>
+    </div>
+
+    <!-- Saved documents -->
+    <div class="prof-full-card" id="prof-docs-card" style="display:none">
+      <div class="prof-card-title">Сохранённые документы</div>
+      <div id="my-docs-list"><div style="font-size:13px;color:var(--t2)">Загружаем...</div></div>
     </div>
 
   </div>
@@ -654,6 +1029,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-hdr">
       <h3 id="modal-title">AI-инструмент</h3>
+      <button class="btn-outline btn-sm" onclick="closeModal()" style="font-size:12px;padding:4px 12px">← Назад к роадмапу</button>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body" id="modal-body"></div>
@@ -690,6 +1066,52 @@ const S = {
 // ══════════════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════════════
+// ── Support contact ───────────────────────────────────────────────────────
+const SUPPORT_TG = '@beauty_os_support'; // ← замени на реальный username
+
+// ── Supported countries (with full market context) ─────────────────────────
+const SUPPORTED_COUNTRIES = ['Украина','Испания','Германия','Польша','Чехия','ОАЭ','Казахстан'];
+
+// ── Tax forms by country ───────────────────────────────────────────────────
+const TAX_FORMS = {
+  'Украина': [
+    {id:'fop1', label:'ФОП 1-я группа', hint:'до 1 167 МЗП/год, без наёмных, розница'},
+    {id:'fop2', label:'ФОП 2-я группа', hint:'до 5 587 МЗП/год, до 10 наёмных — самый популярный'},
+    {id:'fop3', label:'ФОП 3-я группа', hint:'5% от дохода или 3% + НДС, без ограничений'},
+    {id:'tov',  label:'ТОВ (ООО)',       hint:'юридическое лицо, КПН 18%, дивиденды 5%'},
+  ],
+  'Испания': [
+    {id:'autonomo', label:'Autónomo (ИП)',            hint:'SS ~294 €/мес, IRPF 15–37%, самый распространённый'},
+    {id:'sl',       label:'Sociedad Limitada (SL)',   hint:'IS 25% (15% первые 2 года), нужен нотариус'},
+    {id:'comunidad',label:'Comunidad de bienes',      hint:'партнёрство без юрлица, редко для салонов'},
+  ],
+  'Казахстан': [
+    {id:'ip_upro',  label:'ИП упрощённая декларация', hint:'3% от дохода, раз в полугодие — самый популярный'},
+    {id:'ip_obsh',  label:'ИП общеустановленный режим',hint:'ИПН 10% от прибыли, ежеквартально'},
+    {id:'too',      label:'ТОО',                       hint:'КПН 20%, НДС 12% если оборот >20 000 МРП'},
+  ],
+  'Польша': [
+    {id:'jdg_ryczalt', label:'JDG — Ryczałt (8.5%)',      hint:'8.5% от выручки, простой учёт — популярен в beauty'},
+    {id:'jdg_liniowy',  label:'JDG — Podatek liniowy (19%)',hint:'19% от прибыли, если доходы высокие'},
+    {id:'jdg_skala',    label:'JDG — Skala podatkowa',     hint:'12%/32% прогрессивный, для низких доходов'},
+    {id:'spzoo',        label:'Sp. z o.o. (ООО)',           hint:'CIT 9%/19%, нужна бухгалтерия'},
+  ],
+  'Германия': [
+    {id:'klein',   label:'Kleinunternehmer (§19 UStG)', hint:'без НДС если оборот <22 000 €/год — для начинающих'},
+    {id:'einzel',  label:'Einzelunternehmen (ИП)',       hint:'EÜR, НДС 19%, полная ответственность'},
+    {id:'gmbh',    label:'GmbH',                         hint:'KSt 15% + GewSt ~15%, от 25 000 € уставной капитал'},
+  ],
+  'Чехия': [
+    {id:'osvc',    label:'OSVČ (ИП)',   hint:'ДПП/ДПЧ, соц.+мед. страх ~34%, базовый режим'},
+    {id:'sro',     label:'s.r.o. (ООО)',hint:'КПН 21%, мин. капитал 1 Kč'},
+  ],
+  'ОАЭ': [
+    {id:'sole',     label:'Sole Establishment', hint:'100% владение, личная ответственность, mainland'},
+    {id:'llc',      label:'LLC (ООО)',            hint:'mainland, нужен местный спонсор или 100% иностр. владение в свободных зонах'},
+    {id:'freezone', label:'Freezone Company',     hint:'0% налог, 100% иностр. владение, но клиенты только в зоне'},
+  ],
+};
+
 const BLOCKS = [
   {id:'finance',name:'Финансы',color:'#2E7D32'},
   {id:'hr',name:'Персонал',color:'#C2185B'},
@@ -721,13 +1143,13 @@ const ROADMAP_TASKS = {
 };
 
 const TOOL_CONFIGS = {
-  kpi:{title:'Создать KPI',qs:[{id:'q1',label:'Должность'},{id:'q2',label:'Основные обязанности'},{id:'q3',label:'Средний чек (₴)'},{id:'q4',label:'Целевая выручка в месяц (₴)'}]},
+  kpi:{title:'Создать KPI',qs:[{id:'q1',label:'Должность'},{id:'q2',label:'Основные обязанности'},{id:'q3',label:'Целевые показатели (загрузка, конверсия, допродажи)'},{id:'q4',label:'Целевая выручка в месяц'},{id:'q5',label:'Система поощрений / бонусов'}]},
   job_desc:{title:'Должностная инструкция',qs:[{id:'q1',label:'Должность'},{id:'q2',label:'Основные задачи'},{id:'q3',label:'Требования к кандидату'},{id:'q4',label:'График работы'}]},
-  motivation:{title:'Система мотивации',qs:[{id:'q1',label:'Текущий тип оплаты'},{id:'q2',label:'Выручка на мастера в месяц (₴)'},{id:'q3',label:'Текущий % или оклад'},{id:'q4',label:'Цель по росту выручки (%)'}]},
-  scripts:{title:'Скрипты для администраторов',qs:[{id:'q1',label:'Тип скрипта (входящий / допродажа / возврат)'},{id:'q2',label:'Основные услуги'},{id:'q3',label:'Средний чек (₴)'},{id:'q4',label:'Главные возражения клиентов'}]},
+  motivation:{title:'Система мотивации',qs:[{id:'q1',label:'Текущий тип оплаты'},{id:'q2',label:'Выручка на мастера в месяц'},{id:'q3',label:'Текущий % или оклад'},{id:'q4',label:'Цель по росту выручки (%)'},{id:'q5',label:'Страна / что разрешено по трудовому праву (штрафы?)'}]},
+  scripts:{title:'Скрипты для администраторов',qs:[{id:'q1',label:'Тип скрипта (входящий / допродажа / возврат)'},{id:'q2',label:'Основные услуги'},{id:'q3',label:'Услуги с наибольшим потенциалом допродажи'},{id:'q4',label:'Топ-3 возражения клиентов'}]},
   open_checklist:{title:'Чек-лист открытия смены',qs:[{id:'q1',label:'Время начала работы'},{id:'q2',label:'Мастеров в смене'},{id:'q3',label:'Есть кассовый аппарат?'},{id:'q4',label:'Специфические задачи'}]},
   close_checklist:{title:'Чек-лист закрытия смены',qs:[{id:'q1',label:'Время окончания работы'},{id:'q2',label:'Нужен Z-отчёт?'},{id:'q3',label:'Кто делает уборку?'},{id:'q4',label:'Есть склад расходников?'}]},
-  bep_calc:{title:'Расчёт точки безубыточности',qs:[{id:'q1',label:'Постоянные расходы в месяц (₴)'},{id:'q2',label:'Среднемесячная выручка (₴)'},{id:'q3',label:'ФОТ мастеров (%) от выручки'},{id:'q4',label:'Материалы (%) от выручки'}]},
+  bep_calc:{title:'Расчёт точки безубыточности',qs:[{id:'q1',label:'Постоянные расходы в месяц'},{id:'q2',label:'Среднемесячная выручка'},{id:'q3',label:'ФОТ мастеров (%) от выручки'},{id:'q4',label:'Материалы (%) от выручки'},{id:'q5',label:'Рабочих дней в месяц'}]},
   pl_template:{title:'Внедрение P&L',qs:[{id:'q1',label:'Статьи постоянных расходов'},{id:'q2',label:'Статьи переменных расходов'},{id:'q3',label:'Источники выручки'},{id:'q4',label:'Периодичность отчётности'}]},
   loyalty:{title:'Программа лояльности',qs:[{id:'q1',label:'Средний чек (₴)'},{id:'q2',label:'Визитов клиента в год'},{id:'q3',label:'Используете систему записи?'},{id:'q4',label:'Бюджет на бонусы (% выручки)'}]},
   upsell:{title:'Система допродаж',qs:[{id:'q1',label:'Топ-3 услуги'},{id:'q2',label:'Средний чек сейчас (₴)'},{id:'q3',label:'Есть продукты для домашнего ухода?'},{id:'q4',label:'Цель по росту чека (%)'}]},
@@ -784,7 +1206,7 @@ function checkPaymentSuccess() {
       let attempts = 0;
       const poll = async () => {
         await refreshUser();
-        if (S.user?.has_access || attempts++ >= 14) {
+        if (S.user?.has_access || attempts++ >= 29) {  // wait up to 30 sec
           show('payment-success');
         } else {
           setTimeout(poll, 1000);
@@ -1030,22 +1452,99 @@ function afterPayment() {
 // ══════════════════════════════════════════════════
 function toggleSvc(el) { el.classList.toggle('sel'); }
 
+function onCountryChange(country) {
+  const wrap      = document.getElementById('tax-form-wrap');
+  const unsupWrap = document.getElementById('unsupported-wrap');
+  const startBtn  = document.getElementById('start-audit-btn');
+
+  if (!SUPPORTED_COUNTRIES.includes(country) && country !== 'Украина') {
+    // Unsupported country
+    wrap.innerHTML = '';
+    unsupWrap.style.display = 'block';
+    unsupWrap.innerHTML = `
+      <div class="unsupported-banner">
+        <h3>🌍 Страна пока не поддерживается</h3>
+        <p>По вашей стране (<strong>${country}</strong>) у нас пока нет полного рыночного контекста.<br>
+        Напишите нам — мы добавим её в течение нескольких дней!</p>
+        <a class="tg-btn" href="https://t.me/${SUPPORT_TG.replace('@','')}" target="_blank">
+          ✈️ Написать в поддержку ${SUPPORT_TG}
+        </a>
+        <div style="margin-top:14px;font-size:12px;color:var(--t3)">
+          Или продолжите — система сделает всё что сможет без локальных данных
+        </div>
+        <button class="btn-outline btn-sm" style="margin-top:10px" onclick="continueUnsupported()">
+          Продолжить без локальных данных →
+        </button>
+      </div>`;
+    startBtn.style.display = 'none';
+    S._unsupportedCountry = true;
+    return;
+  }
+
+  S._unsupportedCountry = false;
+  unsupWrap.style.display = 'none';
+  startBtn.style.display = '';
+
+  const forms = TAX_FORMS[country];
+  if (!forms) {
+    wrap.innerHTML = '<div style="font-size:13px;color:var(--t2)">Для этой страны форма налогообложения не требуется</div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="tax-form-grid">
+      ${forms.map(f => `
+        <div class="tax-opt" id="tax-${f.id}" onclick="selectTaxForm('${f.id}','${country}')">
+          <div class="tax-opt-radio"></div>
+          <div>
+            <div class="tax-opt-name">${f.label}</div>
+            <div class="tax-opt-hint">${f.hint}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+
+  // Auto-select most popular (first)
+  selectTaxForm(forms[0].id, country);
+}
+
+function selectTaxForm(id, country) {
+  const forms = TAX_FORMS[country] || [];
+  forms.forEach(f => {
+    const el = document.getElementById('tax-' + f.id);
+    if (el) el.classList.toggle('selected', f.id === id);
+  });
+  S._selectedTaxForm = forms.find(f => f.id === id) || null;
+}
+
+function continueUnsupported() {
+  document.getElementById('unsupported-wrap').style.display = 'none';
+  document.getElementById('start-audit-btn').style.display = '';
+  S._unsupportedCountry = false;
+}
+
 function startAudit() {
+  const country = document.getElementById('ob-country').value;
   S.ob = {
-    name: document.getElementById('ob-name').value || 'Ваш салон',
-    country: document.getElementById('ob-country').value,
-    city: document.getElementById('ob-city').value || '',
-    masters: document.getElementById('ob-masters').value || '3',
-    admins: document.getElementById('ob-admins').value || '1',
-    rooms: document.getElementById('ob-rooms').value || '2',
-    crm: document.getElementById('ob-crm').value,
+    name:     document.getElementById('ob-name').value || 'Ваш салон',
+    country,
+    city:     document.getElementById('ob-city').value || '',
+    masters:  document.getElementById('ob-masters').value || '3',
+    admins:   document.getElementById('ob-admins').value || '1',
+    rooms:    document.getElementById('ob-rooms').value || '2',
+    crm:      document.getElementById('ob-crm').value,
+    workDays: document.getElementById('ob-workdays').value || '',
+    workHours:document.getElementById('ob-workhours').value || '',
     avgCheck: document.getElementById('ob-avg').value || '',
-    revenue: document.getElementById('ob-rev').value || '',
-    profit: document.getElementById('ob-profit').value || '',
-    services: [...document.querySelectorAll('.svc.sel')].map(e => e.textContent)
+    revenue:  document.getElementById('ob-rev').value || '',
+    profit:   document.getElementById('ob-profit').value || '',
+    services: [...document.querySelectorAll('.svc.sel')].map(e => e.textContent),
+    pricelist:document.getElementById('ob-pricelist').value || '',
+    visitCycle:document.getElementById('ob-visitcycle').value || '',
+    taxForm:  S._selectedTaxForm ? S._selectedTaxForm.label : '',
+    taxFormId:S._selectedTaxForm ? S._selectedTaxForm.id   : '',
   };
   S.auditBlock = 0;
-  S.answers = {};
+  S.answers    = {};
   show('audit');
   renderAuditBlock();
 }
@@ -1142,37 +1641,97 @@ function sc(s) {
 // ══════════════════════════════════════════════════
 // RESULTS
 // ══════════════════════════════════════════════════
+
+
 function renderResults() {
-  const ov = S.scores.overall || 0;
-  const lv = lvInfo(ov); const c = sc(ov);
+  const ov  = S.scores.overall || 0;
+  const lv  = lvInfo(ov);
+  const clr = sc(ov);
   const R=38, circ=2*Math.PI*R, dash=circ*(1-ov/100);
+  const city    = S.ob?.city    || '';
+  const country = S.ob?.country || '';
+  const location = [S.ob?.name, city && country ? `${city}, ${country}` : city||country].filter(Boolean).join(' · ');
+  const currency = country === 'Испания' ? '€' : '₴';
+
+  // ── Score hero ────────────────────────────────
   document.getElementById('score-hero').innerHTML = `
     <div class="score-ring">
       <svg width="90" height="90" viewBox="0 0 90 90">
         <circle cx="45" cy="45" r="${R}" fill="none" stroke="#F5F4F2" stroke-width="7"/>
-        <circle cx="45" cy="45" r="${R}" fill="none" stroke="${c}" stroke-width="7"
+        <circle cx="45" cy="45" r="${R}" fill="none" stroke="${clr}" stroke-width="7"
           stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}" stroke-linecap="round"/>
       </svg>
-      <div class="ring-num"><div class="ring-val" style="color:${c}">${ov}</div><div class="ring-pct">%</div></div>
+      <div class="ring-num"><div class="ring-val" style="color:${clr}">${ov}</div><div class="ring-pct">%</div></div>
     </div>
     <div class="score-info">
       <h3>Общий рейтинг</h3>
-      <p>${S.ob.name||'Ваш бизнес'} · ${S.ob.city||S.ob.country||''}</p>
+      <p>${location || 'Ваш бизнес'}</p>
       <div class="lv-badge" style="background:${lv.bg};color:${lv.color}">${lv.label}</div>
-      <p style="margin-top:10px;font-size:13px;color:var(--t3)">${S.ob.masters} мастеров · ${S.ob.admins} администраторов</p>
+      <p style="margin-top:10px;font-size:13px;color:var(--t3)">
+        ${S.ob.masters||0} мастеров · ${S.ob.admins||0} администраторов
+        ${S.ob.avgCheck ? ` · ср. чек ${S.ob.avgCheck} ${currency}` : ''}
+      </p>
     </div>`;
+
+  // ── Action row ────────────────────────────────
+  if (!document.getElementById('res-share-row')) {
+    const div = document.createElement('div');
+    div.id = 'res-share-row';
+    div.className = 'res-share';
+    div.innerHTML = `
+      <button class="res-share-btn" onclick="copyResultsText()">⎘ Копировать результаты</button>
+      <button class="res-share-btn" onclick="show('dashboard')">📊 Открыть дашборд</button>
+      <button class="res-share-btn" onclick="buildRoadmap()">🗺 Роадмап →</button>`;
+    document.getElementById('score-hero').after(div);
+  }
+
+  // ── Block cards — clean, no fake benchmarks ───
+  const INSIGHTS = {
+    finance:  s => s < 40 ? 'Нет P&L и учёта расходов'      : s >= 70 ? 'Финансовый учёт выстроен'      : 'Базовый учёт есть, нужна глубина',
+    hr:       s => s < 40 ? 'Нет KPI и должностных инструкций' : s >= 70 ? 'Команда работает системно'   : 'Есть основы, нужен KPI',
+    sales:    s => s < 40 ? 'Нет скриптов и допродаж'        : s >= 70 ? 'Продажи выстроены системно'    : 'Скрипты есть, нет системы upsell',
+    clients:  s => s < 40 ? 'Нет CRM и retention-работы'     : s >= 70 ? 'CRM и retention работают'      : 'База есть, нет реактивации',
+    ops:      s => s < 40 ? 'Нет регламентов и чек-листов'   : s >= 70 ? 'Операционка стандартизирована' : 'Базовые чек-листы есть',
+    owner:    s => s < 40 ? 'Владелец погружён в операционку' : s >= 70 ? 'Делегирование работает'       : 'Частичное делегирование',
+    marketing:s => s < 40 ? 'Нет системного маркетинга'      : s >= 70 ? 'Маркетинг выстроен'            : 'Есть контент, нет рекламы',
+  };
+
   document.getElementById('blocks-grid').innerHTML = BLOCKS.map(b => {
-    const s = S.scores[b.id]||0; const bl=lvInfo(s); const c2=sc(s);
+    const s   = S.scores[b.id] || 0;
+    const bl  = lvInfo(s);
+    const c2  = sc(s);
+    const insight = INSIGHTS[b.id] ? INSIGHTS[b.id](s) : '';
     return `<div class="bcard">
       <div class="bcard-top">
-        <div class="bcard-name" style="color:${b.color}">${b.name}</div>
-        <div><div class="bcard-score" style="color:${c2}">${s}%</div><div class="bcard-lv" style="color:${bl.color}">${bl.label}</div></div>
+        <div>
+          <div class="bcard-name" style="color:${b.color}">${b.name}</div>
+          ${insight ? `<div style="font-size:11px;color:var(--t3);margin-top:3px">${insight}</div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="bcard-score" style="color:${c2}">${s}%</div>
+          <div class="bcard-lv" style="color:${bl.color}">${bl.label}</div>
+        </div>
       </div>
       <div class="bbar"><div class="bfill" style="width:${s}%;background:${c2}"></div></div>
     </div>`;
   }).join('');
+
   // Unlock nav
   ['nl-dashboard','nl-roadmap'].forEach(id => { document.getElementById(id)?.classList.remove('hidden'); });
+}
+function copyResultsText() {
+  const ov = S.scores.overall || 0;
+  const lv = lvInfo(ov);
+  const lines = [
+    `Beauty Operations OS — Результаты аудита`,
+    `Салон: ${S.ob.name||''}  ${S.ob.city||''}`,
+    `Общий рейтинг: ${ov}% — ${lv.label}`,
+    '',
+    ...BLOCKS.map(b => `${b.name}: ${S.scores[b.id]||0}%`)
+  ];
+  navigator.clipboard.writeText(lines.join('\n'))
+    .then(() => toast('Результаты скопированы!'))
+    .catch(() => toast('Не удалось скопировать', true));
 }
 
 // ══════════════════════════════════════════════════
@@ -1226,39 +1785,104 @@ function buildRoadmap() {
   show('roadmap');
 }
 
+// Active roadmap filter state
+let S_rmFilter = 'all';
+
 function renderRoadmap() {
-  const el = document.getElementById('roadmap-content');
+  const el   = document.getElementById('roadmap-content');
+  const head = document.getElementById('rm-header-area');
+
   if (!S.roadmapOrder?.length) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">🗺</div><h3>Сначала пройдите аудит</h3><p>Роадмап строится на основе результатов</p><button class="btn-primary" onclick="show('onboarding')">Пройти аудит</button></div>`;
+    if (head) head.innerHTML = '';
+    el.innerHTML = `<div class="rm-empty"><div class="empty-icon">🗺</div><h3>Сначала пройдите аудит</h3><p>Роадмап строится на основе результатов</p><button class="btn-primary" onclick="show('onboarding')">Пройти аудит →</button></div>`;
     return;
   }
-  const PL = {critical:'Критично',high:'Важно',medium:'Плановое'};
-  el.innerHTML = S.roadmapOrder.map((bid,pi) => {
-    const tasks = ROADMAP_TASKS[bid]||[];
-    const s = S.scores[bid]||0; const lv=lvInfo(s); const c=sc(s);
-    const block = BLOCKS.find(b=>b.id===bid);
-    const done = tasks.filter(t=>S.completedTasks.has(t.id)).length;
-    return `<div class="phase">
-      <div class="phase-top">
-        <div class="phase-left">
-          <div class="phase-num">0${pi+1}</div>
-          <div class="phase-info"><h3>${block?.name||bid}</h3><p>${done} из ${tasks.length} выполнено</p></div>
+
+  const allTasks = S.roadmapOrder.flatMap(bid => ROADMAP_TASKS[bid]||[]);
+  const doneCnt  = allTasks.filter(t => S.completedTasks.has(t.id)).length;
+  const totalCnt = allTasks.length;
+  const progPct  = totalCnt > 0 ? Math.round(doneCnt / totalCnt * 100) : 0;
+  const critLeft = allTasks.filter(t => !S.completedTasks.has(t.id) && t.p === 'critical').length;
+
+  if (head) {
+    head.innerHTML = `
+      <div class="rm-header">
+        <div class="rm-overall">
+          <div class="rm-overall-label">Общий прогресс внедрения</div>
+          <div class="rm-overall-bar"><div class="rm-overall-fill" style="width:${progPct}%"></div></div>
+          <div class="rm-overall-nums">
+            <span>${doneCnt} из ${totalCnt} задач</span>
+            <span style="font-weight:700;color:var(--rose)">${progPct}%</span>
+          </div>
+          ${critLeft > 0 ? `<div style="margin-top:8px;font-size:12px;color:var(--red);font-weight:500">⚠ ${critLeft} критичных задач осталось</div>` : doneCnt === totalCnt && totalCnt > 0 ? '<div style="margin-top:8px;font-size:12px;color:var(--green);font-weight:600">🎉 Все задачи выполнены!</div>' : ''}
         </div>
-        <div><div class="phase-score" style="color:${c}">${s}%<span style="font-size:10px;font-weight:normal;opacity:0.6;margin-left:3px">аудит</span></div><div class="phase-lv" style="color:${lv.color}">${lv.label}</div></div>
+        <div>
+          <div class="rm-filters">
+            <span class="rm-filter-label">Фильтр:</span>
+            <button class="rm-fbtn ${S_rmFilter==='all'?'active':''}" onclick="setRmFilter('all',this)">Все</button>
+            <button class="rm-fbtn ${S_rmFilter==='critical'?'active':''}" onclick="setRmFilter('critical',this)">Критичные</button>
+            <button class="rm-fbtn ${S_rmFilter==='undone'?'active':''}" onclick="setRmFilter('undone',this)">Невыполненные</button>
+            <button class="rm-fbtn ${S_rmFilter==='done'?'active':''}" onclick="setRmFilter('done',this)">Выполненные</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const PL = {critical:'Критично', high:'Важно', medium:'Плановое'};
+
+  el.innerHTML = S.roadmapOrder.map((bid, pi) => {
+    const tasks = ROADMAP_TASKS[bid] || [];
+    let filtered = tasks;
+    if (S_rmFilter === 'critical') filtered = tasks.filter(t => t.p === 'critical');
+    if (S_rmFilter === 'undone')   filtered = tasks.filter(t => !S.completedTasks.has(t.id));
+    if (S_rmFilter === 'done')     filtered = tasks.filter(t => S.completedTasks.has(t.id));
+    if (!filtered.length) return '';
+
+    const s        = S.scores[bid] || 0;
+    const lv       = lvInfo(s);
+    const clr      = sc(s);
+    const block    = BLOCKS.find(b => b.id === bid);
+    const done     = tasks.filter(t => S.completedTasks.has(t.id)).length;
+    const phasePct = tasks.length > 0 ? Math.round(done / tasks.length * 100) : 0;
+    const allDone  = done === tasks.length && tasks.length > 0;
+    const isCollapsed = allDone && S_rmFilter !== 'done';
+
+    return `<div class="phase${isCollapsed ? ' collapsed' : ''}${allDone ? ' done-phase' : ''}" id="phase-${bid}">
+      <div class="phase-top" onclick="togglePhase('${bid}')">
+        <div class="phase-left">
+          <div class="phase-num${allDone ? ' done-num' : ''}">${allDone ? '✓' : '0'+(pi+1)}</div>
+          <div class="phase-info">
+            <h3>${block?.name || bid}</h3>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+              <div class="phase-mini-bar">
+                <div class="phase-mini-fill" style="width:${phasePct}%;background:${allDone?'var(--green)':clr}"></div>
+              </div>
+              <p>${done} из ${tasks.length} задач${allDone ? ' · Завершено ✓' : ''}</p>
+            </div>
+          </div>
+        </div>
+        <div class="phase-right">
+          <div>
+            <div class="phase-score" style="color:${clr}">${s}%</div>
+            <div class="phase-lv" style="color:${lv.color}">${lv.label}</div>
+          </div>
+          <div class="phase-chevron">▾</div>
+        </div>
       </div>
       <div class="task-list">
-        ${tasks.map(t => {
+        ${filtered.map(t => {
           const isDone = S.completedTasks.has(t.id);
+          const hasSaved = (S.savedDocNames||new Set()).has(t.name);
+          const tn = t.name.replace(/'/g, "\'");
           return `<div class="task">
             <div class="task-l">
-              <div class="chk ${isDone?'done':''}" onclick="toggleTask('${t.id}','${t.name.replace(/'/g,"\\'")}',this)"></div>
+              <div class="chk ${isDone?'done':''}" onclick="toggleTask('${t.id}','${tn}',this)"></div>
               <div class="task-name ${isDone?'done':''}">${t.name}</div>
             </div>
             <div class="task-r">
               <div class="prio prio-${t.p}">${PL[t.p]}</div>
-              <button class="btn-impl" onclick="openTool('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.tool}')">🤖 Внедрить</button>
-              ${(S.savedDocNames||new Set()).has(t.name)?`<button class="btn-impl" style="color:var(--rose)" onclick="openSavedDoc('${t.name.replace(/'/g,"\\'")}')">📄 Документ</button>`:''}
-
+              <button class="btn-impl" onclick="openTool('${t.id}','${tn}','${t.tool}')">🤖 Внедрить</button>
+              ${hasSaved ? `<button class="btn-impl" style="color:var(--rose)" onclick="openSavedDoc('${tn}')">📄 Документ</button>` : ''}
             </div>
           </div>`;
         }).join('')}
@@ -1267,6 +1891,17 @@ function renderRoadmap() {
   }).join('');
 }
 
+function togglePhase(bid) {
+  const el = document.getElementById('phase-' + bid);
+  if (el) el.classList.toggle('collapsed');
+}
+
+function setRmFilter(filter, btn) {
+  S_rmFilter = filter;
+  document.querySelectorAll('.rm-fbtn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderRoadmap();
+}
 async function toggleTask(id, name, el) {
   if (S.completedTasks.has(id)) {
     S.completedTasks.delete(id);
@@ -1285,19 +1920,76 @@ async function toggleTask(id, name, el) {
 // ══════════════════════════════════════════════════
 // IMPLEMENT TOOL
 // ══════════════════════════════════════════════════
+// ── Smart field hints ─────────────────────────────────────────────
+function getFieldHint(label) {
+  const cur = (S.ob?.country === 'Испания' || S.ob?.country === 'Германия') ? '€' : '₴';
+  const HINTS = {
+    'Должность': 'Например: Администратор, Мастер маникюра',
+    'Основные обязанности': 'Запись клиентов, расчёт, уборка, допродажи',
+    'Средний чек (₴)': `Например: 50 ${cur}`,
+    'Средний чек': `Например: 50 ${cur}`,
+    'Целевая выручка в месяц (₴)': `Например: 150 000 ${cur}`,
+    'Тип скрипта (входящий / допродажа / возврат)': 'Например: входящий звонок',
+    'Основные услуги': 'Например: маникюр, педикюр, брови',
+    'Главные возражения клиентов': 'Например: дорого, нет времени, уже есть мастер',
+    'Постоянные расходы в месяц (₴)': `Аренда + ФОТ адм + коммунальные (${cur})`,
+    'ФОТ мастеров (%) от выручки': 'Например: 45% (норма UA 45–55%, ES 33–42%)',
+    'Материалы (%) от выручки': 'Например: 12% (норма 8–15%)',
+    'Текущий тип оплаты': 'Например: % от выручки, оклад + KPI',
+    'Выручка на мастера в месяц (₴)': `Например: 30 000 ${cur}`,
+    'Текущий % или оклад': 'Например: 45% от выручки',
+    'Цель по росту выручки (%)': 'Например: +20% за 3 месяца',
+    'Целевая аудитория': 'Женщины 25–45 лет, средний+ доход',
+    'Визитов клиента в год': 'Например: 12 (раз в месяц)',
+    'Бюджет на бонусы (% выручки)': 'Например: 5%',
+    'Время начала работы': 'Например: 09:00',
+    'Время окончания работы': 'Например: 21:00',
+    'Мастеров в смене': S.ob?.masters || 'Например: 5',
+    'Есть кассовый аппарат?': 'Да / Нет',
+    'Нужен Z-отчёт?': 'Да / Нет',
+    'Кто делает уборку?': 'Например: администратор после последнего клиента',
+    'Есть склад расходников?': 'Да / Нет, расходники у мастеров',
+    'Статьи постоянных расходов': 'Аренда, ФОТ администратора, коммунальные, связь',
+    'Статьи переменных расходов': 'Материалы (гели, краски), % мастеров',
+    'Источники выручки': 'Маникюр, педикюр, брови, массаж — по направлениям',
+    'Периодичность отчётности': 'Ежемесячно / еженедельно',
+    'Опишите ситуацию': 'Коротко: что сейчас происходит в этом блоке',
+    'Что сейчас не работает?': 'Например: нет системы, всё держится на мне',
+    'Ожидаемый результат': 'Например: команда работает без постоянного контроля',
+  };
+  return HINTS[label] || 'Введите ответ...';
+}
+
 function openTool(taskId, taskName, tool) {
   if (!S.user) { show('register'); return; }
   if (!S.user.has_access) { showPaywall(); return; }
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
+  const cur = (S.ob?.country === 'Испания' || S.ob?.country === 'Германия' || S.ob?.country === 'Чехия') ? '€' :
+              (S.ob?.country === 'Польша') ? 'zł' : '₴';
+  const avgChk = S.ob?.avgCheck ? `${S.ob.avgCheck} ${cur}` : '';
+  const rev = S.ob?.revenue ? `${S.ob.revenue} ${cur}` : '';
   const OB_DEFAULTS = {
-    'Средний чек (₴)': S.ob?.avgCheck || '',
-    'Средний чек сейчас (₴)': S.ob?.avgCheck || '',
-    'Мастеров в смене': S.ob?.masters || ''
+    'Средний чек (₴)': avgChk,
+    'Средний чек сейчас (₴)': avgChk,
+    'Средний чек': avgChk,
+    'Мастеров в смене': S.ob?.masters || '',
+    'Мастеров': S.ob?.masters || '',
+    'Количество мастеров': S.ob?.masters || '',
+    'Администраторов': S.ob?.admins || '',
+    'Выручка в месяц (₴)': rev,
+    'Выручка/мес': rev,
+    'Среднемесячная выручка (₴)': rev,
+    'Текущий % или оклад': S.ob?.country === 'Испания' ? '40% от выручки' : '45% от выручки',
+    'Целевая выручка в месяц (₴)': rev,
+    'Используете систему записи?': S.ob?.crm || '',
+    'Текущее число подписчиков': '',
+    'Основные услуги': (S.ob?.services||[]).join(', ') || '',
+    'Город': S.ob?.city || '',
   };
   document.getElementById('modal-title').textContent = cfg.title;
   document.getElementById('modal-body').innerHTML = `
     <div class="modal-intro">AI задаст вопросы и создаст готовый документ для <strong>${S.ob.name||'вашего салона'}</strong>.</div>
-    ${cfg.qs.map(q=>`<div class="mfield"><label>${q.label}</label><input id="mq-${q.id}" type="text" placeholder="Введите ответ..." value="${OB_DEFAULTS[q.label]||''}"></div>`).join('')}
+    ${cfg.qs.map(q=>`<div class="mfield"><label>${q.label}</label><input id="mq-${q.id}" type="text" placeholder="${getFieldHint(q.label)}" value="${OB_DEFAULTS[q.label]||''}"></div>`).join('')}
     <div class="btn-row">
       <button class="btn-outline" onclick="closeModal()">Отмена</button>
       <button class="btn-primary" id="gen-btn" onclick="generateDoc('${taskName.replace(/'/g,"\\'")}','${tool}','${taskId}')">✦ Сгенерировать</button>
@@ -1343,28 +2035,62 @@ function mdToHtml(md) {
   return html;
 }
 
-function renderDoc(content, taskName, targetEl) {
+function renderDoc(content, taskName, targetEl, taskId) {
   const html = mdToHtml(content);
   document.querySelector('.modal')?.classList.add('doc-mode');
+  const tn = taskName.replace(/'/g, "\'");
+  const tid = taskId || '';
+  const isAlreadyDone = tid && S.completedTasks.has(tid);
+
   targetEl.innerHTML = `
     <div class="doc-paper" id="doc-content">${html}</div>
     <div class="doc-actions">
-      <button class="btn-copy" onclick="copyResult()">⎘ Копировать текст</button>
-      <button class="btn-primary btn-sm" onclick="downloadDoc('${taskName.replace(/'/g,"\\'")}')">⬇ Скачать .doc</button>
-      <span style="font-size:11px;color:var(--green);margin-left:auto">✓ Сохранено в аккаунте</span>
+      <button class="btn-outline btn-sm" onclick="closeModal(); show('roadmap')" style="padding:6px 12px;font-size:12px">← Роадмап</button>
+      <button class="btn-copy" onclick="copyResult()">⎘ Копировать</button>
+      <button class="btn-outline btn-sm" onclick="downloadDoc('${tn}')">⬇ Скачать</button>
+      <span style="font-size:11px;color:var(--green);margin-left:auto">✓ Сохранено</span>
     </div>
+    ${!isAlreadyDone && tid ? `
+    <div id="done-banner" style="background:var(--gbg);border:1px solid var(--gm);border-radius:var(--rl);padding:14px 16px;margin-top:12px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:20px">✅</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:2px">Документ создан!</div>
+        <div style="font-size:12px;color:var(--t2)">Отметьте задачу выполненной — прогресс обновится на дашборде</div>
+      </div>
+      <button class="btn-primary btn-sm" onclick="markDocTaskDone('${tid}','${tn}')" style="background:var(--green);border-color:var(--green);white-space:nowrap;flex-shrink:0">
+        Отметить ✓
+      </button>
+    </div>` : isAlreadyDone ? '<div style="font-size:12px;color:var(--green);padding:8px 0">✓ Задача уже отмечена выполненной</div>' : ''}
     <div class="chat-refine">
       <div class="chat-refine-label">💬 Попросить AI доработать</div>
       <div class="chat-history" id="chat-history"></div>
-      <textarea id="refine-input" placeholder="Например: добавь KPI для администратора, сделай короче, добавь конкретные цифры..."></textarea>
-      <button class="btn-primary btn-sm" style="margin-top:8px;width:100%;justify-content:center" id="refine-btn" onclick="refineDoc('${taskName.replace(/'/g,"\\'")}')">↻ Улучшить →</button>
+      <textarea id="refine-input" placeholder="Например: сделай короче, добавь цифры, адаптируй под мою ситуацию..."></textarea>
+      <button class="btn-primary btn-sm" style="margin-top:8px;width:100%;justify-content:center" id="refine-btn" onclick="refineDoc('${tn}')">↻ Улучшить →</button>
     </div>`;
   S._lastDocContent = content;
   S._lastDocName = taskName;
+  S._lastTaskId = taskId || null;
   if (!S._chatHistory) S._chatHistory = [];
   renderChatHistory();
 }
 
+function markDocTaskDone(taskId, taskName) {
+  if (!S.completedTasks.has(taskId)) {
+    S.completedTasks.add(taskId);
+    S.recentActions.unshift({
+      text: '✓ ' + taskName,
+      time: new Date().toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'})
+    });
+    if (S.user) {
+      api('/api/audit/task', {method:'POST', body:JSON.stringify({taskId, done:true})}).catch(()=>{});
+    }
+    autoSave();
+  }
+  const banner = document.getElementById('done-banner');
+  if (banner) {
+    banner.innerHTML = '<div style="font-size:20px">🎉</div><div style="font-size:13px;font-weight:600;color:var(--green)">Готово! Прогресс обновлён на дашборде.</div>';
+  }
+}
 function renderChatHistory() {
   const el = document.getElementById('chat-history');
   if (!el || !S._chatHistory?.length) return;
@@ -1378,6 +2104,7 @@ function downloadDoc(taskName) {
   const docEl = document.getElementById('doc-content');
   if (!docEl) return;
   const salonName = S.ob?.name || 'Салон';
+  const city = S.ob?.city || '';
   const date = new Date().toLocaleDateString('ru');
   const wordHtml = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${taskName}</title><style>
     body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.5;margin:2cm;color:#1a1a1a}
@@ -1392,44 +2119,67 @@ function downloadDoc(taskName) {
     .meta{font-size:9pt;color:#666;margin-bottom:16pt}
   </style></head><body>
     <h1>${taskName}</h1>
-    <div class="meta">${salonName} · Сгенерировано: ${date} · Beauty Operations OS</div>
+    <div class="meta">${salonName}${city ? ' · ' + city : ''} · ${date} · Beauty Operations OS</div>
     ${docEl.innerHTML}
   </body></html>`;
-  const blob = new Blob(['﻿' + wordHtml], {type: 'application/msword'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = taskName.replace(/[^а-яёa-z0-9\s]/gi,'').trim().slice(0,40) + '.doc';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Документ скачивается...');
-}
 
+  // iOS/Safari: use .html — Word format breaks on mobile
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const ext      = isIOS ? '.html' : '.doc';
+  const mimeType = isIOS ? 'text/html;charset=utf-8' : 'application/msword';
+  const content  = isIOS ? wordHtml : '﻿' + wordHtml;
+
+  try {
+    const blob = new Blob([content], {type: mimeType});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = taskName.replace(/[^а-яёa-z0-9\s]/gi,'').trim().slice(0,40) + ext;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    toast('Документ скачивается...');
+  } catch(e) {
+    // Fallback: open in new tab
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(wordHtml); w.document.close(); }
+    toast('Открываем документ...');
+  }
+}
 async function generateDoc(taskName, tool, taskId) {
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
   const answers = cfg.qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
   const btn = document.getElementById('gen-btn');
   const resultEl = document.getElementById('modal-result');
   btn.disabled = true; btn.textContent = 'Генерируем...';
-  resultEl.innerHTML = `<div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div style="font-size:13px">Создаём документ...</div></div>`;
+  resultEl.innerHTML = `<div class="loading">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div style="font-size:13px;margin-top:8px">Создаём документ...</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px" id="gen-timer">обычно 20–40 секунд</div>
+    </div>`;
+  let genSec = 0;
+  const genTimerInterval = setInterval(() => {
+    genSec++;
+    const el = document.getElementById('gen-timer');
+    if (el) el.textContent = `${genSec} сек...`;
+  }, 1000);
+  const clearGenTimer = () => clearInterval(genTimerInterval);
 
   try {
     const res = await api('/api/ai/generate', {
       method: 'POST',
       body: JSON.stringify({ taskName, answers, salonData: S.ob })
     });
-    renderDoc(res.content, taskName, resultEl);
-    if (taskId && !S.completedTasks.has(taskId)) {
-      const task = Object.values(ROADMAP_TASKS).flat().find(t => t.id === taskId);
-      toggleTask(taskId, task?.name || taskName);
-    }
-    S.recentActions.unshift({text:'Создан: '+taskName, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+    renderDoc(res.content, taskName, resultEl, taskId);
+    S.recentActions.unshift({text:'📄 Создан: '+taskName, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
   } catch(e) {
     resultEl.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--red)">${e.message.includes('подписк')?'🔒 Требуется активная подписка':'Ошибка генерации. Попробуйте снова.'}</div>`;
     if (e.message.includes('подписк')) {
       setTimeout(() => { closeModal(); showPaywall(); }, 1500);
     }
   } finally {
+    if (typeof clearGenTimer === "function") clearGenTimer();
     btn.disabled = false; btn.textContent = '✦ Сгенерировать';
   }
 }
@@ -1479,36 +2229,225 @@ function closeModal(e) {
 }
 
 // ══════════════════════════════════════════════════
-// DASHBOARD
+// DASHBOARD v2
 // ══════════════════════════════════════════════════
 function renderDashboard() {
   if (S.ob.name) {
     document.getElementById('dash-title').textContent = `Дашборд — ${S.ob.name}`;
+    document.getElementById('dash-sub').textContent = `${S.ob.city||S.ob.country||''}${S.ob.city&&S.ob.country?' · ':''}${S.ob.country||''}`.trim() || 'Операционный статус бизнеса';
   }
-  const ov = S.scores.overall||0; const lv=lvInfo(ov); const c=sc(ov);
-  const done = S.completedTasks.size;
+
+  const ov    = S.scores.overall || 0;
+  const lv    = lvInfo(ov);
+  const c     = sc(ov);
+  const done  = S.completedTasks.size;
   const total = Object.values(ROADMAP_TASKS).flat().length;
-  const progress = total > 0 ? Math.round(done/total*100) : 0;
-  const weak = BLOCKS.filter(b=>(S.scores[b.id]||0)<50).length;
+  const prog  = total > 0 ? Math.round(done / total * 100) : 0;
+  const weak  = BLOCKS.filter(b => (S.scores[b.id]||0) < 50).length;
 
+  // ── Level banner ──────────────────────────────
+  const bannerEl = document.getElementById('dash-level-banner');
+  if (ov > 0) {
+    const LEVEL_DESCS = {
+      'Хаос':            'Бизнес работает хаотично — срочно нужна система.',
+      'Выживание':       'Основы есть, но много дыр. Фокус на фундаменте.',
+      'Контроль':        'Система работает, но не стабильно. Продолжайте.',
+      'Система':         'Хороший уровень! Готовы к масштабированию.',
+      'Масштабирование': 'Отличный результат — бизнес готов расти.'
+    };
+    bannerEl.style.display = 'flex';
+    bannerEl.style.background = lv.bg;
+    bannerEl.style.color = lv.color;
+    bannerEl.innerHTML = `
+      <div class="level-icon">
+        ${ov<=20?'🔴':ov<=40?'🟠':ov<=60?'🟡':ov<=80?'🟢':'🔵'}
+      </div>
+      <div>
+        <div class="level-title">Уровень: ${lv.label}</div>
+        <div class="level-desc">${LEVEL_DESCS[lv.label]||''}</div>
+      </div>
+      <div class="level-score">${ov}%</div>`;
+  } else {
+    bannerEl.style.display = 'none';
+  }
+
+  // ── Top metrics ───────────────────────────────
+  const weakColor = weak > 3 ? '#C62828' : weak > 1 ? '#E65100' : '#2E7D32';
   document.getElementById('dash-metrics').innerHTML = `
-    <div class="metric"><div class="metric-lbl">Рейтинг</div><div class="metric-val" style="color:${c}">${ov}%</div><div class="metric-sub">${lv.label}</div></div>
-    <div class="metric"><div class="metric-lbl">Внедрено</div><div class="metric-val">${progress}%</div><div class="metric-sub">${done} из ${total} задач</div></div>
-    <div class="metric"><div class="metric-lbl">Выполнено</div><div class="metric-val">${done}</div><div class="metric-sub">задач роадмапа</div></div>
-    <div class="metric"><div class="metric-lbl">Слабых блоков</div><div class="metric-val" style="color:${weak>3?'#C62828':weak>1?'#E65100':'#2E7D32'}">${weak}</div><div class="metric-sub">ниже 50%</div></div>`;
+    <div class="metric">
+      <div class="metric-lbl">Рейтинг</div>
+      <div class="metric-val" style="color:${c}">${ov}%</div>
+      <div class="metric-sub">${lv.label}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-lbl">Внедрено</div>
+      <div class="metric-val">${prog}%</div>
+      <div class="metric-sub">${done} из ${total} задач</div>
+    </div>
+    <div class="metric">
+      <div class="metric-lbl">Мастеров</div>
+      <div class="metric-val">${S.ob.masters||'—'}</div>
+      <div class="metric-sub">${S.ob.admins||0} администратор(а)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-lbl">Слабых блоков</div>
+      <div class="metric-val" style="color:${weakColor}">${weak}</div>
+      <div class="metric-sub">ниже 50%</div>
+    </div>`;
 
+  // ── Radar chart (pure SVG, no libs) ──────────
+  const radarEl = document.getElementById('dash-radar');
+  if (ov > 0) {
+    const W = 220, H = 220, cx = W/2, cy = H/2, R = 82;
+    const labels = BLOCKS.map(b => b.name);
+    const values = BLOCKS.map(b => (S.scores[b.id]||0) / 100);
+    const colors = BLOCKS.map(b => b.color);
+    const N = labels.length;
+    const angleStep = (2 * Math.PI) / N;
+    const startAngle = -Math.PI / 2;
+
+    const toXY = (i, r) => ({
+      x: cx + r * Math.cos(startAngle + i * angleStep),
+      y: cy + r * Math.sin(startAngle + i * angleStep)
+    });
+
+    // Grid rings
+    let gridLines = '';
+    [0.25, 0.5, 0.75, 1].forEach(pct => {
+      const pts = Array.from({length: N}, (_, i) => {
+        const p = toXY(i, R * pct);
+        return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+      }).join(' ');
+      gridLines += `<polygon points="${pts}" fill="none" stroke="#EEECE9" stroke-width="1"/>`;
+    });
+
+    // Spokes
+    let spokes = '';
+    for (let i = 0; i < N; i++) {
+      const p = toXY(i, R);
+      spokes += `<line x1="${cx}" y1="${cy}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="#EEECE9" stroke-width="1"/>`;
+    }
+
+    // Data polygon
+    const dataPts = values.map((v, i) => {
+      const p = toXY(i, R * v);
+      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    }).join(' ');
+
+    // Labels
+    let labelEls = '';
+    labels.forEach((lbl, i) => {
+      const p = toXY(i, R + 18);
+      const SHORT = {
+        'Финансы':'Финансы','Персонал':'Персонал','Продажи':'Продажи',
+        'Клиенты':'Клиенты','Операционка':'Операц.','Собственник':'Собств.',
+        'Маркетинг':'Маркетинг'
+      };
+      labelEls += `<text x="${p.x.toFixed(1)}" y="${(p.y+4).toFixed(1)}" text-anchor="middle" fill="#6B6B6B" font-size="10" font-family="Inter,sans-serif" font-weight="500">${SHORT[lbl]||lbl}</text>`;
+    });
+
+    // Score dots
+    let dots = '';
+    values.forEach((v, i) => {
+      const p = toXY(i, R * v);
+      dots += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${colors[i]}" stroke="#fff" stroke-width="1.5"/>`;
+    });
+
+    radarEl.innerHTML = `
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+        ${gridLines}${spokes}
+        <polygon points="${dataPts}" fill="rgba(194,24,91,0.1)" stroke="#C2185B" stroke-width="1.5" stroke-linejoin="round"/>
+        ${dots}${labelEls}
+      </svg>
+      <div style="font-size:12px;color:var(--t3);text-align:center">Паутинная диаграмма операционного профиля</div>`;
+  } else {
+    radarEl.innerHTML = `<div style="font-size:13px;color:var(--t3);text-align:center;padding:40px 0">Пройдите аудит<br>чтобы увидеть профиль</div>`;
+  }
+
+  // ── Block bars ────────────────────────────────
   document.getElementById('dash-blocks').innerHTML = BLOCKS.map(b => {
-    const s=S.scores[b.id]||0; const c2=sc(s);
+    const s = S.scores[b.id] || 0;
+    const c2 = sc(s);
     return `<div class="bbar-row">
       <div class="bbar-name">${b.name}</div>
       <div class="bbar-track"><div class="bbar-fill" style="width:${s}%;background:${c2}"></div></div>
-      <div class="bbar-val" style="color:${c2}" title="Результат аудита">${s}%</div>
+      <div class="bbar-val" style="color:${c2}">${s}%</div>
     </div>`;
   }).join('');
 
+  // ── Implementation progress ────────────────────
+  const implEl = document.getElementById('dash-impl');
+  const phasesDone = S.roadmapOrder.map(bid => {
+    const tasks = ROADMAP_TASKS[bid] || [];
+    const phaseDone = tasks.filter(t => S.completedTasks.has(t.id)).length;
+    const block = BLOCKS.find(b => b.id === bid);
+    const s = S.scores[bid] || 0;
+    return { bid, name: block?.name || bid, total: tasks.length, done: phaseDone, score: s };
+  });
+
+  if (phasesDone.length) {
+    implEl.innerHTML = `
+      <div class="impl-bar-wrap">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span style="color:var(--t2);font-weight:500">Общий прогресс</span>
+          <span style="font-weight:700;color:var(--rose)">${prog}%</span>
+        </div>
+        <div class="impl-bar-track"><div class="impl-bar-fill" style="width:${prog}%"></div></div>
+        <div style="font-size:12px;color:var(--t3);margin-top:5px">${done} из ${total} задач выполнено</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-top:16px">
+        ${phasesDone.map((p, i) => {
+          const pPct = p.total > 0 ? Math.round(p.done / p.total * 100) : 0;
+          const pC = sc(p.score);
+          return `<div style="display:flex;align-items:center;gap:8px">
+            <div style="width:18px;height:18px;border-radius:5px;background:#1A1A1A;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">0${i+1}</div>
+            <div style="font-size:12px;color:var(--t2);min-width:90px;font-weight:500">${p.name}</div>
+            <div style="flex:1;height:4px;background:var(--s3);border-radius:2px;overflow:hidden">
+              <div style="height:100%;border-radius:2px;background:${pPct===100?'#2E7D32':pC};width:${pPct}%;transition:width .5s"></div>
+            </div>
+            <div style="font-size:11px;font-weight:600;min-width:28px;text-align:right;color:${pPct===100?'#2E7D32':pC}">${pPct}%</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  } else {
+    implEl.innerHTML = `<div class="empty-tl">Пройдите аудит и постройте роадмап — прогресс внедрения появится здесь.</div>
+      <button class="btn-primary btn-sm" style="margin-top:14px" onclick="show('onboarding')">Пройти аудит →</button>`;
+  }
+
+  // ── Quick actions ─────────────────────────────
+  const topWeak = BLOCKS
+    .filter(b => (S.scores[b.id]||0) < 60)
+    .sort((a, b) => (S.scores[a.id]||0) - (S.scores[b.id]||0))
+    .slice(0, 3);
+
+  const qaEl = document.getElementById('dash-qa');
+  if (topWeak.length) {
+    qaEl.innerHTML = topWeak.map(b => {
+      const firstTask = (ROADMAP_TASKS[b.id]||[])[0];
+      if (!firstTask) return '';
+      return `<div class="qa-item" onclick="openTool('${firstTask.id}','${firstTask.name.replace(/'/g,"\'")}','${firstTask.tool}')">
+        <div class="qa-icon" style="background:${b.color}20;color:${b.color}">⚡</div>
+        <div>
+          <div style="font-size:12px;color:var(--t3);margin-bottom:1px">${b.name} · ${S.scores[b.id]||0}%</div>
+          ${firstTask.name}
+        </div>
+      </div>`;
+    }).join('');
+  } else if (ov > 0) {
+    qaEl.innerHTML = `<div style="font-size:13px;color:var(--t3);text-align:center;padding:12px 0">🎉 Все блоки выше 60%!<br>Переходите к масштабированию.</div>`;
+  } else {
+    qaEl.innerHTML = `<div class="qa-item" onclick="show('onboarding')">
+      <div class="qa-icon" style="background:var(--rose-l);color:var(--rose)">📋</div>
+      Пройти аудит
+    </div>`;
+  }
+
+  // ── Timeline ──────────────────────────────────
   document.getElementById('dash-timeline').innerHTML = S.recentActions.length
-    ? `<ul class="timeline">${S.recentActions.map(a=>`<li class="tl-item"><div class="tl-dot"></div><div class="tl-text">${a.text}</div><div class="tl-time">${a.time}</div></li>`).join('')}</ul>`
-    : `<div class="empty-tl">Действий пока нет.<br>Пройдите аудит и начните внедрение.</div>`;
+    ? `<ul class="timeline">${S.recentActions.map(a =>
+        `<li class="tl-item"><div class="tl-dot"></div><div class="tl-text">${a.text}</div><div class="tl-time">${a.time}</div></li>`
+      ).join('')}</ul>`
+    : `<div class="empty-tl">Действий пока нет.</div>`;
 }
 
 // ══════════════════════════════════════════════════
@@ -1536,37 +2475,147 @@ function filterTmpl(cat, btn) {
 function renderProfile() {
   if (!S.user) return;
   const u = S.user;
-  document.getElementById('prof-name').textContent = u.name;
-  document.getElementById('prof-email').textContent = u.email;
 
+  // ── Account ────────────────────────────────────
+  document.getElementById('prof-email').textContent = u.email;
+  document.getElementById('prof-name-wrap').innerHTML = `<div class="prof-val">${u.name}</div>`;
+
+  // ── Subscription ───────────────────────────────
   const subEl = document.getElementById('prof-sub-info');
   const upgradeBtn = document.getElementById('prof-upgrade-btn');
-
   if (u.has_access) {
     subEl.innerHTML = `
-      <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);background:var(--gbg);color:var(--green);font-weight:600;margin-bottom:12px">
+      <div class="access-badge" style="background:var(--gbg);color:var(--green)">
         ✓ AI Business Builder активен
       </div>
-      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">
-        Роадмап внедрения, AI-инструменты и шаблоны — доступны.<br>
-        <strong>Повторный аудит:</strong> бесплатно в любое время.
+      <div style="font-size:13px;color:var(--t2);line-height:1.65">
+        Роадмап, AI-инструменты, шаблоны — доступны.<br>
+        Повторный аудит бесплатно в любое время.
       </div>`;
     upgradeBtn.style.display = 'none';
+    // Show docs card
+    const docsCard = document.getElementById('prof-docs-card');
+    if (docsCard) docsCard.style.display = 'block';
   } else {
     subEl.innerHTML = `
-      <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);background:var(--s3);color:var(--t2);font-weight:600;margin-bottom:12px">
+      <div class="access-badge" style="background:var(--s3);color:var(--t2)">
         Бесплатный доступ
       </div>
-      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">
-        Аудит, AI-анализ и роадмап доступны бесплатно.<br>
-        AI-генерация документов — после оплаты.
+      <div style="font-size:13px;color:var(--t2);line-height:1.65">
+        Аудит, AI-анализ и роадмап — бесплатно.<br>
+        Генерация документов — после оплаты.
       </div>`;
     upgradeBtn.style.display = 'block';
-    upgradeBtn.textContent = 'Активировать AI Business Builder — 2999 грн';
   }
 
-  // Загружаем сохранённые документы
-  loadMyDocuments();
+  // ── Salon data view ────────────────────────────
+  renderSalonView();
+
+  // ── Documents ──────────────────────────────────
+  if (u.has_access) loadMyDocuments();
+  loadBotSection();
+}
+
+function renderSalonView() {
+  const ob = S.ob || {};
+  const viewEl = document.getElementById('prof-salon-view');
+  if (!viewEl) return;
+
+  if (!ob.name && !ob.city) {
+    viewEl.innerHTML = `<div style="font-size:13px;color:var(--t3)">Данные салона не заполнены. <a style="color:var(--rose);cursor:pointer" onclick="show('onboarding')">Пройти онбординг →</a></div>`;
+    return;
+  }
+
+  const currency = ob.country === 'Испания' ? '€' : '₴';
+  const items = [
+    {label:'Название',  val: ob.name || '—'},
+    {label:'Страна',    val: ob.country || '—'},
+    {label:'Город',     val: ob.city || '—'},
+    {label:'Мастеров',  val: ob.masters || '—'},
+    {label:'Администраторов', val: ob.admins || '—'},
+    {label:'Ср. чек',   val: ob.avgCheck ? `${ob.avgCheck} ${currency}` : '—'},
+    {label:'Выручка/мес', val: ob.revenue ? `${Number(ob.revenue).toLocaleString('ru')} ${currency}` : '—'},
+    {label:'Система записи', val: ob.crm || '—'},
+  ];
+
+  viewEl.innerHTML = `<div class="prof-salon-grid">
+    ${items.map(i => `<div class="prof-salon-item">
+      <div class="prof-salon-lbl">${i.label}</div>
+      <div class="prof-salon-val">${i.val}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+let salonEditOpen = false;
+function toggleSalonEdit() {
+  salonEditOpen = !salonEditOpen;
+  const viewEl = document.getElementById('prof-salon-view');
+  const editEl = document.getElementById('prof-salon-edit');
+  if (!viewEl || !editEl) return;
+
+  if (salonEditOpen) {
+    viewEl.style.display = 'none';
+    const ob = S.ob || {};
+    editEl.style.display = 'block';
+    editEl.innerHTML = `
+      <div class="form-grid" style="margin-bottom:0">
+        <div class="field fg-full"><label>Название салона</label><input id="pe-name" value="${ob.name||''}" placeholder="Studio Bloom"></div>
+        <div class="field"><label>Страна</label>
+          <select id="pe-country">
+            ${['Украина','Испания','Польша','Германия','Чехия','ОАЭ','Другая'].map(x=>`<option${ob.country===x?' selected':''}>${x}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Город</label><input id="pe-city" value="${ob.city||''}" placeholder="Киев"></div>
+        <div class="field"><label>Мастеров</label><input id="pe-masters" type="number" value="${ob.masters||''}" min="1"></div>
+        <div class="field"><label>Администраторов</label><input id="pe-admins" type="number" value="${ob.admins||''}" min="0"></div>
+        <div class="field"><label>Средний чек</label><input id="pe-avg" type="number" value="${ob.avgCheck||''}" placeholder="800"></div>
+        <div class="field"><label>Выручка/мес</label><input id="pe-rev" type="number" value="${ob.revenue||''}" placeholder="120000"></div>
+        <div class="field"><label>Система записи</label>
+          <select id="pe-crm">
+            ${['DIKIDI','Yclients','Fresha','Google-таблицы','Без системы'].map(x=>`<option${ob.crm===x?' selected':''}>${x}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn-outline" onclick="cancelSalonEdit()">Отмена</button>
+        <button class="btn-primary" onclick="saveSalonEdit()">Сохранить изменения</button>
+      </div>`;
+  } else {
+    viewEl.style.display = 'block';
+    editEl.style.display = 'none';
+    editEl.innerHTML = '';
+  }
+}
+
+function cancelSalonEdit() {
+  salonEditOpen = false;
+  document.getElementById('prof-salon-view').style.display = 'block';
+  document.getElementById('prof-salon-edit').style.display = 'none';
+}
+
+function saveSalonEdit() {
+  S.ob = {
+    ...S.ob,
+    name:    document.getElementById('pe-name')?.value.trim() || S.ob.name,
+    country: document.getElementById('pe-country')?.value || S.ob.country,
+    city:    document.getElementById('pe-city')?.value.trim() || S.ob.city,
+    masters: document.getElementById('pe-masters')?.value || S.ob.masters,
+    admins:  document.getElementById('pe-admins')?.value || S.ob.admins,
+    avgCheck:document.getElementById('pe-avg')?.value || S.ob.avgCheck,
+    revenue: document.getElementById('pe-rev')?.value || S.ob.revenue,
+    crm:     document.getElementById('pe-crm')?.value || S.ob.crm,
+  };
+  cancelSalonEdit();
+  renderSalonView();
+  autoSave();
+  toast('Данные салона сохранены');
+}
+
+function repeatAudit() {
+  if (!confirm('Начать аудит заново? Предыдущие ответы будут заменены новыми после завершения.')) return;
+  S.auditBlock = 0;
+  S.answers = {};
+  show('onboarding');
 }
 
 async function loadMyDocuments() {
@@ -1654,7 +2703,7 @@ async function loadAudit() {
       if (a.onboarding) S.ob = a.onboarding;
       if (a.answers) S.answers = a.answers;
       if (a.scores) S.scores = a.scores;
-      if (a.completed_tasks) S.completedTasks = new Set(a.completed_tasks);
+      if (a.completed_tasks) S.completedTasks = new Set(Array.isArray(a.completed_tasks) ? a.completed_tasks : []);
       if (S.scores.overall) {
         S.roadmapOrder = BLOCKS.filter(b=>ROADMAP_TASKS[b.id]).sort((a,b)=>(S.scores[a.id]||0)-(S.scores[b.id]||0)).map(b=>b.id);
         ['nl-dashboard','nl-roadmap'].forEach(id=>document.getElementById(id)?.classList.remove('hidden'));
@@ -1713,6 +2762,660 @@ async function init() {
 }
 
 init();
+
+// ─── DATA INPUT ───────────────────────────────────────────────────────────────
+let _csvService = 'fresha';
+const CSV_INSTRUCTIONS = {
+  fresha:        'Fresha → Reports → Sales Summary → Export CSV. Также загрузите Client Summary для данных по retention.',
+  treatwell:     'Treatwell Pro → Reports → Sales → Export CSV (кнопка в правом верхнем углу).',
+  poster:        'Poster → Статистика → Выручка → Экспорт → CSV.',
+  yclients_export: 'Yclients → Аналитика → Финансы → Экспорт в Excel/CSV.',
+};
+
+function toggleDataSection() {
+  const body = document.getElementById('data-section-body');
+  const link = document.getElementById('data-toggle-link');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  link.textContent = open ? '▲ Скрыть' : '▼ Показать';
+  if (open) {
+    initDataForm();
+    loadDataHistory();
+  }
+}
+
+function initDataForm() {
+  // Set current month as default period
+  const now = new Date();
+  const periodEl = document.getElementById('data-period');
+  if (periodEl && !periodEl.value) {
+    periodEl.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  }
+  // Set currency hints
+  const cur = getCurrency(S.ob?.country || '');
+  const revHint = document.getElementById('df-revenue-hint');
+  if (revHint) revHint.textContent = `в ${cur}`;
+  const fotHint = document.getElementById('df-fot-hint');
+  if (fotHint) {
+    const country = S.ob?.country || '';
+    fotHint.textContent = country === 'Украина' ? 'норма UA: 45–55%' :
+                          country === 'Испания'  ? 'норма ES: 33–42%' :
+                          country === 'Казахстан'? 'норма KZ: 40–50%' : 'норма: 33–45%';
+  }
+  // Set CSV instructions
+  selectCsvService('fresha', document.querySelector('.csv-st'));
+}
+
+function switchDataTab(tab, btn) {
+  document.querySelectorAll('.dpt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('data-tab-manual').style.display = tab === 'manual' ? 'block' : 'none';
+  document.getElementById('data-tab-csv').style.display    = tab === 'csv'    ? 'block' : 'none';
+}
+
+function selectCsvService(svc, btn) {
+  _csvService = svc;
+  document.querySelectorAll('.csv-st').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const el = document.getElementById('csv-instructions');
+  if (el) el.textContent = CSV_INSTRUCTIONS[svc] || '';
+}
+
+async function saveManualData() {
+  const period = document.getElementById('data-period')?.value;
+  if (!period) { toast('Выберите период', true); return; }
+
+  const revenue    = document.getElementById('df-revenue')?.value;
+  const visits     = document.getElementById('df-visits')?.value;
+  const avg        = document.getElementById('df-avg')?.value;
+  const newCl      = document.getElementById('df-new')?.value;
+  const retention  = document.getElementById('df-retention')?.value;
+  const fot        = document.getElementById('df-fot')?.value;
+  const materials  = document.getElementById('df-materials')?.value;
+  const notes      = document.getElementById('df-notes')?.value;
+
+  if (!revenue && !visits) { toast('Введите хотя бы выручку или количество визитов', true); return; }
+
+  try {
+    await api('/api/integrations/manual', {
+      method: 'POST',
+      body: JSON.stringify({
+        period, period_type: 'month',
+        revenue:       revenue    || null,
+        visits:        visits     || null,
+        avg_check:     avg        || null,
+        new_clients:   newCl      || null,
+        return_rate:   retention  || null,
+        fot_pct:       fot        || null,
+        materials_pct: materials  || null,
+        notes:         notes      || null,
+      })
+    });
+
+    const statusEl = document.getElementById('data-save-status');
+    if (statusEl) { statusEl.style.display = 'inline'; setTimeout(() => statusEl.style.display = 'none', 3000); }
+
+    // Cache in state for AI prompts
+    S.latestMetrics = { period, revenue, visits, avg_check: avg, new_clients: newCl, return_rate: retention, fot_pct: fot };
+    autoSave();
+    loadDataHistory();
+    toast('Данные сохранены — AI будет использовать их при генерации');
+  } catch(e) {
+    toast('Ошибка сохранения: ' + e.message, true);
+  }
+}
+
+async function loadDataHistory() {
+  const wrap = document.getElementById('data-history-wrap');
+  if (!wrap) return;
+  try {
+    const data = await api('/api/integrations/manual');
+    const metrics = data.metrics || [];
+    if (!metrics.length) {
+      wrap.innerHTML = '<div style="font-size:13px;color:var(--t3)">Данных пока нет — введите первые метрики выше</div>';
+      return;
+    }
+    const cur = getCurrency(S.ob?.country || '');
+    wrap.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">История ввода</div>' +
+      '<div class="data-history">' +
+      metrics.map(m => {
+        const d = new Date(m.period + '-01');
+        const label = d.toLocaleDateString('ru', {month:'long', year:'numeric'});
+        return `<div class="dh-item">
+          <div class="dh-period">${label}</div>
+          <div class="dh-metrics">
+            ${m.revenue ? `<span><strong>${Number(m.revenue).toLocaleString('ru')} ${cur}</strong> выручка</span>` : ''}
+            ${m.visits  ? `<span><strong>${m.visits}</strong> визитов</span>` : ''}
+            ${m.return_rate ? `<span><strong>${m.return_rate}%</strong> retention</span>` : ''}
+            ${m.fot_pct ? `<span><strong>${m.fot_pct}%</strong> ФОТ</span>` : ''}
+          </div>
+        </div>`;
+      }).join('') + '</div>';
+  } catch(e) {
+    wrap.innerHTML = '<div style="font-size:13px;color:var(--t3)">Не удалось загрузить историю</div>';
+  }
+}
+
+function handleCsvDrop(event) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('drag');
+  const file = event.dataTransfer.files[0];
+  if (file) handleCsvFile(file);
+}
+
+async function handleCsvFile(file) {
+  if (!file) return;
+  const resultEl = document.getElementById('csv-result');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="font-size:13px;color:var(--t2)">⏳ Обрабатываем файл...</div>';
+
+  try {
+    const period = document.getElementById('data-period')?.value || (() => {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    })();
+
+    // Parse CSV client-side
+    const text = await file.text();
+    const rows = parseCSVText(text);
+    if (!rows.length) throw new Error('Файл пустой или не распознан');
+
+    const resp = await api('/api/integrations/csv', {
+      method: 'POST',
+      body: JSON.stringify({ service: _csvService, period, csvData: rows })
+    });
+
+    const p = resp.parsed || {};
+    const cur = getCurrency(S.ob?.country || '');
+    resultEl.innerHTML = `
+      <div style="background:var(--gbg);border:1px solid var(--gm);border-radius:var(--rl);padding:14px 16px">
+        <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:10px">✓ Данные загружены из CSV!</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+          ${p.revenue  ? `<div><span style="color:var(--t2)">Выручка:</span> <strong>${Number(p.revenue).toLocaleString('ru')} ${cur}</strong></div>` : ''}
+          ${p.visits   ? `<div><span style="color:var(--t2)">Визитов:</span> <strong>${p.visits}</strong></div>` : ''}
+          ${p.avg_check? `<div><span style="color:var(--t2)">Ср. чек:</span> <strong>${Number(p.avg_check).toLocaleString('ru')} ${cur}</strong></div>` : ''}
+          ${p.new_clients? `<div><span style="color:var(--t2)">Новых клиентов:</span> <strong>${p.new_clients}</strong></div>` : ''}
+          ${p.return_rate? `<div><span style="color:var(--t2)">Retention:</span> <strong>${p.return_rate}%</strong></div>` : ''}
+        </div>
+      </div>`;
+
+    S.latestMetrics = p;
+    loadDataHistory();
+    toast('CSV обработан — данные сохранены');
+  } catch(e) {
+    resultEl.innerHTML = `<div style="font-size:13px;color:var(--red)">✗ Ошибка: ${e.message}</div>`;
+  }
+}
+
+function parseCSVText(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const sep = lines[0].includes(';') ? ';' : ',';
+  const headers = lines[0].split(sep).map(h => h.replace(/^"|"$/g,'').trim());
+  return lines.slice(1).map(line => {
+    const vals = line.split(sep).map(v => v.replace(/^"|"$/g,'').trim());
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] || ''; });
+    return obj;
+  }).filter(row => Object.values(row).some(v => v));
+}
+
+
+// ─── BOT SECTION ──────────────────────────────────────────────────────────────
+async function loadBotSection() {
+  const el = document.getElementById('bot-section-content');
+  if (!el) return;
+
+  try {
+    const user = S.user;
+    if (!user?.has_bot_access) {
+      renderBotPaywall(el);
+      return;
+    }
+
+    const data = await api('/api/bot/status');
+    renderBotConnected(el, data);
+  } catch (e) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--t2)">Не удалось загрузить раздел. Попробуйте обновить страницу.</div>';
+  }
+}
+
+function renderBotPaywall(el) {
+  const country = S.ob?.country || 'Украина';
+  const prices = {
+    'Украина':    { pro: '999 ₴/мес',  team: '1999 ₴/мес' },
+    'Казахстан':  { pro: '4500 ₸/мес', team: '9000 ₸/мес' },
+    'Польша':     { pro: '79 zł/мес',  team: '159 zł/мес'  },
+    'Испания':    { pro: '19 €/мес',   team: '39 €/мес'    },
+    'Германия':   { pro: '19 €/мес',   team: '39 €/мес'    },
+    'ОАЭ':        { pro: '70 AED/мес', team: '140 AED/мес' },
+  };
+  const p = prices[country] || prices['Украина'];
+
+  el.innerHTML = `
+    <div class="bot-paywall">
+      <div style="font-size:32px;margin-bottom:8px">🤖</div>
+      <h3>AI-директор в Telegram</h3>
+      <p>Ежедневные отчёты о вашем бизнесе прямо в Telegram.<br>
+      Загрузка мастеров, выручка, retention, алерты — всё автоматически.</p>
+      <div class="plan-cards">
+        <div class="plan-card" id="plan-pro" onclick="selectBotPlan('pro')">
+          <div class="plan-card-name">AI-директор Про</div>
+          <div class="plan-card-price">${p.pro}</div>
+          <div class="plan-card-features">
+            ✓ Ежедневный отчёт<br>
+            ✓ Еженедельный отчёт<br>
+            ✓ Алерты<br>
+            ✓ 1 получатель
+          </div>
+        </div>
+        <div class="plan-card selected" id="plan-team" onclick="selectBotPlan('team')">
+          <div class="plan-card-name">AI-директор Команда</div>
+          <div class="plan-card-price">${p.team}</div>
+          <div class="plan-card-features">
+            ✓ Всё из Про<br>
+            ✓ Ежемесячный отчёт<br>
+            ✓ Интерактивный бот<br>
+            ✓ До 5 получателей
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="showPaywall()">Подключить AI-директора →</button>
+    </div>`;
+}
+
+function selectBotPlan(plan) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('plan-' + plan)?.classList.add('selected');
+}
+
+function renderBotConnected(el, data) {
+  const sub   = data.subscription;
+  const recps = data.recipients || [];
+  const logs  = data.recent_logs || [];
+  const botUsername = data.bot_username || 'beautyos_director_bot';
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="padding:6px 14px;border-radius:20px;background:var(--gbg);color:var(--green);font-size:12px;font-weight:700">
+        ✓ Бот активен
+      </div>
+      ${sub?.plan ? `<div style="font-size:13px;color:var(--t2)">Тариф: <strong style="color:var(--text)">AI-директор ${sub.plan === 'team' ? 'Команда' : 'Про'}</strong></div>` : ''}
+      ${sub?.sub_expires_at ? `<div style="font-size:12px;color:var(--t3)">до ${new Date(sub.sub_expires_at).toLocaleDateString('ru')}</div>` : ''}
+    </div>
+
+    <!-- Recipients -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px">
+        Получатели отчётов
+        <span style="font-size:11px;font-weight:500;color:var(--t3)">(${recps.length} / ${sub?.plan === 'team' ? 5 : 1})</span>
+      </div>
+      <div class="bot-recipients">
+        ${recps.map(r => `
+          <div class="bot-recipient">
+            <div class="bot-r-info">
+              <div class="bot-r-avatar">${(r.display_name||'?')[0].toUpperCase()}</div>
+              <div>
+                <div class="bot-r-name">${r.display_name || r.telegram_username || 'Пользователь'}</div>
+                <div class="bot-r-username">@${r.telegram_username || '—'} · ${r.role}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="font-size:11px;color:${r.is_active ? 'var(--green)' : 'var(--t3)'}">
+                ${r.is_active ? '● Активен' : '○ Отключён'}
+              </div>
+              <button onclick="removeRecipient('${r.id}')"
+                style="padding:3px 8px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;cursor:pointer;background:var(--surface);color:var(--red)">
+                ✕
+              </button>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      ${recps.length < (sub?.plan === 'team' ? 5 : 1) ? `
+      <div style="margin-top:10px">
+        <button class="btn-outline btn-sm" onclick="generateBotLink()" id="gen-link-btn">
+          + Добавить получателя
+        </button>
+        <div id="bot-link-wrap" style="display:none;margin-top:10px">
+          <div style="font-size:12px;color:var(--t2);margin-bottom:6px">Отправьте эту ссылку получателю — он нажмёт её в Telegram и подключится:</div>
+          <div class="bot-link-box">
+            <div class="bot-link-text" id="bot-link-text"></div>
+            <button onclick="copyBotLink()" style="padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;cursor:pointer;background:var(--surface);color:var(--t2);white-space:nowrap">
+              Копировать
+            </button>
+          </div>
+        </div>
+      </div>` : '<div style="font-size:12px;color:var(--t3);margin-top:8px">Максимальное количество получателей достигнуто</div>'}
+    </div>
+
+    <!-- Settings -->
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px">Расписание</div>
+      <div class="bot-settings-grid">
+        <div class="bot-toggle">
+          <label class="toggle-sw">
+            <input type="checkbox" id="tog-daily" ${sub?.daily_enabled !== false ? 'checked' : ''} onchange="saveBotSetting()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Ежедневный в <input type="time" id="set-daily-time" value="${sub?.daily_time || '20:00'}"
+            style="border:none;background:transparent;font-size:13px;font-weight:600;color:var(--rose);cursor:pointer;outline:none;width:58px"
+            onchange="saveBotSetting()"></span>
+        </div>
+        <div class="bot-toggle">
+          <label class="toggle-sw">
+            <input type="checkbox" id="tog-weekly" ${sub?.weekly_enabled !== false ? 'checked' : ''} onchange="saveBotSetting()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Еженедельный (пятница)</span>
+        </div>
+        ${sub?.plan === 'team' ? `
+        <div class="bot-toggle">
+          <label class="toggle-sw">
+            <input type="checkbox" id="tog-monthly" ${sub?.monthly_enabled !== false ? 'checked' : ''} onchange="saveBotSetting()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Ежемесячный (1-е число)</span>
+        </div>` : ''}
+        <div class="bot-toggle">
+          <label class="toggle-sw">
+            <input type="checkbox" id="tog-alerts" ${sub?.alerts_enabled !== false ? 'checked' : ''} onchange="saveBotSetting()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Алерты в реальном времени</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test + log -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <button class="btn-outline btn-sm" onclick="sendTestReport('daily')">▶ Тест дневного</button>
+      <button class="btn-outline btn-sm" onclick="sendTestReport('weekly')">▶ Тест недельного</button>
+      ${logs.length ? `<div style="font-size:12px;color:var(--t3)">Последний: ${new Date(logs[0].created_at).toLocaleDateString('ru')} — ${logs[0].report_type} (${logs[0].status})</div>` : ''}
+    </div>`;
+}
+
+async function generateBotLink() {
+  try {
+    document.getElementById('gen-link-btn').textContent = 'Генерируем...';
+    const data = await api('/api/bot/link', { method: 'POST' });
+    const wrap = document.getElementById('bot-link-wrap');
+    const text = document.getElementById('bot-link-text');
+    if (wrap && text) {
+      text.textContent = data.link;
+      wrap.style.display = 'block';
+    }
+    document.getElementById('gen-link-btn').textContent = '+ Добавить получателя';
+  } catch (e) {
+    toast('Ошибка: ' + e.message, true);
+    document.getElementById('gen-link-btn').textContent = '+ Добавить получателя';
+  }
+}
+
+function copyBotLink() {
+  const text = document.getElementById('bot-link-text')?.textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => toast('Ссылка скопирована!')).catch(() => toast('Не удалось скопировать', true));
+}
+
+async function removeRecipient(id) {
+  if (!confirm('Отключить этого получателя?')) return;
+  try {
+    await api('/api/bot/recipients/' + id, { method: 'DELETE' });
+    toast('Получатель отключён');
+    loadBotSection();
+  } catch(e) { toast('Ошибка', true); }
+}
+
+let _botSettingTimer = null;
+function saveBotSetting() {
+  clearTimeout(_botSettingTimer);
+  _botSettingTimer = setTimeout(async () => {
+    try {
+      await api('/api/bot/settings', {
+        method: 'PUT',
+        body: JSON.stringify({
+          daily_enabled:  document.getElementById('tog-daily')?.checked,
+          daily_time:     document.getElementById('set-daily-time')?.value,
+          weekly_enabled: document.getElementById('tog-weekly')?.checked,
+          monthly_enabled:document.getElementById('tog-monthly')?.checked,
+          alerts_enabled: document.getElementById('tog-alerts')?.checked,
+        })
+      });
+      toast('Настройки сохранены');
+    } catch(e) { toast('Ошибка сохранения', true); }
+  }, 800);
+}
+
+async function sendTestReport(type) {
+  try {
+    toast('Отправляем тестовый отчёт...');
+    await api('/api/bot/test', { method:'POST', body: JSON.stringify({ type }) });
+    toast('✓ Отчёт отправлен в Telegram!');
+  } catch(e) { toast('Ошибка: ' + e.message, true); }
+}
+
+
+// ─── CRM INTEGRATIONS ─────────────────────────────────────────────────────────
+const CRM_SERVICES = [
+  { id:'dikidi',     name:'DIKIDI',      icon:'📱', countries:'UA · KZ · СНГ',
+    fields:[{id:'api_key', label:'API-ключ', placeholder:'Из настроек DIKIDI → Пользователи'}],
+    docs:'https://dikidi.net/ru/open-api/' },
+  { id:'yclients',   name:'Yclients',    icon:'💛', countries:'UA · KZ · СНГ',
+    fields:[
+      {id:'api_key',    label:'Partner Token', placeholder:'Bearer токен партнёра'},
+      {id:'api_secret', label:'User Token',    placeholder:'Токен пользователя'},
+    ], docs:'https://developers.yclients.com/' },
+  { id:'booksy',     name:'Booksy',      icon:'📖', countries:'PL · EU',
+    fields:[{id:'api_key', label:'API-ключ', placeholder:'Из Booksy Business → API'}],
+    docs:'https://booksy.com/developers' },
+  { id:'simplybook', name:'SimplyBook',  icon:'📅', countries:'ES · UAE · Global',
+    fields:[
+      {id:'company_login', label:'Company Login', placeholder:'Логин компании'},
+      {id:'api_key',       label:'API-ключ',      placeholder:'Из SimplyBook → API'},
+    ], docs:'https://simplybook.me/en/api/' },
+  { id:'timify',     name:'Timify',      icon:'⏱', countries:'DE · AT · CH',
+    fields:[{id:'api_key', label:'API-ключ', placeholder:'Из Timify Dashboard → API'}],
+    docs:'https://developers.timify.com' },
+  { id:'shore',      name:'Shore',       icon:'🏠', countries:'DE',
+    fields:[{id:'api_key', label:'API-ключ', placeholder:'Из Shore Dashboard → Integrations'}],
+    docs:'https://www.shore.com/developer' },
+  { id:'poster',     name:'Poster POS',  icon:'🧾', countries:'UA · KZ',
+    fields:[{id:'api_key', label:'Access Token', placeholder:'Из Poster → Приложения → API'}],
+    docs:'https://dev.joinposter.com/' },
+];
+
+let _crmConnected = {};
+
+function toggleCrmSection() {
+  const body = document.getElementById('crm-section-body');
+  const link = document.getElementById('crm-toggle-link');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  link.textContent = open ? '▲ Скрыть' : '▼ Показать';
+  if (open) renderCrmGrid();
+}
+
+async function renderCrmGrid() {
+  const grid = document.getElementById('crm-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div style="font-size:13px;color:var(--t2)">Загружаем...</div>';
+
+  try {
+    const data = await api('/api/integrations/status');
+    _crmConnected = {};
+    (data.integrations || []).forEach(i => { _crmConnected[i.service] = i; });
+  } catch(e) { /* show disconnected state */ }
+
+  grid.innerHTML = CRM_SERVICES.map(svc => {
+    const conn = _crmConnected[svc.id];
+    const isConn = conn && conn.status === 'active';
+    const isErr  = conn && conn.status === 'error';
+
+    const lastSync = conn?.last_sync_at
+      ? 'Синхр: ' + new Date(conn.last_sync_at).toLocaleDateString('ru')
+      : '';
+
+    return `
+    <div class="crm-card ${isConn ? 'connected' : isErr ? 'error' : ''}" id="crm-${svc.id}">
+      <div class="crm-card-head">
+        <div class="crm-logo">${svc.icon}</div>
+        <div>
+          <div class="crm-name">${svc.name}</div>
+          <div class="crm-countries">${svc.countries}</div>
+        </div>
+        <div style="margin-left:auto">
+          <span class="crm-status ${isConn ? 'ok' : isErr ? 'err' : 'none'}">
+            ${isConn ? '✓ Подкл.' : isErr ? '✗ Ошибка' : 'Не подключён'}
+          </span>
+        </div>
+      </div>
+
+      ${isConn ? `
+        <div class="crm-sync-info">${lastSync}</div>
+        <div class="crm-actions">
+          <button class="btn-outline btn-sm" onclick="syncCrm('${svc.id}',this)" style="font-size:12px">
+            ↻ Синхронизировать
+          </button>
+          <button onclick="disconnectCrm('${svc.id}')"
+            style="padding:5px 10px;border:1px solid var(--border2);border-radius:var(--r);font-size:11px;cursor:pointer;background:var(--surface);color:var(--red)">
+            Отключить
+          </button>
+        </div>` : `
+        <div class="crm-fields" id="fields-${svc.id}">
+          ${svc.fields.map(f => `
+            <div class="crm-field">
+              <label>${f.label}</label>
+              <input type="password" id="crm-${svc.id}-${f.id}" placeholder="${f.placeholder}"
+                autocomplete="new-password">
+            </div>`).join('')}
+        </div>
+        <div class="crm-actions">
+          <button class="btn-primary btn-sm" onclick="connectCrm('${svc.id}',this)" style="font-size:12px">
+            Подключить
+          </button>
+          <a href="${svc.docs}" target="_blank"
+            style="font-size:11px;color:var(--rose);padding:5px 8px;cursor:pointer">
+            Инструкция →
+          </a>
+        </div>`}
+    </div>`;
+  }).join('');
+}
+
+async function connectCrm(serviceId, btn) {
+  const svc = CRM_SERVICES.find(s => s.id === serviceId);
+  if (!svc) return;
+
+  const credentials = {};
+  svc.fields.forEach(f => {
+    const val = document.getElementById(`crm-${serviceId}-${f.id}`)?.value?.trim();
+    if (val) credentials[f.id] = val;
+  });
+
+  if (!credentials.api_key && !credentials.company_login) {
+    toast('Заполните поля подключения', true);
+    return;
+  }
+
+  const origText = btn.textContent;
+  btn.textContent = 'Подключаем...';
+  btn.disabled = true;
+
+  try {
+    const resp = await api('/api/integrations/connect', {
+      method: 'POST',
+      body: JSON.stringify({ service: serviceId, ...credentials })
+    });
+
+    const info = resp.info || {};
+    toast(`✓ ${svc.name} подключён! Салон: ${info.company_name || ''}`);
+
+    // Auto-sync
+    setTimeout(() => syncCrm(serviceId), 500);
+    renderCrmGrid();
+  } catch(e) {
+    toast('Ошибка подключения: ' + e.message, true);
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+async function syncCrm(serviceId, btn) {
+  if (btn) { btn.textContent = '↻ Синхр...'; btn.disabled = true; }
+  try {
+    const resp = await api('/api/integrations/sync', {
+      method: 'POST',
+      body: JSON.stringify({ service: serviceId })
+    });
+    const m = resp.metrics || {};
+    const cur = getCurrency(S.ob?.country || '');
+    toast(`✓ ${serviceId}: ${Number(m.revenue||0).toLocaleString('ru')} ${cur}, ${m.visits||0} визитов`);
+
+    // Update latestMetrics in state
+    S.latestMetrics = m;
+    renderCrmGrid();
+  } catch(e) {
+    toast('Ошибка синхронизации: ' + e.message, true);
+  }
+  if (btn) { btn.textContent = '↻ Синхронизировать'; btn.disabled = false; }
+}
+
+async function disconnectCrm(serviceId) {
+  if (!confirm('Отключить интеграцию? Сохранённые данные останутся.')) return;
+  try {
+    await api('/api/integrations/' + serviceId, { method: 'DELETE' });
+    toast('Интеграция отключена');
+    renderCrmGrid();
+  } catch(e) { toast('Ошибка', true); }
+}
+
+
+async function syncAllCrm(btn) {
+  const orig = btn.textContent;
+  btn.textContent = '↻ Синхронизируем...';
+  btn.disabled = true;
+
+  const label = document.getElementById('last-sync-label');
+
+  try {
+    const resp = await api('/api/integrations/sync-all', { method: 'POST' });
+    const { synced, errors, results } = resp;
+
+    if (synced === 0 && errors === 0) {
+      toast('Нет активных интеграций для синхронизации');
+    } else {
+      const parts = [];
+      if (synced) parts.push(`✓ ${synced} синхронизировано`);
+      if (errors) parts.push(`✗ ${errors} с ошибкой`);
+      toast(parts.join(', '));
+
+      // Show details per service
+      if (results?.length) {
+        const cur = getCurrency(S.ob?.country || '');
+        results.forEach(r => {
+          if (r.ok && r.revenue) {
+            console.log(`${r.service}: ${Number(r.revenue).toLocaleString('ru')} ${cur}, ${r.visits} визитов`);
+          }
+        });
+      }
+    }
+
+    // Update last sync label
+    const now = new Date();
+    if (label) label.textContent = `Синхр: ${now.toLocaleTimeString('ru', {hour:'2-digit',minute:'2-digit'})}`;
+
+    // Refresh grid
+    renderCrmGrid();
+
+  } catch(e) {
+    toast('Ошибка: ' + e.message, true);
+  }
+
+  btn.textContent = orig;
+  btn.disabled = false;
+}
+
 </script>
 </body>
 </html>

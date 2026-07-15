@@ -108,13 +108,14 @@ router.get('/users', async (req, res) => {
   }
 });
 
-// GET /api/admin/users/:id — Client 360
+// GET /api/admin/users/:id — Client Digital Twin
 router.get('/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const [profileRes, auditRes, paymentsRes, docsRes, analysisRes] = await Promise.all([
-      query(`SELECT u.id, u.email, u.name, u.created_at,
-                    p.salon_name, p.city, p.team_size, p.has_access, p.access_expires_at, p.is_admin, p.onboarding
+      query(`SELECT u.id, u.email, u.name, u.created_at, u.last_login_at, u.login_count,
+                    p.salon_name, p.city, p.team_size, p.has_access, p.access_expires_at, p.is_admin,
+                    p.onboarding, p.phone, p.notes, p.frozen_at, p.tariff
              FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE u.id = $1`, [id]),
       query(`SELECT onboarding, answers, scores, completed_tasks, created_at, updated_at FROM audits WHERE user_id = $1`, [id]),
       query(`SELECT id, order_id, amount, currency, status, created_at FROM payments WHERE user_id = $1 ORDER BY created_at DESC`, [id]),
@@ -124,12 +125,36 @@ router.get('/users/:id', async (req, res) => {
 
     if (!profileRes.rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
 
+    const profile = profileRes.rows[0];
+    const audit   = auditRes.rows[0] || null;
+    const docs    = docsRes.rows;
+
+    // ── Build activity timeline ──
+    const timeline = [];
+    timeline.push({ ts: profile.created_at, type: 'register', label: 'Зарегистрировался', icon: '🎉' });
+    if (audit?.created_at) {
+      const ob = audit.onboarding || {};
+      if (ob.name || ob.city) timeline.push({ ts: audit.created_at, type: 'onboarding', label: 'Заполнил профиль салона', icon: '🏪' });
+      if (audit.scores?.overall) timeline.push({ ts: audit.updated_at || audit.created_at, type: 'audit', label: `Завершил аудит · рейтинг ${Math.round(audit.scores.overall)}%`, icon: '✅' });
+    }
+    if (analysisRes.rows[0]) timeline.push({ ts: analysisRes.rows[0].created_at, type: 'ai', label: 'Получил AI-диагностику', icon: '🤖' });
+    paymentsRes.rows.forEach(p => {
+      const label = p.status === 'paid' ? `Оплатил подписку — ${p.amount} ${p.currency}` : `Попытка оплаты — ${p.status}`;
+      timeline.push({ ts: p.created_at, type: 'payment', label, icon: p.status === 'paid' ? '💳' : '⏳' });
+    });
+    docs.forEach(d => timeline.push({ ts: d.created_at, type: 'document', label: `Создал документ: ${d.task_name}`, icon: '📄' }));
+    if (profile.last_login_at && new Date(profile.last_login_at) > new Date(profile.created_at)) {
+      timeline.push({ ts: profile.last_login_at, type: 'login', label: 'Последний вход в систему', icon: '🔑' });
+    }
+    timeline.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+
     res.json({
-      profile:  profileRes.rows[0],
-      audit:    auditRes.rows[0] || null,
+      profile,
+      audit,
       payments: paymentsRes.rows,
-      documents: docsRes.rows,
-      analysis: analysisRes.rows[0] || null
+      documents: docs,
+      analysis: analysisRes.rows[0] || null,
+      timeline
     });
   } catch (err) {
     console.error('[ADMIN USER 360]', err.message);
@@ -137,11 +162,11 @@ router.get('/users/:id', async (req, res) => {
   }
 });
 
-// POST /api/admin/users/:id/access — toggle access
+// POST /api/admin/users/:id/access — grant / revoke access
 router.post('/users/:id/access', async (req, res) => {
   try {
     const { id } = req.params;
-    const { grant } = req.body; // true = grant, false = revoke
+    const { grant } = req.body;
     const { rows } = await query(`
       UPDATE profiles
       SET has_access = $1,
@@ -154,6 +179,178 @@ router.post('/users/:id/access', async (req, res) => {
   } catch (err) {
     console.error('[ADMIN ACCESS]', err.message);
     res.status(500).json({ error: 'Ошибка изменения доступа' });
+  }
+});
+
+// POST /api/admin/users/:id/freeze — freeze / unfreeze account
+router.post('/users/:id/freeze', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { freeze } = req.body;
+    const { rows } = await query(`
+      UPDATE profiles SET frozen_at = $1 WHERE user_id = $2 RETURNING frozen_at
+    `, [freeze ? new Date() : null, id]);
+    if (!rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
+    res.json({ success: true, frozen_at: rows[0].frozen_at });
+  } catch (err) {
+    console.error('[ADMIN FREEZE]', err.message);
+    res.status(500).json({ error: 'Ошибка заморозки' });
+  }
+});
+
+// POST /api/admin/users/:id/extend — extend subscription by N months
+router.post('/users/:id/extend', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { months = 1 } = req.body;
+    const { rows } = await query(`
+      UPDATE profiles
+      SET has_access = true,
+          access_expires_at = GREATEST(COALESCE(access_expires_at, NOW()), NOW()) + ($1 || ' months')::INTERVAL
+      WHERE user_id = $2
+      RETURNING has_access, access_expires_at
+    `, [Number(months), id]);
+    if (!rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
+    res.json({ success: true, ...rows[0] });
+  } catch (err) {
+    console.error('[ADMIN EXTEND]', err.message);
+    res.status(500).json({ error: 'Ошибка продления' });
+  }
+});
+
+// POST /api/admin/users/:id/tariff — change tariff
+router.post('/users/:id/tariff', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tariff } = req.body;
+    if (!tariff) return res.status(400).json({ error: 'Укажите тариф' });
+    const { rows } = await query(
+      `UPDATE profiles SET tariff = $1 WHERE user_id = $2 RETURNING tariff`,
+      [tariff, id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
+    res.json({ success: true, tariff: rows[0].tariff });
+  } catch (err) {
+    console.error('[ADMIN TARIFF]', err.message);
+    res.status(500).json({ error: 'Ошибка изменения тарифа' });
+  }
+});
+
+// POST /api/admin/users/:id/note — save admin note
+router.post('/users/:id/note', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+    const { rows } = await query(
+      `UPDATE profiles SET notes = $1 WHERE user_id = $2 RETURNING notes`,
+      [note || null, id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[ADMIN NOTE]', err.message);
+    res.status(500).json({ error: 'Ошибка сохранения заметки' });
+  }
+});
+
+// GET /api/admin/users/:id/ai-analysis — generate AI client analysis
+router.get('/users/:id/ai-analysis', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [profileRes, auditRes, docsRes, analysisRes] = await Promise.all([
+      query(`SELECT u.name, u.email, u.created_at, u.last_login_at, u.login_count,
+                    p.salon_name, p.city, p.has_access, p.access_expires_at, p.tariff, p.frozen_at, p.onboarding
+             FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE u.id = $1`, [id]),
+      query(`SELECT scores, completed_tasks, updated_at FROM audits WHERE user_id = $1`, [id]),
+      query(`SELECT COUNT(*) AS cnt FROM generated_documents WHERE user_id = $1`, [id]),
+      query(`SELECT analysis FROM audit_analyses WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, [id])
+    ]);
+
+    if (!profileRes.rows.length) return res.status(404).json({ error: 'Пользователь не найден' });
+
+    const p = profileRes.rows[0];
+    const audit = auditRes.rows[0];
+    const scores = audit?.scores || {};
+    const completedCount = Array.isArray(audit?.completed_tasks) ? audit.completed_tasks.length : 0;
+    const daysSinceLogin = p.last_login_at
+      ? Math.floor((Date.now() - new Date(p.last_login_at)) / 86400000) : null;
+    const daysSinceReg = Math.floor((Date.now() - new Date(p.created_at)) / 86400000);
+    const ob = p.onboarding || {};
+
+    const prompt = `Ты аналитик CRM для платформы Beauty Operations OS. Проанализируй клиента и дай конкретные выводы.
+
+КЛИЕНТ:
+- Имя: ${p.name || 'не указано'}
+- Салон: ${p.salon_name || ob.name || 'не указано'}, ${ob.city || p.city || ''}
+- Тариф: ${p.has_access ? 'Платный' : 'Бесплатный'}
+- Зарегистрирован: ${daysSinceReg} дней назад
+- Последний вход: ${daysSinceLogin !== null ? daysSinceLogin + ' дней назад' : 'не зафиксирован'}
+- Входов в систему: ${p.login_count || 0}
+- Документов создано: ${docsRes.rows[0]?.cnt || 0}
+- Задач внедрения выполнено: ${completedCount} из 30+
+- Аудит рейтинг: ${scores.overall ? Math.round(scores.overall) + '%' : 'не пройден'}
+${scores.overall ? `- Слабые блоки: ${Object.entries(scores).filter(([k,v]) => k !== 'overall' && v < 40).map(([k]) => k).join(', ') || 'нет'}` : ''}
+- Заморожен: ${p.frozen_at ? 'да' : 'нет'}
+
+Дай анализ в формате JSON:
+{
+  "engagement_level": "высокая|средняя|низкая",
+  "churn_risk": "высокий|средний|низкий",
+  "churn_risk_pct": число от 0 до 100,
+  "renewal_probability": число от 0 до 100,
+  "key_observations": ["наблюдение 1", "наблюдение 2", "наблюдение 3"],
+  "recommended_actions": ["действие для менеджера 1", "действие 2", "действие 3"],
+  "summary": "1-2 предложения общего вывода"
+}`;
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }]
+    });
+
+    const text = message.content.map(c => c.text || '').join('');
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : { summary: text };
+
+    res.json({ analysis });
+  } catch (err) {
+    console.error('[ADMIN AI CLIENT]', err.message);
+    res.status(500).json({ error: 'Ошибка AI анализа' });
+  }
+});
+
+// POST /api/admin/users/:id/impersonate — create short-lived impersonation token
+router.post('/users/:id/impersonate', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminId = req.user.id;
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+    await query(
+      `INSERT INTO impersonate_tokens (token, user_id, admin_id, expires_at)
+       VALUES ($1, $2, $3, NOW() + INTERVAL '15 minutes')`,
+      [token, id, adminId]
+    );
+    res.json({ token });
+  } catch (err) {
+    console.error('[ADMIN IMPERSONATE]', err.message);
+    res.status(500).json({ error: 'Ошибка создания токена' });
+  }
+});
+
+// DELETE /api/admin/documents/:docId — delete a document
+router.delete('/documents/:docId', async (req, res) => {
+  try {
+    const { rows } = await query(
+      `DELETE FROM generated_documents WHERE id = $1 RETURNING id`,
+      [req.params.docId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Документ не найден' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[ADMIN DOC DELETE]', err.message);
+    res.status(500).json({ error: 'Ошибка удаления' });
   }
 });
 
@@ -516,6 +713,246 @@ router.get('/documents/:id', async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
+
+// ═══════════════════════════════════════════════════════════════
+// PRICING & SETTINGS
+// ═══════════════════════════════════════════════════════════════
+
+// GET /api/admin/settings — все настройки приложения
+router.get('/settings', async (req, res) => {
+  try {
+    const { rows } = await query(
+      'SELECT key, value, description, updated_at FROM app_settings ORDER BY key'
+    );
+    const settings = {};
+    rows.forEach(r => { settings[r.key] = { value: r.value, description: r.description, updated_at: r.updated_at }; });
+    res.json({ settings });
+  } catch (err) {
+    console.error('[ADMIN SETTINGS GET]', err.message);
+    res.status(500).json({ error: 'Ошибка загрузки настроек' });
+  }
+});
+
+// PUT /api/admin/settings/:key — обновить конкретную настройку
+router.put('/settings/:key', async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { value } = req.body;
+    if (!value) return res.status(400).json({ error: 'Нет данных' });
+
+    const allowedKeys = ['plan_main', 'plan_bot_pro', 'plan_bot_team', 'countries_config', 'trial_settings'];
+    if (!allowedKeys.includes(key)) return res.status(400).json({ error: 'Неизвестная настройка' });
+
+    const { rows } = await query(
+      `INSERT INTO app_settings (key, value, updated_by, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (key) DO UPDATE
+         SET value = $2, updated_by = $3, updated_at = NOW()
+       RETURNING key, value, updated_at`,
+      [key, JSON.stringify(value), req.user.id]
+    );
+    res.json({ success: true, setting: rows[0] });
+  } catch (err) {
+    console.error('[ADMIN SETTINGS PUT]', err.message);
+    res.status(500).json({ error: 'Ошибка сохранения' });
+  }
+});
+
+// GET /api/admin/pricing — только ценовые планы (для удобного UI)
+router.get('/pricing', async (req, res) => {
+  try {
+    const { rows } = await query(
+      "SELECT key, value FROM app_settings WHERE key LIKE 'plan_%'"
+    );
+    const plans = {};
+    rows.forEach(r => { plans[r.key] = r.value; });
+    res.json({ plans });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
+// POST /api/admin/pricing/:plan/price — обновить цену в одной валюте
+router.post('/pricing/:plan/price', async (req, res) => {
+  try {
+    const { plan } = req.params;
+    const { currency, price } = req.body;
+    if (!currency || price === undefined) return res.status(400).json({ error: 'Нужны currency и price' });
+
+    const validPlans = ['plan_main', 'plan_bot_pro', 'plan_bot_team'];
+    if (!validPlans.includes(plan)) return res.status(400).json({ error: 'Неизвестный план' });
+
+    const { rows } = await query("SELECT value FROM app_settings WHERE key = $1", [plan]);
+    if (!rows.length) return res.status(404).json({ error: 'План не найден' });
+
+    const planData = rows[0].value;
+    planData.prices = planData.prices || {};
+    planData.prices[currency] = Number(price);
+
+    await query(
+      "UPDATE app_settings SET value = $1, updated_by = $2, updated_at = NOW() WHERE key = $3",
+      [JSON.stringify(planData), req.user.id, plan]
+    );
+    res.json({ success: true, prices: planData.prices });
+  } catch (err) {
+    console.error('[ADMIN PRICING]', err.message);
+    res.status(500).json({ error: 'Ошибка обновления цены' });
+  }
+});
+
+// POST /api/admin/pricing/:plan/duration — изменить длительность (для plan_main)
+router.post('/pricing/:plan/duration', async (req, res) => {
+  try {
+    const { plan } = req.params;
+    const { months } = req.body;
+    if (!months || months < 1 || months > 24) return res.status(400).json({ error: 'Неверная длительность (1–24 мес)' });
+
+    const { rows } = await query("SELECT value FROM app_settings WHERE key = $1", [plan]);
+    if (!rows.length) return res.status(404).json({ error: 'План не найден' });
+
+    const planData = rows[0].value;
+    planData.duration_months = Number(months);
+
+    await query(
+      "UPDATE app_settings SET value = $1, updated_by = $2, updated_at = NOW() WHERE key = $3",
+      [JSON.stringify(planData), req.user.id, plan]
+    );
+    res.json({ success: true, duration_months: planData.duration_months });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
+// POST /api/admin/pricing/:plan/toggle — вкл/выкл план
+router.post('/pricing/:plan/toggle', async (req, res) => {
+  try {
+    const { plan } = req.params;
+    const { rows } = await query("SELECT value FROM app_settings WHERE key = $1", [plan]);
+    if (!rows.length) return res.status(404).json({ error: 'План не найден' });
+
+    const planData = rows[0].value;
+    planData.active = !planData.active;
+
+    await query(
+      "UPDATE app_settings SET value = $1, updated_by = $2, updated_at = NOW() WHERE key = $3",
+      [JSON.stringify(planData), req.user.id, plan]
+    );
+    res.json({ success: true, active: planData.active });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// PROMO CODES
+// ═══════════════════════════════════════════════════════════════
+
+// GET /api/admin/promos — список промокодов
+router.get('/promos', async (req, res) => {
+  try {
+    const { rows } = await query(
+      `SELECT p.*, u.email as created_by_email
+       FROM promo_codes p
+       LEFT JOIN users u ON u.id = p.created_by
+       ORDER BY p.created_at DESC`
+    );
+    res.json({ promos: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
+// POST /api/admin/promos — создать промокод
+router.post('/promos', async (req, res) => {
+  try {
+    const { code, plan, discount_type, discount_value, max_uses, expires_at, currency } = req.body;
+    if (!code || !discount_value) return res.status(400).json({ error: 'Нужны code и discount_value' });
+
+    const { rows } = await query(
+      `INSERT INTO promo_codes (code, plan, discount_type, discount_value, currency, max_uses, expires_at, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        code.toUpperCase().trim(),
+        plan || 'all',
+        discount_type || 'percent',
+        Number(discount_value),
+        currency || null,
+        max_uses || null,
+        expires_at || null,
+        req.user.id
+      ]
+    );
+    res.json({ success: true, promo: rows[0] });
+  } catch (err) {
+    if (err.message.includes('unique')) return res.status(409).json({ error: 'Такой промокод уже существует' });
+    console.error('[ADMIN PROMO CREATE]', err.message);
+    res.status(500).json({ error: 'Ошибка создания промокода' });
+  }
+});
+
+// DELETE /api/admin/promos/:id — деактивировать промокод
+router.delete('/promos/:id', async (req, res) => {
+  try {
+    await query("UPDATE promo_codes SET active = false WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
+// GET /api/admin/promos/:id/uses — кто использовал промокод
+router.get('/promos/:id/uses', async (req, res) => {
+  try {
+    const { rows } = await query(
+      `SELECT pu.*, u.email, u.name
+       FROM promo_uses pu
+       JOIN users u ON u.id = pu.user_id
+       WHERE pu.promo_id = $1
+       ORDER BY pu.used_at DESC`,
+      [req.params.id]
+    );
+    res.json({ uses: rows });
+  } catch (err) {
+    res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// USER BOT ACCESS MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+// POST /api/admin/users/:id/bot-access — выдать/продлить доступ к боту
+router.post('/users/:id/bot-access', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { months, plan } = req.body;  // plan: 'pro' | 'team'
+    if (!months || !plan) return res.status(400).json({ error: 'Нужны months и plan' });
+
+    const expires = new Date();
+    expires.setMonth(expires.getMonth() + Number(months));
+
+    await query(
+      `UPDATE profiles SET has_bot_access = true, bot_expires_at = $1 WHERE user_id = $2`,
+      [expires.toISOString(), id]
+    );
+
+    // Upsert bot_subscriptions
+    await query(
+      `INSERT INTO bot_subscriptions (user_id, plan, sub_expires_at)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id) DO UPDATE
+         SET plan = $2, sub_expires_at = $3, updated_at = NOW()`,
+      [id, plan, expires.toISOString()]
+    );
+
+    res.json({ success: true, bot_expires_at: expires, plan });
+  } catch (err) {
+    console.error('[ADMIN BOT ACCESS]', err.message);
+    res.status(500).json({ error: 'Ошибка выдачи доступа к боту' });
   }
 });
 

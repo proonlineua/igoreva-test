@@ -1,31 +1,13 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-const { query } = require('../lib/db');
+const bcrypt  = require('bcrypt');
+const crypto  = require('crypto');
+const { query }                           = require('../lib/db');
 const { sign, setTokenCookie, clearTokenCookie } = require('../lib/jwt');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth }                     = require('../middleware/auth');
+const { sendPasswordReset }               = require('../lib/mailer');
 
 const router = express.Router();
 const SALT_ROUNDS = 12;
-
-function getMailer() {
-  const isLocal = !process.env.SMTP_PASS || process.env.SMTP_HOST === 'localhost';
-  if (isLocal) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'localhost',
-      port: Number(process.env.SMTP_PORT) || 25,
-      secure: false,
-      ignoreTLS: true
-    });
-  }
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: false,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-  });
-}
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -78,6 +60,7 @@ router.post('/login', async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'Неверный email или пароль' });
 
+    // Обновляем статистику входов (колонки добавлены в миграции 003)
     await query(
       'UPDATE users SET last_login_at = NOW(), login_count = COALESCE(login_count, 0) + 1 WHERE id = $1',
       [user.id]
@@ -111,11 +94,11 @@ router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Введите email' });
 
-    const { rows } = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
-    // Отвечаем одинаково независимо от того, найден ли пользователь (защита от перебора)
+    const { rows } = await query('SELECT id, name FROM users WHERE email = $1', [email.toLowerCase()]);
+    // Одинаковый ответ независимо от результата — защита от перебора
     if (!rows.length) return res.json({ success: true });
 
-    const token = crypto.randomBytes(32).toString('hex');
+    const token   = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 час
 
     await query(
@@ -123,19 +106,13 @@ router.post('/forgot-password', async (req, res) => {
       [token, expires, rows[0].id]
     );
 
-    const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.APP_URL || 'https://beauty.proonline.com.ua'}/reset-password?token=${token}`;
 
-    if (process.env.SMTP_HOST) {
-      const mailer = getMailer();
-      await mailer.sendMail({
-        from: `Beauty OS <${process.env.SMTP_USER || 'noreply@proonline.com.ua'}>`,
-        to: email,
-        subject: 'Сброс пароля — Beauty Operations OS',
-        html: `<p>Для сброса пароля перейдите по ссылке:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Ссылка действительна 1 час.</p>`
-      });
-    } else {
-      console.log('[RESET LINK]', resetUrl);
-    }
+    await sendPasswordReset({
+      to:       email.toLowerCase(),
+      resetUrl,
+      userName: rows[0].name,
+    }).catch(err => console.error('[FORGOT-PASSWORD mailer]', err.message));
 
     res.json({ success: true });
   } catch (err) {
@@ -170,12 +147,13 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-// GET /api/auth/impersonate?token=xxx — client view mode
+// GET /api/auth/impersonate?token=xxx — admin «войти как пользователь»
 router.get('/impersonate', async (req, res) => {
   try {
     const { token } = req.query;
     if (!token) return res.status(400).json({ error: 'Token required' });
 
+    // Таблица impersonate_tokens создана в миграции 003
     const { rows } = await query(
       `DELETE FROM impersonate_tokens WHERE token = $1 AND expires_at > NOW() RETURNING user_id`,
       [token]
