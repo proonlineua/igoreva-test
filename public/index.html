@@ -873,8 +873,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn-outline" onclick="show('results')">📊 Последние результаты</button>
-        <button class="prof-audit-btn" style="width:auto;padding:8px 20px;border-style:solid" onclick="repeatAudit()">
-          🔄 Пройти аудит заново
+        <button class="prof-audit-btn" style="width:auto;padding:8px 20px;border-style:solid" onclick="show('onboarding')">
+          🔄 Пройти аудит заново<span id="audit-progress-badge" style="margin-left:8px;font-size:11px;opacity:.7"></span>
         </button>
       </div>
     </div>
@@ -1544,7 +1544,11 @@ function startAudit() {
     taxFormId:S._selectedTaxForm ? S._selectedTaxForm.id   : '',
   };
   S.auditBlock = 0;
-  S.answers    = {};
+  // Keep previously saved answers so progress is not lost on re-entry
+  if (!S.answers) S.answers = {};
+  // Jump to first block that still has unanswered questions
+  const firstIncomplete = BLOCKS.findIndex(b => countAns(b.id) < QUESTIONS[b.id].length);
+  if (firstIncomplete > 0) S.auditBlock = firstIncomplete;
   show('audit');
   renderAuditBlock();
 }
@@ -1606,8 +1610,10 @@ function saveComment(key, val) { S.answers[key] = {...(S.answers[key]||{}), comm
 function jumpBlock(i) { S.auditBlock = i; renderAuditBlock(); window.scrollTo(0,0); }
 function prevBlock() { if (S.auditBlock > 0) { S.auditBlock--; renderAuditBlock(); window.scrollTo(0,0); } else show('onboarding'); }
 function nextBlock() {
-  if (S.auditBlock < BLOCKS.length-1) { S.auditBlock++; renderAuditBlock(); window.scrollTo(0,0); }
-  else { calcScores(); show('results'); renderResults(); runAI(); autoSave(); }
+  if (S.auditBlock < BLOCKS.length-1) {
+    S.auditBlock++; renderAuditBlock(); window.scrollTo(0,0);
+    autoSave(); // save partial progress after each block
+  } else { calcScores(); show('results'); renderResults(); runAI(); autoSave(); }
 }
 
 // ══════════════════════════════════════════════════
@@ -2708,6 +2714,10 @@ async function loadAudit() {
         S.roadmapOrder = BLOCKS.filter(b=>ROADMAP_TASKS[b.id]).sort((a,b)=>(S.scores[a.id]||0)-(S.scores[b.id]||0)).map(b=>b.id);
         ['nl-dashboard','nl-roadmap'].forEach(id=>document.getElementById(id)?.classList.remove('hidden'));
       }
+      // Update audit progress badge
+      const ta = totalAns(), tq = totalQ();
+      const badge = document.getElementById('audit-progress-badge');
+      if (badge && tq > 0) badge.textContent = `(${ta}/${tq})`;
     }
   } catch(e) { console.warn('LoadAudit failed:', e.message); }
 }
