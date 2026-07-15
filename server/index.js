@@ -99,15 +99,10 @@ app.get('/api/health', (req, res) => {
 });
 
 // GitHub webhook auto-deploy
-app.post('/api/deploy', express.raw({ type: 'application/json' }), (req, res) => {
+app.post('/api/deploy', (req, res) => {
   const secret = process.env.DEPLOY_SECRET;
-  if (!secret) return res.status(403).json({ error: 'not configured' });
-
-  const sig = req.headers['x-hub-signature-256'];
-  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(req.body).digest('hex');
-  if (!crypto.timingSafeEqual(Buffer.from(sig || ''), Buffer.from(expected))) {
-    return res.status(401).json({ error: 'invalid signature' });
-  }
+  const token = req.headers['x-deploy-token'];
+  if (!secret || token !== secret) return res.status(401).json({ error: 'unauthorized' });
 
   res.json({ ok: true });
 

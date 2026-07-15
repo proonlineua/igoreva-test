@@ -15,10 +15,8 @@ jobs:
     steps:
       - name: Trigger git-pull deploy on server
         run: |
-          PAYLOAD='{"ref":"refs/heads/main"}'
-          SIG="sha256=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac '${{ secrets.DEPLOY_SECRET }}' | awk '{print $2}')"
           curl -f -s -o /dev/null -w "HTTP %{http_code}" \
             -X POST https://beauty.proonline.com.ua/api/deploy \
             -H "Content-Type: application/json" \
-            -H "X-Hub-Signature-256: $SIG" \
-            -d "$PAYLOAD"
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_SECRET }}" \
+            -d '{"ref":"refs/heads/main"}'
