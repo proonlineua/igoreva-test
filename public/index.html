@@ -2155,37 +2155,82 @@ function downloadDoc(taskName) {
 }
 async function generateDoc(taskName, tool, taskId) {
   const cfg = TOOL_CONFIGS[tool] || TOOL_CONFIGS.default;
-  const answers = cfg.qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
+  const qs = cfg.qs || [];
+  const answers = qs.map(q => `${q.label}: ${document.getElementById('mq-'+q.id)?.value||'не указано'}`).join('\n');
+
+  // Soft validation — warn but don't block
+  const hasInput = qs.some(q => (document.getElementById('mq-'+q.id)?.value||'').trim());
+  if (!hasInput && qs.length > 0) toast('Заполните поля для более точного результата', true);
+
   const btn = document.getElementById('gen-btn');
   const resultEl = document.getElementById('modal-result');
   btn.disabled = true; btn.textContent = 'Генерируем...';
   resultEl.innerHTML = `<div class="loading">
       <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
       <div style="font-size:13px;margin-top:8px">Создаём документ...</div>
-      <div style="font-size:11px;color:var(--t3);margin-top:4px" id="gen-timer">обычно 20–40 секунд</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:4px" id="gen-timer">0 сек...</div>
     </div>`;
   let genSec = 0;
-  const genTimerInterval = setInterval(() => {
-    genSec++;
-    const el = document.getElementById('gen-timer');
-    if (el) el.textContent = `${genSec} сек...`;
-  }, 1000);
-  const clearGenTimer = () => clearInterval(genTimerInterval);
+  const timerInterval = setInterval(() => { genSec++; const el=document.getElementById('gen-timer'); if(el) el.textContent=`${genSec} сек...`; }, 1000);
+
+  let fullText = '';
+  let streamStarted = false;
 
   try {
-    const res = await api('/api/ai/generate', {
+    const response = await fetch('/api/ai/generate', {
       method: 'POST',
-      body: JSON.stringify({ taskName, answers, salonData: S.ob })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskName, answers, salonData: S.ob }),
+      credentials: 'include',
     });
-    renderDoc(res.content, taskName, resultEl, taskId);
-    S.recentActions.unshift({text:'📄 Создан: '+taskName, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
-  } catch(e) {
-    resultEl.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--red)">${e.message.includes('подписк')?'🔒 Требуется активная подписка':'Ошибка генерации. Попробуйте снова.'}</div>`;
-    if (e.message.includes('подписк')) {
-      setTimeout(() => { closeModal(); showPaywall(); }, 1500);
+
+    if (!response.ok) {
+      const d = await response.json().catch(()=>({}));
+      throw new Error(d.error || 'Ошибка сервера');
     }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        let data;
+        try { data = JSON.parse(line.slice(6)); } catch { continue; }
+        if (data.error) throw new Error(data.error);
+        if (data.chunk) {
+          fullText += data.chunk;
+          if (!streamStarted) {
+            streamStarted = true;
+            clearInterval(timerInterval);
+            resultEl.innerHTML = `<div id="doc-stream" style="font-size:13px;line-height:1.7;padding:4px 0"></div>`;
+          }
+          const el = document.getElementById('doc-stream');
+          if (el) el.innerHTML = mdToHtml(fullText);
+        }
+        if (data.done) {
+          renderDoc(fullText, taskName, resultEl, taskId);
+          S.recentActions.unshift({ text:'📄 Создан: '+taskName, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}) });
+        }
+      }
+    }
+  } catch(e) {
+    clearInterval(timerInterval);
+    const isAccess = e.message.includes('подписк') || e.message.includes('ACCESS');
+    resultEl.innerHTML = `<div style="padding:16px;font-size:13px;color:var(--red);line-height:1.6">
+      ${isAccess
+        ? '🔒 Требуется активная подписка'
+        : '⚠️ Сервис временно недоступен. Подождите 30–60 секунд и попробуйте снова.'
+      }</div>`;
+    if (isAccess) setTimeout(() => { closeModal(); showPaywall(); }, 1500);
   } finally {
-    if (typeof clearGenTimer === "function") clearGenTimer();
+    clearInterval(timerInterval);
     btn.disabled = false; btn.textContent = '✦ Сгенерировать';
   }
 }

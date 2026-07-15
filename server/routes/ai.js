@@ -466,7 +466,20 @@ ${country === 'Испания' ? '- ФОТ мастеров: 33–42% (если 
     salonData?.visitCycle? `Цикличность визитов клиентов: ${salonData.visitCycle} дней` : '',
   ].filter(Boolean).join('\n');
 
-  const prompt = `Ты операционный консультант для салонов красоты. Создай профессиональный рабочий документ который можно использовать с первого дня.
+  // SSE streaming — keeps connection alive, no nginx 60s timeout
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+
+  const sendSSE = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    // Load metrics BEFORE building prompt (was a ReferenceError bug before)
+    const metrics    = await getLatestMetrics(req.user?.id);
+    const metricsCtx = buildMetricsContext(metrics, cur);
+
+    const prompt = `Ты операционный консультант для салонов красоты. Создай профессиональный рабочий документ который можно использовать с первого дня.
 
 ДАННЫЕ САЛОНА (использовать точно):
 Название: ${salonData?.name || 'Салон'}
@@ -496,26 +509,30 @@ ${safeAnswers || 'не указаны — используй данные сал
 - Готово к применению сразу. Ноль воды и общих слов.
 - Язык: русский (если город в Украине — можно украинский)`;
 
-  try {
-    // Enrich with real metrics if available
-    const metrics = await getLatestMetrics(req.user?.id);
-    const metricsCtx = buildMetricsContext(metrics, cur);
-
-    const msg = await anthropic.messages.create({
+    let fullText = '';
+    const stream = await anthropic.messages.stream({
       model: 'claude-sonnet-4-6', max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }]
     });
-    const result = msg.content.map(c => c.text || '').join('');
+
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+        fullText += event.delta.text;
+        sendSSE({ chunk: event.delta.text });
+      }
+    }
 
     await query(
       'INSERT INTO generated_documents (user_id, task_name, content) VALUES ($1, $2, $3)',
-      [req.user.id, taskName, result]
+      [req.user.id, taskName, fullText]
     ).catch(() => {});
 
-    res.json({ success: true, content: result });
+    sendSSE({ done: true });
+    res.end();
   } catch (err) {
     console.error('[AI GENERATE]', err.message);
-    res.status(500).json({ error: 'Ошибка генерации. Попробуйте снова.' });
+    sendSSE({ error: err.message });
+    res.end();
   }
 });
 
