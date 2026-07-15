@@ -2298,12 +2298,18 @@ function downloadDoc(taskName) {
 }
 function submitFinancialForm(taskName, tool, taskId) {
   const cfg = TOOL_CONFIGS[tool] || {};
+  const ctr = S.ob?.country || '';
+  const cur = /испан|германи|итали|франци|португал/i.test(ctr) ? '€' : /польш/i.test(ctr) ? 'zł' : '₴';
   const parts = (cfg.fields || []).map(f => {
     const v = (document.getElementById('ff-' + f.id)?.value || '').trim();
     if (!v || v === '0') return null;
-    const sfx = f.suffix && f.suffix !== '₴' ? f.suffix : (f.suffix === '₴' ? (S.ob?.country && /испан|германи/i.test(S.ob.country) ? '€' : '₴') : '');
+    const sfx = f.suffix === '₴' ? cur : (f.suffix || '');
     return `${f.label}: ${v}${sfx ? ' ' + sfx : ''}`;
   }).filter(Boolean);
+  if (!parts.length) {
+    toast('Заполните хотя бы одно поле для расчёта', true);
+    return;
+  }
   generateDoc(taskName, tool, taskId, parts.join('\n'));
 }
 

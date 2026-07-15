@@ -589,6 +589,7 @@ ${safeAnswers ? `\nДОПОЛНИТЕЛЬНЫЕ ДАННЫЕ:\n${safeAnswers}` :
     let fullText = '';
     const stream = await anthropic.messages.stream({
       model: 'claude-sonnet-4-6', max_tokens: 4096,
+      temperature: 0.3,
       messages: [{ role: 'user', content: prompt }]
     });
 
