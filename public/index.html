@@ -678,7 +678,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
       <div class="field"><label>Мастеров</label><input id="ob-masters" type="number" min="1" value="3"></div>
       <div class="field"><label>Администраторов</label><input id="ob-admins" type="number" min="0" value="1"></div>
       <div class="field"><label>Кабинетов / мест</label><input id="ob-rooms" type="number" min="1" value="2"></div>
-      <div class="field"><label>Система записи</label><select id="ob-crm"><option>DIKIDI</option><option>Yclients</option><option>Fresha</option><option>Google-таблицы</option><option>Без системы</option></select></div>
+      <div class="field"><label>Система записи</label><select id="ob-crm"><option>DIKIDI</option><option>Yclients</option><option>Alteggio</option><option>Fresha</option><option>Google-таблицы</option><option>Без системы</option></select></div>
       <div class="field"><label>Рабочих дней в неделю</label><input id="ob-workdays" type="number" min="1" max="7" placeholder="6"></div>
       <div class="field"><label>Рабочие часы</label><input id="ob-workhours" type="text" placeholder="10:00–20:00"></div>
     </div>
@@ -2578,7 +2578,7 @@ function toggleSalonEdit() {
         <div class="field"><label>Выручка/мес</label><input id="pe-rev" type="number" value="${ob.revenue||''}" placeholder="120000"></div>
         <div class="field"><label>Система записи</label>
           <select id="pe-crm">
-            ${['DIKIDI','Yclients','Fresha','Google-таблицы','Без системы'].map(x=>`<option${ob.crm===x?' selected':''}>${x}</option>`).join('')}
+            ${['DIKIDI','Yclients','Alteggio','Fresha','Google-таблицы','Без системы'].map(x=>`<option${ob.crm===x?' selected':''}>${x}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -3216,6 +3216,11 @@ const CRM_SERVICES = [
       {id:'api_key',    label:'Partner Token', placeholder:'Bearer токен партнёра'},
       {id:'api_secret', label:'User Token',    placeholder:'Токен пользователя'},
     ], docs:'https://developers.yclients.com/' },
+  { id:'alteg',      name:'Alteggio',    icon:'🌿', countries:'UA · KZ · СНГ',
+    fields:[
+      {id:'api_key',    label:'Partner Token', placeholder:'Токен партнёра из alteg.io'},
+      {id:'api_secret', label:'User Token',    placeholder:'Токен пользователя'},
+    ], docs:'https://developers.alteg.io/' },
   { id:'booksy',     name:'Booksy',      icon:'📖', countries:'PL · EU',
     fields:[{id:'api_key', label:'API-ключ', placeholder:'Из Booksy Business → API'}],
     docs:'https://booksy.com/developers' },

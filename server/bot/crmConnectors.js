@@ -498,11 +498,94 @@ async function syncPoster(accessToken) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ALTEGGIO (alteg.io)
+// Docs: https://developers.alteg.io/
+// Auth: Bearer {partner_token}, User {user_token} — same structure as Yclients
+// ═══════════════════════════════════════════════════════════════════════════════
+async function altegFetch(partnerToken, userToken, path, params = {}) {
+  const qs  = new URLSearchParams(params).toString();
+  const url = `https://api.alteg.io/api/v1${path}${qs ? '?' + qs : ''}`;
+  const res = await fetchJSON(url, {
+    headers: {
+      'Authorization': `Bearer ${partnerToken}, User ${userToken}`,
+      'Accept':        'application/vnd.yclients.v2+json',
+    }
+  });
+  if (!res.data?.success) throw new Error(`Alteg error: ${res.data?.meta?.message || res.status}`);
+  return res.data;
+}
+
+async function connectAlteg(partnerToken, userToken) {
+  const data = await altegFetch(partnerToken, userToken, '/companies', { count: 10 });
+  const companies = data?.data || [];
+  if (!companies.length) throw new Error('Компании не найдены в Alteggio');
+  const co = companies[0];
+  return {
+    company_id:   String(co.id),
+    company_name: co.title || 'Alteggio Salon',
+    city:         co.city?.title || '',
+    currency:     co.currency?.symbol || '₴',
+  };
+}
+
+async function syncAlteg(partnerToken, userToken, companyId) {
+  const dateFrom = monthStart();
+  const dateTo   = today();
+
+  const visits = await altegFetch(partnerToken, userToken,
+    `/records/${companyId}`, {
+      start_date: dateFrom,
+      end_date:   dateTo,
+      count:      500,
+      status:     '1,2,8',
+    }
+  );
+
+  const items    = visits?.data || [];
+  const revenue  = items.reduce((s,r) => s + Number(r.cost || 0), 0);
+  const count    = items.length;
+  const avgCheck = count > 0 ? Math.round(revenue / count) : 0;
+
+  const masterMap = {};
+  items.forEach(r => {
+    r.staff?.forEach(st => {
+      const name = st.name || 'Мастер';
+      if (!masterMap[name]) masterMap[name] = { name, revenue: 0, visits: 0 };
+      masterMap[name].revenue += Number(r.cost || 0) / (r.staff?.length || 1);
+      masterMap[name].visits  += 1;
+    });
+  });
+  const masters = Object.values(masterMap)
+    .sort((a,b) => b.revenue - a.revenue)
+    .map(m => ({ ...m, revenue: Math.round(m.revenue) }));
+
+  const todayItems = items.filter(r => (r.datetime || '').slice(0,10) === today());
+  const todayRev   = todayItems.reduce((s,r) => s + Number(r.cost||0), 0);
+
+  return {
+    period:      dateFrom.slice(0,7),
+    revenue:     Math.round(revenue),
+    visits:      count,
+    avg_check:   avgCheck,
+    new_clients: Math.round(count * 0.2),
+    masters,
+    today: {
+      revenue:   Math.round(todayRev),
+      visits:    todayItems.length,
+      avg_check: todayItems.length > 0 ? Math.round(todayRev / todayItems.length) : 0,
+    },
+    raw_count: items.length,
+    source: 'alteg',
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // DISPATCHER — connect and sync any service
 // ═══════════════════════════════════════════════════════════════════════════════
 const CONNECTORS = {
   dikidi:    { connect: connectDikidi,    sync: syncDikidi    },
   yclients:  { connect: connectYclients,  sync: syncYclients  },
+  alteg:     { connect: connectAlteg,     sync: syncAlteg     },
   booksy:    { connect: connectBooksy,    sync: syncBooksy    },
   simplybook:{ connect: connectSimplybook,sync: syncSimplybook},
   timify:    { connect: connectTimify,    sync: syncTimify    },
@@ -518,7 +601,8 @@ async function connectService(service, credentials) {
 
   switch(service) {
     case 'dikidi':    return connector.connect(apiKey);
-    case 'yclients':  return connector.connect(apiKey, apiSecret); // partnerToken, userToken
+    case 'yclients':  return connector.connect(apiKey, apiSecret);
+    case 'alteg':     return connector.connect(apiKey, apiSecret);
     case 'booksy':    return connector.connect(apiKey);
     case 'simplybook':return connector.connect(companyLogin, apiKey);
     case 'timify':    return connector.connect(apiKey);
@@ -537,6 +621,7 @@ async function syncService(service, credentials, companyId, extra = {}) {
   switch(service) {
     case 'dikidi':    return connector.sync(apiKey, companyId);
     case 'yclients':  return connector.sync(apiKey, apiSecret, companyId);
+    case 'alteg':     return connector.sync(apiKey, apiSecret, companyId);
     case 'booksy':    return connector.sync(apiKey, companyId);
     case 'simplybook':return connector.sync(extra.company_login || companyLogin, apiKey);
     case 'timify':    return connector.sync(apiKey, companyId);
