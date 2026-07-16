@@ -496,6 +496,32 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 .fin-input-wrap input{width:100%;padding:8px 36px 8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);font-size:15px;box-sizing:border-box;font-family:inherit}
 .fin-suffix{position:absolute;right:10px;color:var(--t3);font-size:13px;pointer-events:none}
 @media(max-width:480px){.fin-form{grid-template-columns:1fr}}
+/* === Orgchart document visual nodes === */
+.doc-paper .chart-block{background:#fff;border:1px solid #e6ddd6;border-radius:16px;padding:18px 12px;margin:12px 0;overflow-x:auto}
+.doc-paper .tree{min-width:440px;display:flex;flex-direction:column;align-items:center}
+.doc-paper .node{color:#fff;border-radius:10px;padding:8px 14px;text-align:center;font-weight:600;font-size:13px;min-width:120px;max-width:190px;box-shadow:0 5px 14px -8px rgba(0,0,0,.38);display:inline-block}
+.doc-paper .node small{display:block;font-weight:400;font-size:11px;opacity:.9;margin-top:2px}
+.doc-paper .n-owner{background:#3d3a5c}.doc-paper .n-mgmt{background:#5a7d8c}
+.doc-paper .n-prod{background:#7a9e7e}.doc-paper .n-front{background:#c78a4a}
+.doc-paper .n-support{background:#9a8fa8}.doc-paper .n-accent{background:#b76e79}
+.doc-paper .connector{width:2px;height:14px;background:#e6ddd6;margin:0 auto}
+.doc-paper .hbar{height:2px;background:#e6ddd6;width:60%;margin:2px auto}
+.doc-paper .groups{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.doc-paper .group{border:1px dashed #e6ddd6;border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:7px;background:#fcfaf9}
+.doc-paper .col-label{font-size:10px;color:#6f625b;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.doc-paper .stack{display:flex;flex-direction:column;gap:7px;align-items:center}
+.doc-paper .oc-callout{background:#f3ebe7;border:1px dashed #b76e79;border-radius:12px;padding:12px 16px;margin:12px 0;color:#2b2320}
+.doc-paper .oc-callout b,.doc-paper .oc-callout strong{color:#8f4f5a}
+.doc-paper .oc-hero{background:linear-gradient(135deg,#8f4f5a,#b76e79 55%,#c9a24b 140%);color:#fff;border-radius:14px;padding:22px 24px 16px;margin:-4px -4px 16px;box-shadow:0 14px 32px -14px rgba(143,79,90,.5)}
+.doc-paper .oc-hero .oc-kicker{text-transform:uppercase;letter-spacing:.14em;font-size:10px;opacity:.85;font-weight:600;margin-bottom:4px}
+.doc-paper .oc-hero h1{margin:4px 0;font-size:20px;line-height:1.2;color:#fff}
+.doc-paper .oc-hero p{margin:4px 0 0;font-size:12px;opacity:.9}
+.doc-paper .oc-when{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.doc-paper .oc-when .c{background:#fff;border:1px solid #e6ddd6;border-radius:12px;padding:10px 12px}
+.doc-paper .oc-when .c h4{margin:0 0 5px;font-size:13px;color:#8f4f5a}
+.doc-paper .oc-when .c ul{margin:0;padding-left:14px}
+.doc-paper .oc-when .c li{margin:3px 0;font-size:12px;color:#6f625b}
+@media(max-width:600px){.doc-paper .oc-when{grid-template-columns:1fr}.doc-paper .tree{min-width:280px}}
 </style>
 </head>
 <body>
@@ -2203,9 +2229,18 @@ function mdToHtml(md) {
   // Wrap consecutive <li> in <ul>
   html = html.replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>');
   // Paragraphs: wrap lines that aren't already HTML
+  // Track nesting depth of block HTML elements so multi-line blocks pass through
+  let depth = 0;
   html = html.split('\n').map(line => {
     if (!line.trim()) return '';
-    if (/^<(h[1-4]|ul|li|table|tr|td|th|hr)/.test(line)) return line;
+    const opens  = (line.match(/<(div|header|footer|section|nav|figure|aside|article)\b/gi) || []).length;
+    const closes = (line.match(/<\/(div|header|footer|section|nav|figure|aside|article)>/gi) || []).length;
+    if (depth > 0 || opens > 0) {
+      depth += opens - closes;
+      if (depth < 0) depth = 0;
+      return line;
+    }
+    if (/^<(h[1-4]|ul|li|table|tr|td|th|hr|p|strong|em|br)/.test(line)) return line;
     return '<p>' + line + '</p>';
   }).join('\n');
   return html;
