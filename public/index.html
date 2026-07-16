@@ -2200,7 +2200,9 @@ function openTool(taskId, taskName, tool) {
 }
 
 function mdToHtml(md) {
-  // Strip code fences (``` blocks)
+  // Keep content of HTML code fences (AI often wraps generated HTML in ```html ... ```)
+  md = md.replace(/```(?:html)\n?([\s\S]*?)```/gi, '$1');
+  // Strip other code fences (python, js, etc.)
   md = md.replace(/```[^\n]*\n?([\s\S]*?)```/g, '');
 
   // Convert markdown tables to HTML tables
@@ -2317,17 +2319,44 @@ function downloadDoc(taskName) {
   const salonName = S.ob?.name || 'Салон';
   const city = S.ob?.city || '';
   const date = new Date().toLocaleDateString('ru');
-  const wordHtml = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${taskName}</title><style>
-    body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.5;margin:2cm;color:#1a1a1a}
-    h1{font-size:16pt;color:#880e4f;border-bottom:2pt solid #c2185b;padding-bottom:6pt;margin-bottom:12pt}
-    h2{font-size:13pt;color:#880e4f;margin-top:14pt;margin-bottom:6pt}
-    h3{font-size:11pt;font-weight:bold;margin-top:10pt;margin-bottom:4pt}
-    ul{margin:4pt 0 8pt 16pt}li{margin-bottom:3pt}
-    table{border-collapse:collapse;width:100%;margin:8pt 0}
-    th{background:#fce4ec;color:#880e4f;padding:5pt 8pt;border:1pt solid #f48fb1;text-align:left;font-weight:bold}
-    td{padding:5pt 8pt;border:1pt solid #e0e0e0;vertical-align:top}
-    tr:nth-child(even) td{background:#fafaf9}
-    .meta{font-size:9pt;color:#666;margin-bottom:16pt}
+  const wordHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${taskName}</title><style>
+    body{font-family:"Segoe UI",Arial,sans-serif;font-size:11pt;line-height:1.6;margin:2cm;color:#1a1a1a;max-width:900px}
+    h1{font-size:18pt;color:#8f4f5a;border-bottom:2pt solid #b76e79;padding-bottom:6pt;margin-bottom:14pt;font-weight:700}
+    h2{font-size:14pt;color:#8f4f5a;margin-top:18pt;margin-bottom:6pt;font-weight:700}
+    h3{font-size:12pt;font-weight:bold;color:#5a3040;margin-top:12pt;margin-bottom:4pt}
+    h4{font-size:11pt;font-weight:bold;color:#5a3040;margin-top:8pt;margin-bottom:3pt}
+    p{margin:5pt 0}
+    ul{margin:4pt 0 8pt 18pt}li{margin-bottom:3pt}
+    table{border-collapse:collapse;width:100%;margin:8pt 0;font-size:10pt}
+    th{background:#8f4f5a;color:#fff;padding:6pt 9pt;text-align:left;font-weight:bold;font-size:10pt}
+    td{padding:6pt 9pt;border:1pt solid #e0d5d0;vertical-align:top}
+    tr:nth-child(even) td{background:#faf7f5}
+    .meta{font-size:9pt;color:#888;margin-bottom:18pt}
+    hr{border:none;border-top:1pt solid #e0d5d0;margin:12pt 0}
+    strong{color:#5a3040}
+    /* Orgchart nodes */
+    .chart-block{background:#fff;border:1pt solid #e6ddd6;border-radius:10pt;padding:16pt 12pt;margin:10pt 0;overflow-x:auto}
+    .tree{display:flex;flex-direction:column;align-items:center;gap:0;min-width:400pt}
+    .node{color:#fff;border-radius:7pt;padding:7pt 12pt;text-align:center;font-weight:700;font-size:10pt;min-width:110pt;display:inline-block;margin:2pt}
+    .node small{display:block;font-weight:400;font-size:8.5pt;opacity:.9;margin-top:1pt}
+    .n-owner{background:#3d3a5c}.n-mgmt{background:#5a7d8c}.n-prod{background:#7a9e7e}.n-front{background:#c78a4a}.n-support{background:#9a8fa8}.n-accent{background:#b76e79}
+    .connector{width:2pt;height:12pt;background:#e6ddd6;margin:0 auto;display:block}
+    .hbar{height:2pt;background:#e6ddd6;width:60%;margin:2pt auto;display:block}
+    .groups{display:flex;gap:8pt;flex-wrap:wrap;justify-content:center;margin-top:4pt}
+    .group{border:1pt dashed #e6ddd6;border-radius:8pt;padding:8pt;display:flex;flex-direction:column;align-items:center;gap:6pt;background:#fcfaf9}
+    .col-label{font-size:8pt;color:#6f625b;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+    .stack{display:flex;flex-direction:column;gap:5pt;align-items:center}
+    .oc-callout{background:#f3ebe7;border:1pt dashed #b76e79;border-radius:8pt;padding:10pt 14pt;margin:10pt 0;color:#2b2320}
+    .oc-callout b,.oc-callout strong{color:#8f4f5a}
+    .oc-hero{background:linear-gradient(135deg,#8f4f5a,#b76e79 55%,#c9a24b 140%);color:#fff;border-radius:10pt;padding:18pt 20pt 14pt;margin-bottom:14pt}
+    .oc-hero h1{color:#fff;border:none;margin:4pt 0;font-size:17pt}
+    .oc-hero p{margin:3pt 0;font-size:10pt;opacity:.9}
+    .oc-kicker{font-size:8pt;text-transform:uppercase;letter-spacing:.12em;opacity:.85;font-weight:600;margin-bottom:3pt}
+    .oc-when{display:grid;grid-template-columns:repeat(3,1fr);gap:8pt;margin:10pt 0}
+    .oc-when .c{background:#fff;border:1pt solid #e6ddd6;border-radius:8pt;padding:8pt 10pt}
+    .oc-when .c h4{margin:0 0 5pt;font-size:11pt;color:#8f4f5a}
+    .oc-when .c ul{margin:0;padding-left:12pt}
+    .oc-when .c li{margin:2pt 0;font-size:9pt;color:#6f625b}
   </style></head><body>
     <h1>${taskName}</h1>
     <div class="meta">${salonName}${city ? ' · ' + city : ''} · ${date} · Beauty Operations OS</div>
