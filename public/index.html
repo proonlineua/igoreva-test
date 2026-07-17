@@ -1168,7 +1168,7 @@ const QUESTIONS = {
 
 const ROADMAP_TASKS = {
   finance:[{id:'f1',name:'Рассчитать себестоимость услуг',tool:'cost_calc',p:'critical'},{id:'f2',name:'Внедрить P&L таблицу',tool:'pl_template',p:'critical'},{id:'f3',name:'Создать план-факт на месяц',tool:'plan_fact',p:'high'},{id:'f4',name:'Рассчитать точку безубыточности',tool:'bep_calc',p:'high'},{id:'f5',name:'Настроить учёт материалов',tool:'expenses',p:'medium'}],
-  hr:[{id:'h1',name:'Создать оргструктуру',tool:'orgchart',p:'high'},{id:'h2',name:'Написать должностные инструкции',tool:'job_desc',p:'critical'},{id:'h3',name:'Разработать KPI',tool:'kpi',p:'critical'},{id:'h4',name:'Создать систему мотивации',tool:'motivation',p:'high'},{id:'h5',name:'Внедрить регулярные собрания',tool:'meetings',p:'medium'}],
+  hr:[{id:'h1',name:'Создать оргструктуру',tool:'orgchart',p:'high'},{id:'h2',name:'Должностная инструкция + KPI + мотивация',tool:'job_desc',p:'critical'},{id:'h5',name:'Внедрить регулярные собрания',tool:'meetings',p:'medium'}],
   sales:[{id:'s1',name:'Написать скрипты администраторов',tool:'scripts',p:'critical'},{id:'s2',name:'Внедрить систему допродаж',tool:'upsell',p:'high'},{id:'s3',name:'Запустить программу лояльности',tool:'loyalty',p:'high'},{id:'s4',name:'Настроить контроль конверсии',tool:'conversion',p:'medium'},{id:'s5',name:'Запустить продажу абонементов',tool:'subscriptions',p:'medium'}],
   clients:[{id:'c1',name:'Настроить автонапоминания',tool:'reminders',p:'high'},{id:'c2',name:'Внедрить сбор обратной связи',tool:'feedback',p:'medium'},{id:'c3',name:'Запустить реферальную программу',tool:'referral',p:'medium'}],
   ops:[{id:'o1',name:'Создать чек-лист открытия смены',tool:'open_checklist',p:'critical'},{id:'o2',name:'Создать чек-лист закрытия смены',tool:'close_checklist',p:'critical'},{id:'o3',name:'Написать регламент закупок',tool:'procurement',p:'high'},{id:'o4',name:'Внедрить контроль качества',tool:'quality',p:'high'},{id:'o5',name:'Регламент работы с жалобами',tool:'complaints',p:'medium'}],
@@ -1179,7 +1179,7 @@ const ROADMAP_TASKS = {
 const TOOL_CONFIGS = {
   // Слим-формы — только 1 критически нужный вопрос
   kpi:{title:'Создать KPI',qs:[{id:'q1',label:'Должность',type:'select',options:['Мастер','Администратор','Управляющий/Директор','Все роли']}]},
-  job_desc:{title:'Должностная инструкция',qs:[
+  job_desc:{title:'Должностная инструкция + KPI + мотивация',qs:[
     {id:'specialty',label:'Специальность',type:'select',options:[
       'Парикмахер / Стилист',
       'Мастер маникюра / Нейл-мастер',
